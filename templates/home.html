@@ -1,0 +1,71 @@
+{% extends "master.html" %}
+
+{% block title %} Data Analysis Tool {% endblock %}
+
+{% block body %}
+
+<b>Please enter the following information:</b>
+
+<div class="formwrapper">
+  <form method=post>
+    <div class="date">
+		{{ form.date.label }} {{ form.date(placeholder="YYYY-MM-DD") }} </div>
+<!--      {% if form.date.errors %}-->
+<!--        <ul class="errors">{% for error in form.date.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+    <div class="id">
+      {{ form.id.label }} {{ form.id(placeholder="a") }}    </div>
+<!--      {% if form.id.errors %}-->
+<!--        <ul class="errors">{% for error in form.id.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+    <div class="initials">
+      {{ form.initials.label }} {{ form.initials }}    </div>
+<!--      {% if form.initials.errors %}-->
+<!--        <ul class="errors">{% for error in form.initials.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+    <div class="cutlength">
+      {{ form.cutlength.label }} {{ form.cutlength }}    </div>
+<!--      {% if form.cutlength.errors %}-->
+<!--        <ul class="errors">{% for error in form.cutlength.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+
+    <br> <b> If cycle length is known: </b>
+        <div class="cyclelength">
+      {{ form.cyclelength.label }} {{ form.cyclelength }}    </div>
+<!--      {% if form.cyclelength.errors %}-->
+<!--        <ul class="errors">{% for error in form.cyclelength.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+
+    <br><b>If cycle length is not known:</b>
+          <div class="length">
+      {{ form.length.label }} {{ form.length }}    </div>
+<!--      {% if form.length.errors %}-->
+<!--        <ul class="errors">{% for error in form.length.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+    <div class="totaldata">
+      {{ form.totaldata.label }} {{ form.totaldata }}    </div>
+<!--      {% if form.totaldata.errors %}-->
+<!--        <ul class="errors">{% for error in form.totaldata.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
+<!--      {% endif %}-->
+
+    <br>
+	  <input type="file" name="file[]" id="fileToUpload" multiple=''>
+    <div class="submitbutton">
+      <input id="submit" type="submit" value="Submit">
+    </div>
+  </form>
+</div>
+
+<br>
+
+<br>
+
+{% endblock %}
+
+{% block content %} {% endblock %}
+
+{% block footer %}
+
+ <!––TODO: catch errors if the the RFU and INFO files were not found in the correct location––>
+
+{% endblock %}

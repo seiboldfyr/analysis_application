@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset="utf-8" />
+  <title>FYR Diagnostics Data Analytics</title>
+  <link type="text/css" rel="stylesheet"
+       href="{{ url_for('static',
+                        filename='hello.css')}}" />
+</head>
+<body>
+
+<h2>FYR Diagnostics {% block title %}{% endblock %}</h2>
+
+{% block body %}{% endblock %}
+
+{% block content %}{% endblock %}
+
+<br>
+
+<a href="{{ url_for('index') }}"><button>Home</button></a>
+<a href="{{ url_for('graph') }}"><button>Graphing</button></a>
+
+</body>
+</html>
+
+
