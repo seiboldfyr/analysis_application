@@ -1,6 +1,7 @@
 import numpy as np
 import xlsxwriter
 import xlrd
+from collections import OrderedDict, Counter
 
 from framework.model.request.response import Response
 from framework.abstract.abstract_processor import AbstractProcessor
@@ -23,7 +24,7 @@ class Processor(AbstractProcessor):
         self.length = length
         self.datacount = datacount
         self.data = {}
-        self.output = {}
+        self.output = OrderedDict()
 
     def execute(self, request) -> Response:
         self.getData()
@@ -37,8 +38,8 @@ class Processor(AbstractProcessor):
 
     def processData(self) -> Response:
         calculateCycleLength()
-        inflectionDict = {}  # keys: 'Inflection 1-4' , values are the inflection points
-        rfuDict = {}
+        inflectionDict = OrderedDict()  # keys: 'Inflection 1-4' , values are the inflection points
+        rfuDict = OrderedDict()
         for wellID in self.data.keys():
             if wellID != 'Time':
                 derivatives = getDerivatives(self)

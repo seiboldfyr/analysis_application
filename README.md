@@ -14,7 +14,7 @@ See `requirements.txt` for a complete list of requirements that needs to be avai
 Execute, from the project root folder:
 
 ```
-bash ./development
+bash ./execute.sh
 ```
 
 This should launch a server running on http://127.0.0.1:5000
