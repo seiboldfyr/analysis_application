@@ -3,5 +3,5 @@ from framework.model.request.response import Response
 
 
 class AbstractProcessor:
-    def execute(self, request) -> Response:
+    def execute(self) -> Response:
         raise MethodNotImplemented

@@ -9,7 +9,7 @@
 <div class="formwrapper">
   <form method=post>
     <div class="date">
-		{{ form.date.label }} {{ form.date(placeholder="YYYY-MM-DD") }} </div>
+		{{ form.date.label }} {{ form.date(placeholder="MM-DD-YYYY") }} </div>
 <!--      {% if form.date.errors %}-->
 <!--        <ul class="errors">{% for error in form.date.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
 <!--      {% endif %}-->
@@ -19,37 +19,25 @@
 <!--        <ul class="errors">{% for error in form.id.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
 <!--      {% endif %}-->
     <div class="initials">
-      {{ form.initials.label }} {{ form.initials }}    </div>
-<!--      {% if form.initials.errors %}-->
-<!--        <ul class="errors">{% for error in form.initials.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
-<!--      {% endif %}-->
+      {{ form.initials.label }} {{ form.initials(placeholder="XX") }}    </div>
+      {% if form.initials.errors %}
+        <ul class="errors">{% for error in form.initials.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+      {% endif %}
+
     <div class="cutlength">
-      {{ form.cutlength.label }} {{ form.cutlength }}    </div>
-<!--      {% if form.cutlength.errors %}-->
-<!--        <ul class="errors">{% for error in form.cutlength.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
-<!--      {% endif %}-->
+      {{ form.cutlength.label }} {{ form.cutlength(placeholder="default=0") }}    </div>
 
-    <br> <b> If cycle length is known: </b>
-        <div class="cyclelength">
-      {{ form.cyclelength.label }} {{ form.cyclelength }}    </div>
-<!--      {% if form.cyclelength.errors %}-->
-<!--        <ul class="errors">{% for error in form.cyclelength.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
-<!--      {% endif %}-->
+    <div class="customlabel"
+         PP{ form.customlabel.label }} {{ form.customlabel }} </div>
 
-    <br><b>If cycle length is not known:</b>
-          <div class="length">
-      {{ form.length.label }} {{ form.length }}    </div>
-<!--      {% if form.length.errors %}-->
-<!--        <ul class="errors">{% for error in form.length.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
-<!--      {% endif %}-->
-    <div class="totaldata">
-      {{ form.totaldata.label }} {{ form.totaldata }}    </div>
-<!--      {% if form.totaldata.errors %}-->
-<!--        <ul class="errors">{% for error in form.totaldata.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
-<!--      {% endif %}-->
-
-    <br>
+    <div class="folder">
+      {{ form.folder.label }} {{ form.folder }}    </div>
+    <!--<br>
 	  <input type="file" name="file[]" id="fileToUpload" multiple=''>
+    <br>
+      <input type="file" name="file" autocomplete="off" > required>-->
+
+
     <div class="submitbutton">
       <input id="submit" type="submit" value="Submit">
     </div>
@@ -62,7 +50,22 @@
 
 {% endblock %}
 
-{% block content %} {% endblock %}
+{% block content %} {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if error %}
+  <div class="alert alert-danger">{{error}}</div>
+{% endif %}
+
+{% if msg %}
+  <div class="alert alert-success">{{msg}}</div>
+{% endif %}
+{% endblock %}
 
 {% block footer %}
 

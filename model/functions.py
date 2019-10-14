@@ -3,17 +3,43 @@ import numpy as np
 import os
 import xlrd
 import pandas as pd
+import datetime
 
 
-def calculateCycleLength(self):
-    if self.cycle == 0:
-        self.cycle = self.length/self.datacount
-    for time in self.data['Time']:
-        self.data['Time'] = time * self.cycle
+def getCycleLength(self, infopath, rfupath):
+    inforaw = pd.ExcelFile(infopath)
+    infosheet = inforaw.parse('Run Information').values
+    length = getRunEnd(infosheet[:, :2]) - getRunStart(infosheet[:, :2])
+
+    rfuraw = pd.ExcelFile(rfupath)
+    rfusheet = rfuraw.parse('SYBR').values
+    datacount = len(rfusheet[:, 0])
+    self.cycle = length/datacount
+    # for time in self.data['Time']:
+    #     self.data['Time'] = time * self.cycle
+
+
+def getRunStart(data) -> datetime:
+    labels = data[:, 0]
+    values = data[:, 1]
+    for idx, item in enumerate(labels):
+        if str(item) == 'Run Started':
+            time = datetime.datetime.strptime(values[idx][:-4], '%m/%d/%Y %H:%M:%S')
+            return time.second + time.minute * 60 + time.hour * 3600
+
+
+def getRunEnd(data) -> datetime:
+    labels = data[:, 0]
+    values = data[:, 1]
+    for idx, item in enumerate(labels):
+        if str(item) == 'Run Ended':
+            time = datetime.datetime.strptime(values[idx][:-4], '%m/%d/%Y %H:%M:%S')
+            return time.second + time.minute * 60 + time.hour * 3600
 
 
 def getFilePath(name, path):
     for file in os.listdir(path):
+        print(file)
         fileend = name + '.xlsx'
         if file.endswith(fileend):
             name = os.path.join(path, file)
@@ -26,55 +52,60 @@ def getUniqueKeys(keylist):
     return [keylist[value] for value in sorted(indexes)]
 
 
-def getTriplicateKeys(self) -> {}:
-    labeldict = {}
-    labelraw = pd.ExcelFile(self.path)
+def getTriplicateKeys(self, path) -> {}:
+    labelraw = pd.ExcelFile(path)
     labelsheet = labelraw.parse('0')
     label = labelsheet.values
-    triplicates = np.asarray(getUniqueKeys(label[:, 17]))
-    for label, position in enumerate(triplicates):
-        self.data[label] = [[position] for i in range(3)]
-        labeldict[position] = label
-    return labeldict
+    # print(label[0, :])
+    wells = []
+    control = label[0, 5]
+    group = 1
+    prevrow = 0
+    for row in range(0, len(label[:, 1])):
+        if label[row, 5] == control and row > 6 and row > prevrow + 6:  # TODO: account for custom groups
+            group += 1
+            prevrow = row
+        header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + str(group)
+        self.data[header] = []
+        self.labeldict[row] = [header, group]
+    # triplicates = getUniqueKeys(wells)
 
 
-def getTriplicateValues(self, labeldict):
-    wb = xlrd.open_workbook(self.path)
+def getTriplicateValues(self, path):
+    wb = xlrd.open_workbook(path)
     sheet = wb.sheet_by_name('SYBR')
-    for column in range(0, sheet.ncols):
-        if column == 0:
+    for column in range(1, sheet.ncols):
+        if column == 1:
             wellLabel = 'Time'
-            calculateCycleLength()
         else:
-            wellLabel = labeldict[column] # TODO: confirm that all columns and time are collected
-        self.data[wellLabel] = sheet.col_values(column, start_rowx=self.cut)
+            wellLabel = self.labeldict[column-2][0]  # TODO: confirm that all columns and time are collected
+        self.data[wellLabel] = sheet.col_values(column, start_rowx=int(self.cut))[1:]
 
 
-def getDerivatives(self) -> []:
-    derivative = {}
-    derivative[1] = smooth(np.gradient(self.data[:]))
+def getDerivatives(self, well) -> []:
+    derivative = {1: smooth(np.gradient(self.data[well]))}
     derivative[2] = np.gradient(derivative[1])
     return derivative
 
 
-def getPeaks(derivative, includenegative) -> []:
-    if includenegative:  # flip to find the negative peak
-        derivativeline = -derivative
-
+def getPeaks(dindex, derivative) -> []:
+    if dindex == 2:  # flip to find the negative peak
+        derivative = -derivative
     for width in range(8, 1, -1):
         for proms in range(50, 10, -1):
-            peaks, properties = find_peaks(abs(derivativeline), prominence=proms, width=width)
+            peaks, properties = find_peaks(abs(derivative), prominence=proms, width=width)
             if len(peaks) >= 2:
-                width = getPeakWidths(np.maximum(properties))
-                return [peaks, peaks - width, peaks + width]
+                widths = getMaxWidth(properties["widths"])
+                start = [np.minimum(int(peakstart), 1) for peakstart in peaks - widths]
+                end = [np.maximum(int(peakend), len(derivative)) for peakend in peaks + widths]
+                return [peaks, start, end]
     # TODO: what if more than two peaks are found?
-    return ['Eror finding peaks', _, _]
+    return ['Eror finding peaks', 0, 0]
 
 
-def getPeakWidths(properties) -> []:
-    # take the width of the peak, divide in half, this is the half width, no smaller than 4 units
+def getMaxWidth(widths) -> []:
     # TODO: use something different then the generic 4
-    return np.maximum(properties["widths"] / 2, 4)
+    return np.maximum(widths / 2, 4)
 
 
 def ind2sub(array_shape, ind):
@@ -85,8 +116,8 @@ def ind2sub(array_shape, ind):
     return rows, cols
 
 
-def square(datalist):
-    return [i ** 2 for i in datalist]
+def square(data):
+    return [i ** 2 for i in data]
 
 
 def fitPolyEquation(timelist, observed):
@@ -95,12 +126,13 @@ def fitPolyEquation(timelist, observed):
     return coefs
 
 
-def getExpectedValues(self, wellid, timestart, timeend, timecenter) -> []:
-    polynomialcoefs = fitPolyEquation(self.data[wellid][timestart:timeend])
-
-    x2 = square(timecenter)
+def getExpectedValues(self, wellid, xvalue, start, end) -> []:
+    polynomialcoefs = fitPolyEquation(self.data['Time'][start:end], self.data[wellid][start:end])
+    if isinstance(xvalue, float):
+        xvalue = [xvalue]
+    x2 = square(xvalue)
     ax2 = [polynomialcoefs[0]*x for x in x2]
-    bx = [polynomialcoefs[1]*x for x in timecenter]
+    bx = [polynomialcoefs[1]*x for x in xvalue]
     prediction = [(a+b+polynomialcoefs[2]) for (a, b) in zip(ax2, bx)]
     return prediction
 
@@ -115,3 +147,6 @@ def smooth(a):
     start = np.cumsum(a[:windowsize-1])[::2]/r
     stop = (np.cumsum(a[:-windowsize:-1])[::2]/r)[::-1]
     return np.concatenate((start, out0, stop))
+
+
+
