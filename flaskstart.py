@@ -38,10 +38,11 @@ def home():
     if request.method == 'POST':  # and input_form.validate():
         folder = request.form['folder']
 
-        response = Processor(path=folder, cut=request.form['cutlength']).execute()
+        response = Processor(path=folder,
+                             cut=request.form['cutlength'],
+                             label=request.form['customlabel']
+                             ).execute()
         if response.is_success():
-            # graph(inflections,request.files['fileupload'])
-            # output()
             flash('%s' % response.get_message(), 'Processed successfully!')
             return redirect(url_for('home'))
         else:

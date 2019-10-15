@@ -3,40 +3,51 @@
 {% block title %} Data Analysis Tool {% endblock %}
 
 {% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+</style>
+<br>
 
 <b>Please enter the following information:</b>
+<br>
+<p class="big">
 
 <div class="formwrapper">
+
   <form method=post>
     <div class="date">
 		{{ form.date.label }} {{ form.date(placeholder="MM-DD-YYYY") }} </div>
 <!--      {% if form.date.errors %}-->
 <!--        <ul class="errors">{% for error in form.date.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
 <!--      {% endif %}-->
+    <p class="big">
     <div class="id">
       {{ form.id.label }} {{ form.id(placeholder="a") }}    </div>
 <!--      {% if form.id.errors %}-->
 <!--        <ul class="errors">{% for error in form.id.errors %}<li>{{ error }}</li>{% endfor %}</ul>-->
 <!--      {% endif %}-->
+    <p class="big">
     <div class="initials">
       {{ form.initials.label }} {{ form.initials(placeholder="XX") }}    </div>
       {% if form.initials.errors %}
         <ul class="errors">{% for error in form.initials.errors %}<li>{{ error }}</li>{% endfor %}</ul>
       {% endif %}
-
+    <p class="big">
     <div class="cutlength">
       {{ form.cutlength.label }} {{ form.cutlength(placeholder="default=0") }}    </div>
-
-    <div class="customlabel"
-         PP{ form.customlabel.label }} {{ form.customlabel }} </div>
-
+    <p class="big">
+    <div class="customlabel">
+         {{ form.customlabel.label }} {{ form.customlabel }}   </div>
+    <p class="big">
     <div class="folder">
       {{ form.folder.label }} {{ form.folder }}    </div>
     <!--<br>
 	  <input type="file" name="file[]" id="fileToUpload" multiple=''>
     <br>
       <input type="file" name="file" autocomplete="off" > required>-->
-
+    <p class="big">
 
     <div class="submitbutton">
       <input id="submit" type="submit" value="Submit">

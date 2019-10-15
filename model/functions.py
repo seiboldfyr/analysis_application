@@ -15,8 +15,6 @@ def getCycleLength(self, infopath, rfupath):
     rfusheet = rfuraw.parse('SYBR').values
     datacount = len(rfusheet[:, 0])
     self.cycle = length/datacount
-    # for time in self.data['Time']:
-    #     self.data['Time'] = time * self.cycle
 
 
 def getRunStart(data) -> datetime:
@@ -39,12 +37,21 @@ def getRunEnd(data) -> datetime:
 
 def getFilePath(name, path):
     for file in os.listdir(path):
-        print(file)
         fileend = name + '.xlsx'
         if file.endswith(fileend):
             name = os.path.join(path, file)
             break
     return name
+
+
+def getGroupHeaders(triplicateHeaders):
+    headers = []
+    previousgroup = 0
+    for h in triplicateHeaders:
+        if int(h[-1]) > previousgroup:
+            headers.append(h[7:])
+            previousgroup = int(h[-1])
+    return headers
 
 
 def getUniqueKeys(keylist):
@@ -56,8 +63,6 @@ def getTriplicateKeys(self, path) -> {}:
     labelraw = pd.ExcelFile(path)
     labelsheet = labelraw.parse('0')
     label = labelsheet.values
-    # print(label[0, :])
-    wells = []
     control = label[0, 5]
     group = 1
     prevrow = 0
@@ -66,7 +71,7 @@ def getTriplicateKeys(self, path) -> {}:
             group += 1
             prevrow = row
         header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + str(group)
-        self.data[header] = []
+        self.data[row] = {'Label': header, 'Group': group, 'Values': []}
         self.labeldict[row] = [header, group]
     # triplicates = getUniqueKeys(wells)
 
@@ -76,14 +81,13 @@ def getTriplicateValues(self, path):
     sheet = wb.sheet_by_name('SYBR')
     for column in range(1, sheet.ncols):
         if column == 1:
-            wellLabel = 'Time'
+            self.data['Time'] = [(self.cycle * time) / 60 for time in sheet.col_values(column, start_rowx=int(self.cut))[1:]]
         else:
-            wellLabel = self.labeldict[column-2][0]  # TODO: confirm that all columns and time are collected
-        self.data[wellLabel] = sheet.col_values(column, start_rowx=int(self.cut))[1:]
+            self.data[column-2]['Values'] = sheet.col_values(column, start_rowx=int(self.cut))[1:]
 
 
 def getDerivatives(self, well) -> []:
-    derivative = {1: smooth(np.gradient(self.data[well]))}
+    derivative = {1: smooth(np.gradient(self.data[well]['Values']))}
     derivative[2] = np.gradient(derivative[1])
     return derivative
 
@@ -91,10 +95,19 @@ def getDerivatives(self, well) -> []:
 def getPeaks(dindex, derivative) -> []:
     if dindex == 2:  # flip to find the negative peak
         derivative = -derivative
-    for width in range(8, 1, -1):
-        for proms in range(50, 10, -1):
+    for proms in range(20, 5, -1):
+        for width in range(15, 5, -1):
             peaks, properties = find_peaks(abs(derivative), prominence=proms, width=width)
-            if len(peaks) >= 2:
+            if len(peaks) == 2:
+                widths = getMaxWidth(properties["widths"])
+                start = [np.minimum(int(peakstart), 1) for peakstart in peaks - widths]
+                end = [np.maximum(int(peakend), len(derivative)) for peakend in peaks + widths]
+                return [peaks, start, end]
+    # search more extremes if it doesn't work
+    for proms in range(10,1,-1): # (50,10,-1):
+        for width in range(5,1,-1): # (8,1,-1):
+            peaks, properties = find_peaks(abs(derivative), prominence=proms, width=width)
+            if len(peaks) == 2:
                 widths = getMaxWidth(properties["widths"])
                 start = [np.minimum(int(peakstart), 1) for peakstart in peaks - widths]
                 end = [np.maximum(int(peakend), len(derivative)) for peakend in peaks + widths]
@@ -127,7 +140,7 @@ def fitPolyEquation(timelist, observed):
 
 
 def getExpectedValues(self, wellid, xvalue, start, end) -> []:
-    polynomialcoefs = fitPolyEquation(self.data['Time'][start:end], self.data[wellid][start:end])
+    polynomialcoefs = fitPolyEquation(self.data['Time'][start:end], self.data[wellid]['Values'][start:end])
     if isinstance(xvalue, float):
         xvalue = [xvalue]
     x2 = square(xvalue)
@@ -141,7 +154,7 @@ def smooth(a):
     # a: NumPy 1-D array containing the data to be smoothed
     # WSZ: smoothing window size needs, which must be odd number,
     # as in the original MATLAB implementation
-    windowsize = 5
+    windowsize = 11
     out0 = np.convolve(a, np.ones(windowsize, dtype=int), 'valid')/windowsize
     r = np.arange(1, windowsize-1,2)
     start = np.cumsum(a[:windowsize-1])[::2]/r
@@ -149,4 +162,10 @@ def smooth(a):
     return np.concatenate((start, out0, stop))
 
 
-
+def saveImage(self, plt, title):
+    plt.title(str(self.title + '_' + title), fontsize=14)
+    strFile = os.path.join(self.path, title+'.png')
+    if os.path.isfile(strFile):
+        os.remove(strFile)
+    plt.savefig(strFile)
+    plt.close()
