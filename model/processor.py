@@ -57,13 +57,13 @@ class Processor(AbstractProcessor):
                 borderList = []
                 for dIndex in derivatives.keys():
                     self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
-                    if inflectionList is []:
-                        self.errorpeaks.append(wellID)
-                    else:
-                        np.sort(inflectionList)
-                        for index, inflectionPoint in enumerate(inflectionList):
-                            rfuList.append(getExpectedValues(self, wellID, inflectionPoint,
-                                                             borderList[index][0], borderList[index][1]))
+                if inflectionList is []:
+                    self.errorpeaks.append(wellID)
+                else:
+                    inflectionList = np.sort(inflectionList)
+                    for index, inflectionPoint in enumerate(inflectionList):
+                        rfuList.append(getExpectedValues(self, wellID, inflectionPoint,
+                                                         borderList[index][0], borderList[index][1]))
                 self.output[wellID] = {'Inflections': inflectionList, 'RFUs': rfuList}
         self.getPercentDifferences()
         if len(self.errorpeaks) != 0:
@@ -75,12 +75,12 @@ class Processor(AbstractProcessor):
         peaks, xstart, xend = getPeaks(dindex, derivative)
         if type(peaks[0]) == str:
             return []
-        for peakindex, peaks in enumerate(peaks):
+        for peakindex, peak in enumerate(peaks):
             timediff = [(self.data['Time'][t] + self.data['Time'][t + 1]) / 2 for t in range(len(self.data['Time']) - 1)]
             leftside = xstart[peakindex]
             rightside = min([xend[peakindex], len(derivative), len(timediff)])
             polycoefs = fitPolyEquation(timediff[leftside:rightside], derivative[leftside:rightside])
-            inflectionList.append(-polycoefs[1] / (2 * polycoefs[0]))
+            inflectionList.append((-polycoefs[1] / (2 * polycoefs[0]))/60)
             borderList.append([leftside, rightside])
 
     def getPercentDifferences(self):

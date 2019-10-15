@@ -54,6 +54,18 @@ def getGroupHeaders(triplicateHeaders):
     return headers
 
 
+def getTriplicateIndexes(data):
+    triplicateIndex = -1
+    triplicateIndexList = []
+    previouslabel = ''
+    for label in data:
+        if label != previouslabel:
+            triplicateIndex += 1
+            previouslabel = label
+        triplicateIndexList.append(triplicateIndex)
+    return triplicateIndexList
+
+
 def getUniqueKeys(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
@@ -81,7 +93,7 @@ def getTriplicateValues(self, path):
     sheet = wb.sheet_by_name('SYBR')
     for column in range(1, sheet.ncols):
         if column == 1:
-            self.data['Time'] = [(self.cycle * time) / 60 for time in sheet.col_values(column, start_rowx=int(self.cut))[1:]]
+            self.data['Time'] = [self.cycle * time for time in sheet.col_values(column, start_rowx=int(self.cut))[1:]]
         else:
             self.data[column-2]['Values'] = sheet.col_values(column, start_rowx=int(self.cut))[1:]
 
@@ -99,21 +111,22 @@ def getPeaks(dindex, derivative) -> []:
         for width in range(15, 5, -1):
             peaks, properties = find_peaks(abs(derivative), prominence=proms, width=width)
             if len(peaks) == 2:
-                widths = getMaxWidth(properties["widths"])
-                start = [np.minimum(int(peakstart), 1) for peakstart in peaks - widths]
-                end = [np.maximum(int(peakend), len(derivative)) for peakend in peaks + widths]
-                return [peaks, start, end]
+                return getPeakBorders(peaks, properties, len(derivative))
     # search more extremes if it doesn't work
     for proms in range(10,1,-1): # (50,10,-1):
         for width in range(5,1,-1): # (8,1,-1):
             peaks, properties = find_peaks(abs(derivative), prominence=proms, width=width)
             if len(peaks) == 2:
-                widths = getMaxWidth(properties["widths"])
-                start = [np.minimum(int(peakstart), 1) for peakstart in peaks - widths]
-                end = [np.maximum(int(peakend), len(derivative)) for peakend in peaks + widths]
-                return [peaks, start, end]
+                return getPeakBorders(peaks, properties, len(derivative))
     # TODO: what if more than two peaks are found?
     return ['Eror finding peaks', 0, 0]
+
+
+def getPeakBorders(peaks, properties, maxlength):
+    widths = getMaxWidth(properties["widths"])
+    start = [np.maximum(int(peakstart - width), 1) for peakstart, width in zip(peaks, widths)]
+    end = [np.minimum(int(peakend + width), maxlength) for peakend, width in zip(peaks, widths)]
+    return [peaks, start, end]
 
 
 def getMaxWidth(widths) -> []:
