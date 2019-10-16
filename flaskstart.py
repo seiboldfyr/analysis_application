@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from forms import DataInputForm
 from model.processor import Processor
 import os
+from filewriter.metadatawriter import WriteMetadata
 
 # create application
 APP = Flask(__name__)
@@ -42,6 +43,9 @@ def home():
                              cut=request.form['cutlength'],
                              label=request.form['customlabel']
                              ).execute()
+
+        WriteMetadata(folder, request)
+
         if response.is_success():
             flash('%s' % response.get_message(), 'Processed successfully!')
             return redirect(url_for('home'))
