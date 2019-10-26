@@ -24,8 +24,7 @@ class WriteMetadata(AbstractProcessor):
             except OSError:
                 pass
 
-        path = os.path.join(path, 'metadata.txt')
-        with open(path, 'w') as f:
+        with open(os.path.join(path, 'metadata.txt'), 'w') as f:
             f.write("Fyr Diagnostics Data Analysis")
             f.write('\n')
             f.write("Program Version: ")
@@ -39,13 +38,13 @@ class WriteMetadata(AbstractProcessor):
                     continue
                 line = str(item) + ': ' + str(self.data[item]) + '\n'
                 f.write(line)
-        return
+        return path
 
     def getPreExistingOutputNumber(self):
+        increment = 0
         for file in os.listdir(self.path):
             if file.startswith(self.version):
                 fileend = file.split('_')[-1]
                 if fileend[0] != 'v':
-                    return float(fileend) + 1
-                return 0
-        return 0
+                    increment = max(float(fileend) + 1, increment)
+        return int(increment)

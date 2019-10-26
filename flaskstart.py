@@ -73,13 +73,13 @@ def process(folder):
 
         folderpath = folder.replace('+', os.sep)
 
-        WriteMetadata(path=folderpath, data=request.form, version=Version).execute()
+        outputPath = WriteMetadata(path=folderpath, data=request.form, version=Version).execute()
 
         cutlength = request.form['cutlength']
-        if request.form['cutlength'] is None:
+        if len(request.form['cutlength']) == 0:
             cutlength = 0
 
-        response = Processor(paths=folderpath,
+        response = Processor(paths={'input': folderpath, 'output': outputPath},
                              cut=cutlength,
                              label=request.form['customlabel'],
                              groupings=buildGroupInputs(request.form),

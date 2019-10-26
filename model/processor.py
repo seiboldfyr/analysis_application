@@ -4,22 +4,23 @@ from flask import flash, current_app
 
 from framework.model.request.response import Response
 from framework.abstract.abstract_processor import AbstractProcessor
-from model.functions import getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
+from model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
 from model.functions import getDerivatives, getPeaks, getExpectedValues, getUniqueKeys
 from model.graphs import Grapher
+from filewriter.writer import Writer
 
 class Processor(AbstractProcessor):
     def __init__(
             self,
-            paths: [] = None,
+            paths: dict = None,
             cut: int = 0,
             label: str = '',
             groupings: dict = None,
-            errorwells= []
+            errorwells: [] = None
     ):
-        self.path = paths
+        self.paths = paths
         self.cut = cut
-        self.filelabel = label
+        self.customlabel = label
         self.groupings = groupings
         self.cycle = 27
         self.data = {}
@@ -33,19 +34,24 @@ class Processor(AbstractProcessor):
         response = self.processData()
         flash('Processed file. Beginning graph creation...')
 
-        # Grapher(path=self.path,
-        #         data=self.data,
-        #         labels=self.labeldict,
-        #         output=self.output,
-        #         averageoutput=self.averageoutput,
-        #         errors=self.errorpeaks
-        #         ).execute()
+        Grapher(paths=self.paths,
+                customtitle=self.customlabel,
+                data=self.data,
+                labels=self.labeldict,
+                output=self.output,
+                averageoutput=self.averageoutput,
+                errors=self.errorwells
+                ).execute()
+
+        Writer(data=self.data,
+               output=self.output,
+               labels=self.labeldict).writebook(self.paths['output'])
 
         return Response(response.is_success(), response.get_message())
 
     def getData(self) -> {}:
-        rfufilepath = self.getFile('RFU')
-        infofilepath = self.getFile('INFO')
+        rfufilepath = getFile(self, 'RFU')
+        infofilepath = getFile(self, 'INFO')
         getTriplicateKeys(self, infofilepath, self.groupings)
         getTriplicateValues(self, rfufilepath)
         getCycleLength(self, infofilepath, rfufilepath)
@@ -70,18 +76,9 @@ class Processor(AbstractProcessor):
                                                          borderList[index][0], borderList[index][1]))
                 self.output[wellID] = {'Inflections': inflectionList, 'RFUs': rfuList}
         self.getPercentDifferences()
-        if len(self.errorwells) != 0:
-            message = 'Peaks were not found in wells:' + str(self.errorwells)
-            flash(message)
+        if len(self.errorwells) > 0 and self.errorwells[0] != '':
+            message = 'Peaks were not found in wells:' + str(self.errorwells) #TODO: concatenate items in string
         return Response(True, message)
-
-    def getFile(self, filetype) -> str:
-        for file in os.listdir(self.path):
-            fileend = filetype + '.xlsx'
-            if file.endswith(fileend):
-                name = os.path.join(self.path, file)
-                return name
-        return ''
 
     def getInflectionPoints(self, dindex, derivative, inflectionList, borderList):
         peaks, xstart, xend = getPeaks(dindex, derivative)

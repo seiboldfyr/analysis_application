@@ -10,15 +10,16 @@ from flask import flash
 class Grapher:
     def __init__(
             self,
-            path: str = '',
+            paths: dict = None,
+            customtitle: str = '',
             data=None,
             labels=None,
             output=None,
             averageoutput=None,
             errors=None
     ):
-        self.path = path
-        self.title = ''
+        self.paths = paths
+        self.customtitle = customtitle
         self.data = data
         self.labeldict = labels
         self.output = output
@@ -27,10 +28,8 @@ class Grapher:
 
     def execute(self):
         self.setGraphSettings()
-        self.title = os.path.split(self.path)[1][:13]
-        self.path = os.path.join(self.path, 'Graphs')
         try:
-            os.mkdir(self.path)
+            os.mkdir(self.paths['output'])
         except OSError:
             pass
 

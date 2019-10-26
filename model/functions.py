@@ -36,6 +36,15 @@ def getRunEnd(data) -> datetime:
             return time.second + time.minute * 60 + time.hour * 3600
 
 
+def getFile(self, filetype) -> str:
+    for file in os.listdir(self.paths['input']):
+        fileend = filetype + '.xlsx'
+        if file.endswith(fileend):
+            name = os.path.join(self.paths['input'], file)
+            return name
+    return ''
+
+
 def getGroupHeaders(triplicateHeaders):
     headers = []
     previousgroup = 0
@@ -184,9 +193,12 @@ def smooth(a):
     return np.concatenate((start, out0, stop))
 
 
-def saveImage(self, plt, title):
-    plt.title(str(self.title + '_' + title), fontsize=14)
-    strFile = os.path.join(self.path, title+'.png')
+def saveImage(self, plt, figuretitle):
+    title = os.path.split(self.paths['input'])[1][:13] + '_' + self.customtitle
+    title = str(title + '_' + figuretitle)
+    plt.title(title, fontsize=14)
+    path = os.path.join(self.paths['output'], 'Graphs')
+    strFile = os.path.join(path, title+'.png')
     if os.path.isfile(strFile):
         os.remove(strFile)
     plt.savefig(strFile)
