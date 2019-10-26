@@ -69,14 +69,14 @@ class Grapher:
             tripdf.insert(4, 'time', [t / 60 for t in self.data['Time']])
             datadf = datadf.append(tripdf, sort=True)
 
-        # for group in getUniqueKeys([e[1] for e in self.labeldict.values()]):
-        #     self.InflectionGraphByGroup(int(group), groupHeaders, outputdf)
-        #     self.RFUIndividualGraphsByGroup(int(group), datadf)
-        #     self.RFUAverageGraphsByGroup(int(group), datadf)
-        #     self.percentGraphs(group, averagedf)
-        #     flash('Graphed ' + str(group) + ' successfully')
+        for group in getUniqueKeys([e[1] for e in self.labeldict.values()]):
+            self.InflectionGraphByGroup(int(group), groupHeaders, outputdf)
+            self.RFUIndividualGraphsByGroup(int(group), datadf)
+            self.RFUAverageGraphsByGroup(int(group), datadf)
+            self.percentGraphs(group, averagedf)
+            flash('Graphed ' + str(group) + ' successfully')
 
-        # self.InflectionGraphsByNumber(groupHeaders, outputdf)
+        self.InflectionGraphsByNumber(groupHeaders, outputdf)
         self.RFUAllGraphs(groupHeaders, datadf)
         return
 
@@ -140,7 +140,6 @@ class Grapher:
         saveImage(self, plt, 'Averages_' + str(group))
 
     def RFUAllGraphs(self, headers, df):
-        print(df.head(50))
         df = df.sort_values(['index', 'time'])
         manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
         seaborn.lineplot(x='time', y='value', hue='group', units='triplicate', estimator=None, data=df,

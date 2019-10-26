@@ -1,26 +1,20 @@
+<!doctype html>
 {% extends "master.html" %}
 
 {% block title %} Data Analysis Tool {% endblock %}
 
 {% block body %}
-<style>
-p.big {
-line-height: 8px;
-}
-</style>
-<br>
 
-<b>Please enter the following information:</b>
-<br>
-
-<div class="formwrapper">
-  <form action = "http://localhost:5000/search" method = "POST">
-     <p>Folder <input type = "text" name = "folder" /></p>
-     <p><input type = "submit" value = "Get Files " /></p>
+ {% for key, value in result.items() %}
+    <tr>
+       <b>{{ key }}:</b> {{ value }} <br>
+    </tr>
+ {% endfor %}
 
 {% endblock %}
 
 {% block content %}{% endblock %}
+
 
 {% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -39,6 +33,17 @@ line-height: 8px;
 {% endif %}
 {% endblock %}
 
-{% block buttons %}{% endblock %}
+{% block buttons %}
+<br>
+
+<a href="{{ url_for('manual', folder=folder ) }}"><button>Manually Enter File Info</button></a>
+
+<a href="{{ url_for('process', folder=folder) }}"><button>Process Data</button></a>
+
+<!-- <p><input type = "submit" value = "Process Data" name = 'process' /></p>-->
+
+<br>
+{% endblock %}
+
 
 

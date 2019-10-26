@@ -4,6 +4,7 @@ import os
 import xlrd
 import pandas as pd
 import datetime
+from flask import flash
 
 
 def getCycleLength(self, infopath, rfupath):
@@ -35,15 +36,6 @@ def getRunEnd(data) -> datetime:
             return time.second + time.minute * 60 + time.hour * 3600
 
 
-def getFilePath(name, path):
-    for file in os.listdir(path):
-        fileend = name + '.xlsx'
-        if file.endswith(fileend):
-            name = os.path.join(path, file)
-            break
-    return name
-
-
 def getGroupHeaders(triplicateHeaders):
     headers = []
     previousgroup = 0
@@ -71,21 +63,38 @@ def getUniqueKeys(keylist):
     return [keylist[value] for value in sorted(indexes)]
 
 
-def getTriplicateKeys(self, path) -> {}:
+def getTriplicateKeys(self, path, inputinfo) -> {}:
     labelraw = pd.ExcelFile(path)
     labelsheet = labelraw.parse('0')
     label = labelsheet.values
-    control = label[0, 5]
-    group = 1
-    prevrow = 0
-    for row in range(0, len(label[:, 1])):
-        if label[row, 5] == control and row > 6 and row > prevrow + 6:  # TODO: account for custom groups
-            group += 1
-            prevrow = row
-        header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + str(group)
-        self.data[row] = {'Label': header, 'Group': group, 'Values': []}
-        self.labeldict[row] = [header, group]
-    # triplicates = getUniqueKeys(wells)
+    if len(inputinfo) == 0:
+        control = label[0, 5]
+        group = 1
+        prevrow = 0
+        for row in range(0, len(label[:, 1])):
+            if label[row, 5] == control and row > 6 and row > prevrow + 6:
+                group += 1
+                prevrow = row
+            header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + str(group)
+            addHeader(self, row, header, group, label[row, 1])
+    else:
+        row = 0
+        for group in inputinfo.keys():
+            groupsize = float(inputinfo[group]['Group Wells']) * float(inputinfo[group]['Group Samples'])
+            if groupsize % 1 != 0:
+                flash('possible error with wells/samples', 'error')  # TODO: validator
+            grouplabel = inputinfo[group]['Group Label']
+            for well in range(int(groupsize)):
+                row += 1
+                if row > len(label[:, 1]):
+                    flash('The wells and samples added up to be more than the % s wells' % len(label[:, 1]), 'error')
+                header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + grouplabel + '_' + str(group)
+                addHeader(self, row, header, group, label[row, 1])
+
+
+def addHeader(self, row, header, group, excelindex):
+    self.data[row] = {'Label': header, 'Group': group, 'Values': []}
+    self.labeldict[row] = [header, group, excelindex]
 
 
 def getTriplicateValues(self, path):
@@ -119,7 +128,7 @@ def getPeaks(dindex, derivative) -> []:
             if len(peaks) == 2:
                 return getPeakBorders(peaks, properties, len(derivative))
     # TODO: what if more than two peaks are found?
-    return ['Eror finding peaks', 0, 0]
+    return ['Error finding peaks', 0, 0]
 
 
 def getPeakBorders(peaks, properties, maxlength):

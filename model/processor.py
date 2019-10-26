@@ -1,64 +1,68 @@
 import numpy as np
-from collections import OrderedDict
+import os
+from flask import flash, current_app
 
 from framework.model.request.response import Response
 from framework.abstract.abstract_processor import AbstractProcessor
-from model.functions import getFilePath, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
+from model.functions import getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
 from model.functions import getDerivatives, getPeaks, getExpectedValues, getUniqueKeys
 from model.graphs import Grapher
-
 
 class Processor(AbstractProcessor):
     def __init__(
             self,
-            path: str = '',
+            paths: [] = None,
             cut: int = 0,
-            label: str = ''
+            label: str = '',
+            groupings: dict = None,
+            errorwells= []
     ):
-        self.path = path
+        self.path = paths
         self.cut = cut
         self.filelabel = label
+        self.groupings = groupings
         self.cycle = 27
         self.data = {}
         self.labeldict = {}
         self.output = {}
         self.averageoutput = {}
-        self.errorpeaks = []
+        self.errorwells = errorwells
 
     def execute(self) -> Response:
         self.getData()
         response = self.processData()
+        flash('Processed file. Beginning graph creation...')
 
-        Grapher(path=self.path,
-                data=self.data,
-                labels=self.labeldict,
-                output=self.output,
-                averageoutput=self.averageoutput,
-                errors=self.errorpeaks
-                ).execute()
+        # Grapher(path=self.path,
+        #         data=self.data,
+        #         labels=self.labeldict,
+        #         output=self.output,
+        #         averageoutput=self.averageoutput,
+        #         errors=self.errorpeaks
+        #         ).execute()
 
         return Response(response.is_success(), response.get_message())
 
     def getData(self) -> {}:
-        rfufilepath = getFilePath('RFU', self.path)
-        infofilepath = getFilePath('INFO', self.path)
-        getTriplicateKeys(self, infofilepath)
-        getCycleLength(self, infofilepath, rfufilepath)
+        rfufilepath = self.getFile('RFU')
+        infofilepath = self.getFile('INFO')
+        getTriplicateKeys(self, infofilepath, self.groupings)
         getTriplicateValues(self, rfufilepath)
+        getCycleLength(self, infofilepath, rfufilepath)
 
     def processData(self) -> Response:
         message = ''
-        self.errorpeaks = []
+        self.errorwells = [well for well in self.errorwells.split(',')]
         for wellID in self.data.keys():
-            if wellID != 'Time':
+            if wellID != 'Time' and self.labeldict[wellID][2] not in self.errorwells:
                 derivatives = getDerivatives(self, int(wellID))
                 inflectionList = []
                 rfuList = []
                 borderList = []
                 for dIndex in derivatives.keys():
                     self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
-                if inflectionList is []:
-                    self.errorpeaks.append(wellID)
+                if inflectionList is [] or len(inflectionList) < 4:
+                    self.errorwells.append(wellID)
                 else:
                     inflectionList = np.sort(inflectionList)
                     for index, inflectionPoint in enumerate(inflectionList):
@@ -66,10 +70,18 @@ class Processor(AbstractProcessor):
                                                          borderList[index][0], borderList[index][1]))
                 self.output[wellID] = {'Inflections': inflectionList, 'RFUs': rfuList}
         self.getPercentDifferences()
-        if len(self.errorpeaks) != 0:
-            message = 'Peaks could not be found in wells:' + str(self.errorpeaks)
-        print(message)
+        if len(self.errorwells) != 0:
+            message = 'Peaks were not found in wells:' + str(self.errorwells)
+            flash(message)
         return Response(True, message)
+
+    def getFile(self, filetype) -> str:
+        for file in os.listdir(self.path):
+            fileend = filetype + '.xlsx'
+            if file.endswith(fileend):
+                name = os.path.join(self.path, file)
+                return name
+        return ''
 
     def getInflectionPoints(self, dindex, derivative, inflectionList, borderList):
         peaks, xstart, xend = getPeaks(dindex, derivative)
@@ -91,8 +103,13 @@ class Processor(AbstractProcessor):
             group = triplicate[-1]
             triplicateGroup = []
             for well in self.data.keys():
-                if well != 'Time' and self.data[int(well)]['Label'] == triplicate:
-                    triplicateGroup.append(self.output[int(well)]['Inflections'])
+                if well != 'Time' and self.labeldict[well][2] not in self.errorwells and \
+                        self.data[int(well)]['Label'] == triplicate:
+                    wellinflections = self.output[int(well)]['Inflections']
+                    if len(wellinflections) != 4:
+                        current_app.logger.info('Only %s inflections found in well: %s', str(len(wellinflections)), str(well))
+                        continue
+                    triplicateGroup.append(wellinflections)
             tripAverage = np.mean(triplicateGroup, axis=0)
             if group != previousgroup:
                 control = tripAverage

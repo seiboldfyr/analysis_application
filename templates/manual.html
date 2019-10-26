@@ -1,3 +1,4 @@
+
 {% extends "master.html" %}
 
 {% block title %} Data Analysis Tool {% endblock %}
@@ -12,12 +13,25 @@ line-height: 8px;
 
 <b>Please enter the following information:</b>
 <br>
+<p class="big">
+<br>
 
 <div class="formwrapper">
-  <form action = "http://localhost:5000/search" method = "POST">
-     <p>Folder <input type = "text" name = "folder" /></p>
-     <p><input type = "submit" value = "Get Files " /></p>
+  <form method=get>
+    <div class="date">
+		{{ form.date.label }} {{ form.date(placeholder="MM-DD-YYYY") }} </div>
+    <p class="big">
 
+    <div class="id">
+      {{ form.id.label }} {{ form.id(placeholder="a") }}    </div>
+    <p class="big">
+
+    <div class="initials">
+      {{ form.initials.label }} {{ form.initials(placeholder="XX") }}    </div>
+    <p class="big">
+
+<br>
+<br>
 {% endblock %}
 
 {% block content %}{% endblock %}
@@ -39,6 +53,6 @@ line-height: 8px;
 {% endif %}
 {% endblock %}
 
-{% block buttons %}{% endblock %}
-
-
+{% block buttons %}
+<a href="{{ url_for('process', folder=folder) }}"><button>Process Data</button></a>
+{% endblock %}
