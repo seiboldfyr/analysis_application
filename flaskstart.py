@@ -14,16 +14,6 @@ APP.secret_key = b'\xd7^\x9d6j\xde"v\x12\x99r[\xed\xcb\x17\xba'
 
 Version = 'output_v2.1'
 
-# required_extension = ['INFO.xlsx', 'RFU.xlsx']
-#
-# def required_file(folder):
-#     for extension in required_extension:
-#         for file in os.listdir(folder):
-#             if file.endswith(extension):
-#                 break
-#         flash(extension + 'file not found in provided location.')
-#         return False
-
 
 def buildGroupInputs(requestinfo):
     groupdetails = {}

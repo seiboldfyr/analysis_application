@@ -29,7 +29,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(self.paths['output'])
+            os.mkdir(os.path.join(self.paths['output'], 'graphs'))
         except OSError:
             pass
 
