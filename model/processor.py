@@ -106,6 +106,8 @@ class Processor(AbstractProcessor):
                         current_app.logger.info('Only %s inflections found in well: %s', str(len(wellinflections)), str(well))
                         continue
                     triplicateGroup.append(wellinflections)
+            if len(triplicateGroup) == 0:
+                continue
             tripAverage = np.mean(triplicateGroup, axis=0)
             if group != previousgroup:
                 control = tripAverage

@@ -4,12 +4,14 @@ from wtforms.validators import DataRequired, Length, number_range, input_require
 
 class DataInputForm(Form):
     date = DateField('Date of Experiment')
-    id = StringField('Experiment ID', validators=[
-        DataRequired,
-        Length(min=1, max=3)])
-    initials = StringField('Your Initials', validators=[
-        DataRequired,
-        Length(min=2, max=4, message=u'Little short for your intiaials')])
+    id = StringField('Experiment ID')
+        #              validators=[
+        # DataRequired,
+        # Length(min=1, max=3)])
+    initials = StringField('Your Initials')
+        #                    validators=[
+        # DataRequired,
+        # Length(min=2, max=4, message=u'Little short for your intiaials')])
     customlabel = StringField('Custom Label Addition')
     cutlength = StringField('Fluorescence Error Cut Time')
 

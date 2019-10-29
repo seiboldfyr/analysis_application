@@ -41,10 +41,14 @@ class Grapher:
                                      triplicate=triplicateIndexList,
                                      group=[int(e[1]) for e in list(self.labeldict.values())],
                                      label=[e[0] for e in self.labeldict.values()],
-                                     inflection1=[value['Inflections'][0] for value in self.output.values()],
-                                     inflection2=[value['Inflections'][1] for value in self.output.values()],
-                                     inflection3=[value['Inflections'][2] for value in self.output.values()],
-                                     inflection4=[value['Inflections'][3] for value in self.output.values()]))
+                                     inflection1=[value['Inflections'][0] if len(value['Inflections']) == 4 else 0
+                                                  for value in self.output.values()],
+                                     inflection2=[value['Inflections'][1] if len(value['Inflections']) == 4 else 0
+                                                  for value in self.output.values()],
+                                     inflection3=[value['Inflections'][2] if len(value['Inflections']) == 4 else 0
+                                                  for value in self.output.values()],
+                                     inflection4=[value['Inflections'][3] if len(value['Inflections']) == 4 else 0
+                                                  for value in self.output.values()]))
 
         averagedf = pd.DataFrame(dict(label=list(self.averageoutput.keys()),
                                      group=[int(label[-1]) for label in list(self.averageoutput.keys())],
