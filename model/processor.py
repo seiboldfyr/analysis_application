@@ -1,5 +1,4 @@
 import numpy as np
-import os
 from flask import flash, current_app
 
 from framework.model.request.response import Response
