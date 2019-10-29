@@ -41,18 +41,16 @@ def home():
 @APP.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        files = checkFolder(request)
-        folderurl = request.form['folder'].replace(os.sep, '+')
-        return render_template('search.html', result=files.data, folder=folderurl)
+        if request.form['folder'] != '':
+            files = checkFolder(request)
+            folderurl = request.form['folder'].replace(os.sep, '+')
+            return render_template('search.html', result=files.data, folder=folderurl)
     return render_template('home.html')
 
 
 @APP.route('/manual/<folder>', methods=['GET', 'POST'])
 def manual(folder):
     input_form = DataInputForm()
-    if request.method == 'POST':
-        print('post')
-        # return render_template('manual.html', folder=folder)
     return render_template('manual.html', form=input_form, folder=folder)
 
 
