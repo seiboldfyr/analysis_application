@@ -14,12 +14,14 @@ class Processor(AbstractProcessor):
             paths: dict = None,
             cut: int = 0,
             label: str = '',
+            swaps: dict = None,
             groupings: dict = None,
             errorwells: [] = None
     ):
         self.paths = paths
         self.cut = cut
         self.customlabel = label
+        self.swaps = swaps
         self.groupings = groupings
         self.cycle = 27
         self.data = {}
@@ -31,7 +33,7 @@ class Processor(AbstractProcessor):
     def execute(self) -> Response:
         self.getData()
         response = self.processData()
-        flash('Processed file. Beginning graph creation...')
+        flash('Processed to: %s' % self.paths['output'])
 
         Grapher(paths=self.paths,
                 customtitle=self.customlabel,

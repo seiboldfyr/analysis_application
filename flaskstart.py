@@ -17,12 +17,21 @@ Version = 'output_v2.1'
 
 def buildGroupInputs(requestinfo):
     groupdetails = {}
-    for item in request.form.keys():
+    for item in requestinfo.keys():
         if item.startswith('Group'):
             if groupdetails.get(str(item[-1])) is None:
                 groupdetails[str(item[-1])] = {}
-            groupdetails[item[-1]][item[:-2]] = request.form[item]
+            groupdetails[item[-1]][item[:-2]] = requestinfo[item]
     return groupdetails
+
+def buildSwapInputs(requestinfo):
+    swapdetails = {}
+    for item in requestinfo.keys():
+        if item.startswith('Swap From'):
+            if swapdetails.get(requestinfo[item]) is None:
+                swapdetails[requestinfo[item]] = {}
+            swapdetails[requestinfo[item]]['To'] = requestinfo['Swap To ' + str(item[-1])]
+    return swapdetails
 
 
 def checkFolder(requestdata):
@@ -73,6 +82,7 @@ def process(folder):
         response = Processor(paths={'input': folderpath, 'output': outputPath},
                              cut=cutlength,
                              label=request.form['customlabel'],
+                             swaps=buildSwapInputs(request.form),
                              groupings=buildGroupInputs(request.form),
                              errorwells=request.form['errorwells']
                              ).execute()

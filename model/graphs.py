@@ -144,7 +144,7 @@ class Grapher:
     def RFUAllGraphs(self, df):
         manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
         seaborn.lineplot(x='time', y='value', hue='group', units='index', estimator=None, data=df,
-                         palette=manualcolors[:np.max(df['group'])], linewidth=.7)  # hue='group', units='triplicate'
+                         palette=manualcolors[-np.max(df['group']):], linewidth=.7)  # hue='group', units='triplicate'
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         saveImage(self, plt, 'Averages_All')

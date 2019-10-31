@@ -81,11 +81,15 @@ def getTriplicateKeys(self, path, inputinfo) -> {}:
         group = 1
         prevrow = 0
         for row in range(0, len(label[:, 1])):
+            usedrow = row
             if label[row, 5] == control and row > 6 and row > prevrow + 6:
                 group += 1
                 prevrow = row
-            header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + str(group)
-            addHeader(self, row, header, group, label[row, 1])
+            if label[row, 1] in self.swaps.keys():
+                usedrow = replacementIndex(self, row, label[:, 1])
+            print(usedrow)
+            header = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6]) + '_' + str(group)
+            addHeader(self, usedrow, header, group, label[usedrow, 1])
     else:
         row = 0
         for group in inputinfo.keys():
@@ -95,10 +99,20 @@ def getTriplicateKeys(self, path, inputinfo) -> {}:
             grouplabel = inputinfo[group]['Group Label']
             for well in range(int(groupsize)):
                 row += 1
+                usedrow = row
+                if label[row, 1] in self.swaps.keys():
+                    usedrow = replacementIndex(self, row, label[:, 1])
                 if row > len(label[:, 1]):
                     flash('The wells and samples added up to be more than the % s wells' % len(label[:, 1]), 'error')
-                header = str(label[row, 5]) + '_' + str(label[row, 6]) + '_' + grouplabel + '_' + str(group)
-                addHeader(self, row, header, group, label[row, 1])
+                header = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6]) + '_' + grouplabel + '_' + str(group)
+                addHeader(self, usedrow, header, group, label[usedrow, 1])
+
+
+def replacementIndex(self, row, labels):
+    fromLabel = labels[row]
+    for searchidx, search in enumerate(labels):
+        if search == self.swaps[fromLabel]['To']:
+            return searchidx
 
 
 def addHeader(self, row, header, group, excelindex):

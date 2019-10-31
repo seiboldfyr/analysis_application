@@ -47,7 +47,6 @@ line-height: 16px;
 <script type="text/javascript">
 
 function otherSelect() {
-    console.log('here')
     var pick = document.getElementById("groupidentification").selectedIndex;
     makeVisible(parseInt(pick));
     }
@@ -87,7 +86,52 @@ function buildGroupHtml(group) {
            {{ form.widesearch.label }}
             <input type="checkbox" name="Broad search" value="true">
         </div>
+        <p class="big"></p>
+
+        <div class="labelswaps">
+        {{ form.swaplabel.label }}
+            <select id="labelswaps" name="labels that were swapped" onchange="swapnumber()">
+                <option value="0">None</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select>
+        </div>
         <p class="big">
+
+        <p id="swapinput"></p>
+
+<script type="text/javascript">
+function swapnumber() {
+    var pick = document.getElementById("labelswaps").selectedIndex;
+    makeSwapsVisible(parseInt(pick));
+    }
+
+function makeSwapsVisible(swapnumber) {
+    var swapdetails = document.getElementsByClassName("labelidentification");
+    document.getElementById("swapinput").innerHTML = ''
+
+    for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
+        var formSwapHtml = buildSwapHtml(wellswap);
+        document.getElementById("swapinput").innerHTML += formSwapHtml;
+        }
+    }
+
+function buildSwapHtml(swapnumber) {
+    var html ='<div class="labelidentification"></div>'
+    html += '<div id="labelfrom">{{ form.labelfrom.label}} <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>'
+    html += '<div id="labelto">{{ form.labelto.label}} <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>'
+    html += '<p class="big">'
+    return html;
+    }
+
+</script>
+
 
         <p><input type="submit" name='Run' value="Run it!"/></p>
         </form>
