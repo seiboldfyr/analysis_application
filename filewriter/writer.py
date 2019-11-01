@@ -6,12 +6,8 @@ from filewriter.helper import addTimeMeasurements
 class Writer:
     def __init__(
             self,
-            data: {} = None,
-            output: {} = None,
-            labels: {} = None):
+            data: {} = None):
         self.data = data
-        self.output = output
-        self.labels = labels
         self.workbook = None
 
     def writebook(self, path):
@@ -23,6 +19,7 @@ class Writer:
         # TODO: write corrected data
         self.workbook.close()
 
+
     def writeInflectionData(self):
         sheet = self.workbook.add_worksheet('Inflections')
         for row, label in enumerate(createLabels()):
@@ -30,15 +27,18 @@ class Writer:
 
         for row, key in enumerate(self.data.keys()):
             col = 0
-            if not self.output.get(key):
-                continue
             sheet.write(row + 1, col, self.data[key]['Label'])
-            for inflection in self.output[key]['Inflections']:
+            for inflection in self.data[key]['Inflections']:
                 col += 1
                 sheet.write(row, col, inflection)
-            for rfu in self.output[key]['RFUs']:
+            for rfu in self.data[key]['RFUs']:
                 col += 1
                 sheet.write(row, col, rfu[0])
+            if not self.data[key].get['Relative Difference']:
+                continue
+            for reldiff in self.data[key]['Relative Difference'][1]:
+                col += 1
+                sheet.write(row, col, reldiff)
 
     def writeRawData(self):
         sheet = self.workbook.add_worksheet('Raw RFU')
