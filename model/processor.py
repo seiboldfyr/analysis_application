@@ -44,7 +44,7 @@ class Processor(AbstractProcessor):
                 time=self.time
                 ).execute()
 
-        Writer(data=self.data).writebook(self.paths['output'])
+        Writer(data=self.data, time=self.time).writebook(self.paths['output'])
 
         self.writeStatistics()
 

@@ -14,7 +14,7 @@ line-height: 8px;
 <br>
 
 <div class="formwrapper">
-  <form action = "http://localhost:5000/search" method = "POST">
+  <form action = "{{ url_for('search') }}" method = "POST">
      <p>Folder <input type = "text" name = "folder" /></p>
      <p><input type = "submit" value = "Get Files " /></p>
 

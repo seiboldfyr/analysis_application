@@ -1,5 +1,5 @@
 #!/bin/bash
-export FLASK_APP=flaskstart
+export FLASK_APP=application
 export FLASK_ENV=development
 
 flask=$(which flask)

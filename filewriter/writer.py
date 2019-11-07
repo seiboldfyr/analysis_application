@@ -6,8 +6,10 @@ from filewriter.helper import addTimeMeasurements
 class Writer:
     def __init__(
             self,
-            data: {} = None):
+            data: {} = None,
+            time: {} = None):
         self.data = data
+        self.time = time
         self.workbook = None
 
     def writebook(self, path):
@@ -34,7 +36,7 @@ class Writer:
             for rfu in self.data[key]['RFUs']:
                 col += 1
                 sheet.write(row, col, rfu[0])
-            if not self.data[key].get['Relative Difference']:
+            if not self.data[key].get('Relative Difference'):
                 continue
             for reldiff in self.data[key]['Relative Difference'][1]:
                 col += 1
@@ -42,7 +44,7 @@ class Writer:
 
     def writeRawData(self):
         sheet = self.workbook.add_worksheet('Raw RFU')
-        sheet = addTimeMeasurements(sheet, self.data['Time'])
+        sheet = addTimeMeasurements(sheet, self.time)
         for col, key in enumerate(self.data.keys()):
             if key == 'Time':
                 continue
