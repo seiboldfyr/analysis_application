@@ -2,11 +2,11 @@
 import os
 import json
 from flask import Flask, render_template, redirect, url_for, request, flash
-from forms import DataInputForm, ExperimentInputForm
+from flaskr.forms import DataInputForm, ExperimentInputForm
 
-from model.processor import Processor
-from model.validators.import_validator import ImportValidator
-from filewriter.metadatawriter import WriteMetadata
+from flaskr.model.processor import Processor
+from flaskr.model.validators.import_validator import ImportValidator
+from flaskr.filewriter.metadatawriter import WriteMetadata
 
 
 # create application
@@ -67,8 +67,8 @@ def search():
         json.dumps(dict(date=fileinfo['Date'],
                         id=fileinfo['Id'],
                         initials=fileinfo['Initials'],
-                        infofile=request.files['infofile'],
-                        rfufile=request.files['rfufile']))
+                        infofile=filedata['infofile'],
+                        rfufile=filedata['rfufile']))
         return render_template('search.html', result=fileinfo, folder = '')
     return render_template('home.html')
 

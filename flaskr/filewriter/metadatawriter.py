@@ -2,7 +2,7 @@ import xlsxwriter
 import os
 from datetime import date
 
-from framework.abstract.abstract_processor import AbstractProcessor
+from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 
 
 class WriteMetadata(AbstractProcessor):

@@ -1,7 +1,7 @@
 import os
 
-from framework.abstract.abstract_validator import AbstractValidator
-from framework.model.request.response import Response
+from flaskr.framework.abstract.abstract_validator import AbstractValidator
+from flaskr.framework.model.request.response import Response
 
 
 def checkname(file) -> Response:
@@ -18,7 +18,6 @@ class ImportValidator(AbstractValidator):
         if request.files is None:
             return Response(False, 'Files are required')
         for f in request.files:
-            print(f)
             file = request.files.get(f)
             if file is None:
                 return Response(False, 'A file is required')
@@ -26,6 +25,7 @@ class ImportValidator(AbstractValidator):
 
             if not checkname(file).is_success():
                 return Response(False, checkname(file).get_message())
+            print('next')
 
         if request.form['folder'] is None:
             return Response(False, 'Output location is required')

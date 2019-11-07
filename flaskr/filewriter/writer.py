@@ -1,6 +1,6 @@
 import xlsxwriter
 import os
-from filewriter.helper import addTimeMeasurements
+from flaskr.filewriter.helper import addTimeMeasurements
 
 
 class Writer:

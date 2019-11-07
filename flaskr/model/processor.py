@@ -2,14 +2,13 @@ import numpy as np
 import os
 from flask import flash, current_app
 from statistics import mean, stdev
-from operator import attrgetter, itemgetter
 
-from framework.model.request.response import Response
-from framework.abstract.abstract_processor import AbstractProcessor
-from model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
-from model.functions import getDerivatives, getPeaks, getExpectedValues
-from model.graphs import Grapher
-from filewriter.writer import Writer
+from flaskr.framework.model.request.response import Response
+from flaskr.framework.abstract.abstract_processor import AbstractProcessor
+from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
+from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues
+from flaskr.model.graphs import Grapher
+from flaskr.filewriter.writer import Writer
 
 class Processor(AbstractProcessor):
     def __init__(

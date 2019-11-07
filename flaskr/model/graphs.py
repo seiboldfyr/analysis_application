@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 import pandas as pd
-from model.functions import saveImage, getUnique, getGroupHeaders
+from flaskr.model.functions import saveImage, getUnique, getGroupHeaders
 
 
 class Grapher:

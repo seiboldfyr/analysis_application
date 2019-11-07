@@ -1,5 +1,5 @@
-from framework.exception import MethodNotImplemented
-from framework.model.request.response import Response
+from flaskr.framework.exception import MethodNotImplemented
+from flaskr.framework.model.request.response import Response
 
 
 class AbstractValidator:
