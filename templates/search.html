@@ -1,0 +1,47 @@
+<!doctype html>
+{% extends "master.html" %}
+
+{% block title %} Data Analysis Tool {% endblock %}
+
+{% block body %}
+
+ {% for key, value in result.items() %}
+    <tr>
+       <b>{{ key }}:</b> {{ value }} <br><br>
+    </tr>
+ {% endfor %}
+
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+
+{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if error %}
+  <div class="alert alert-danger">{{error}}</div>
+{% endif %}
+
+{% if msg %}
+  <div class="alert alert-success">{{msg}}</div>
+{% endif %}
+{% endblock %}
+
+{% block buttons %}
+<br>
+
+<a href="{{ url_for('manual', folder=folder) }}"><button>Manually Enter File Info</button></a>
+
+<a href="{{ url_for('process', folder=folder) }}"><button>Process Data</button></a>
+
+<br>
+{% endblock %}
+
+
+

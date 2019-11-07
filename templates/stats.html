@@ -1,0 +1,44 @@
+{% extends "master.html" %}
+
+{% block title %} Data Analysis Tool {% endblock %}
+
+{% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+</style>
+<br>
+
+<b>Please enter the following information:</b>
+<br>
+
+<div class="formwrapper">
+  <form action = "{{ url_for('search') }}" method = "POST">
+     <p>Folder <input type = "text" name = "folder" /></p>
+     <p><input type = "submit" value = "Get Files " /></p>
+
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if error %}
+  <div class="alert alert-danger">{{error}}</div>
+{% endif %}
+
+{% if msg %}
+  <div class="alert alert-success">{{msg}}</div>
+{% endif %}
+{% endblock %}
+
+{% block buttons %}{% endblock %}
+
+

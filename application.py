@@ -2,7 +2,7 @@
 import os
 import json
 from flask import Flask, render_template, redirect, url_for, request, flash
-from flaskr.forms import DataInputForm, ExperimentInputForm
+from forms import DataInputForm, ExperimentInputForm
 
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
@@ -60,16 +60,14 @@ def search():
 
         filedata = {}
         for f in request.files:
-            if request.files.get(f).filename.endswith('info.xlsx'):
+            if request.files.get(f).filename.endswith('INFO.xlsx'):
                 filedata['infofile'] = request.files.get(f)
             else:
                 filedata['rfufile'] = request.files.get(f)
-        json.dumps(dict(date=fileinfo['Date'],
-                        id=fileinfo['Id'],
-                        initials=fileinfo['Initials'],
-                        infofile=filedata['infofile'],
-                        rfufile=filedata['rfufile']))
-        return render_template('search.html', result=fileinfo, folder = '')
+
+        #TODO: Save data to database here
+
+        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'))
     return render_template('home.html')
 
 
@@ -80,11 +78,12 @@ def manual(folder):
 
 
 @application.route('/process/<folder>', methods=['GET', 'POST'])
+#TODO: pass folder and info as json
 def process(folder):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
         if folder is None:
-            flash('error', 'No folder found')
+            flash('error', 'No corrected information was found')
             return render_template('home.html')
 
         folderpath = folder.replace('+', os.sep)
@@ -107,21 +106,21 @@ def process(folder):
             flash('%s' % response.get_message(), 'Processed successfully!')
             return render_template('process.html', form=input_form)
         else:
-            flash('%s' % response.get_message(), 'Error processing the file', 'error')
+            flash('%s' % response.get_message(), 'Error processing the file')
             return render_template('process.html', form=input_form)
 
     return render_template('process.html', form=input_form)
 
 
 @application.route('/runstats', methods=['GET', 'POST'])
-def runstats():
-    #TODO: start at top folder, search all for a v2.1 output
+def runbatch():
+    #TODO: start at top folder, search all for valid data files
     #get inflections from output and create graphs
     return render_template('stats.html')
 
 
 if __name__ == '__main__':
     # application.run(port=80)
-    # application.run(port=80, debug=True)
+    application.run(debug=True)
     application.run()
 
