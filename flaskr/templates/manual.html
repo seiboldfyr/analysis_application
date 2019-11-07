@@ -1,0 +1,60 @@
+
+{% extends "master.html" %}
+
+{% block title %} Data Analysis Tool {% endblock %}
+
+{% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+</style>
+<br>
+
+<b>Please enter the following information:</b>
+<br>
+<p class="big">
+<br>
+
+<div class="formwrapper">
+  <form method=get>
+    <div class="date">
+		{{ form.date.label }} {{ form.date(placeholder="MM-DD-YYYY") }} </div>
+    <p class="big">
+
+    <div class="id">
+      {{ form.id.label }} {{ form.id(placeholder="a") }}    </div>
+    <p class="big">
+
+    <div class="initials">
+      {{ form.initials.label }} {{ form.initials(placeholder="XX") }}    </div>
+    <p class="big">
+
+<!--<p><input type = "submit" value = "Continue" /></p>-->
+
+<br>
+<br>
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if error %}
+  <div class="alert alert-danger">{{error}}</div>
+{% endif %}
+
+{% if msg %}
+  <div class="alert alert-success">{{msg}}</div>
+{% endif %}
+{% endblock %}
+
+{% block buttons %}
+<a href="{{ url_for('process', folder=folder) }}"><button>Process Data</button></a>
+{% endblock %}
