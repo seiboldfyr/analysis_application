@@ -6,7 +6,7 @@ from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.filewriter.metadatawriter import WriteMetadata
 
-base_blueprint = Blueprint('', __name__, template_folder='templates')
+base_blueprint = Blueprint('', __name__)
 
 
 @base_blueprint.route('/')
