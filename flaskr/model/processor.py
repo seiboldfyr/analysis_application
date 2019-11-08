@@ -32,6 +32,7 @@ class Processor(AbstractProcessor):
         self.statistics = {}
 
     def execute(self) -> Response:
+        return Response(True, "Implementing data storage. Functionality coming soon!")
         self.getData()
         response = self.processData()
         flash('Processed to: %s' % self.paths['output'])

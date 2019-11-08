@@ -1,0 +1,112 @@
+import os
+from flask import render_template, redirect, url_for, request, flash, Blueprint, current_app
+from forms import DataInputForm, ExperimentInputForm
+
+from flaskr.model.processor import Processor
+from flaskr.model.validators.import_validator import ImportValidator
+from flaskr.filewriter.metadatawriter import WriteMetadata
+
+base_blueprint = Blueprint('', __name__, template_folder='templates')
+
+
+@base_blueprint.route('/')
+def home():
+    return render_template('home.html')
+
+
+def buildGroupInputs(requestinfo):
+    groupdetails = {}
+    for item in requestinfo.keys():
+        if item.startswith('Group'):
+            if groupdetails.get(str(item[-1])) is None:
+                groupdetails[str(item[-1])] = {}
+            groupdetails[item[-1]][item[:-2]] = requestinfo[item]
+    return groupdetails
+
+
+def buildSwapInputs(requestinfo):
+    swapdetails = {}
+    for item in requestinfo.keys():
+        if item.startswith('Swap From'):
+            if swapdetails.get(requestinfo[item]) is None:
+                swapdetails[requestinfo[item]] = {}
+            swapdetails[requestinfo[item]]['To'] = requestinfo['Swap To ' + str(item[-1])]
+    return swapdetails
+
+
+@base_blueprint.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+
+        validator = ImportValidator()
+        result = validator.execute(request)
+        if not result.is_success():
+            flash('%s' % result.get_message(), 'error')
+            return redirect(url_for('home'))
+
+        folder = request.form['folder']
+        filedata = {}
+        for f in request.files:
+            if request.files.get(f).filename.endswith('INFO.xlsx'):
+                filedata['infofile'] = request.files.get(f)
+            else:
+                filedata['rfufile'] = request.files.get(f)
+                fileinfo = {}
+                fileinfo['Date'] = filedata['rfufile'].filename[:8]
+                fileinfo['Id'] = filedata['rfufile'].filename[8]
+                fileinfo['Initials'] = filedata['rfufile'].filename[10:12]
+
+        #TODO: Save data to database here
+
+        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'))
+
+    return render_template('home.html')
+
+
+@base_blueprint.route('/manual/<folder>', methods=['GET', 'POST'])
+def manual(folder):
+    input_form = DataInputForm()
+    return render_template('manual.html', form=input_form, folder=folder)
+
+
+@base_blueprint.route('/process/<folder>', methods=['GET', 'POST'])
+#TODO: pass folder and info as json
+def process(folder):
+    input_form = ExperimentInputForm()
+    if request.method == 'POST':
+        if folder is None:
+            flash('error', 'No corrected information was found')
+            return render_template('home.html')
+
+        folderpath = folder.replace('+', os.sep)
+
+        outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
+
+        cutlength = request.form['cutlength']
+        if len(request.form['cutlength']) == 0:
+            cutlength = 0
+
+        response = Processor(paths={'input': folderpath, 'output': outputPath},
+                             cut=cutlength,
+                             label=request.form['customlabel'],
+                             swaps=buildSwapInputs(request.form),
+                             groupings=buildGroupInputs(request.form),
+                             errorwells=request.form['errorwells']
+                             ).execute()
+
+        if response.is_success():
+            flash('%s' % response.get_message(), 'Processed successfully!')
+            return render_template('process.html', form=input_form)
+        else:
+            flash('%s' % response.get_message(), 'Error processing the file')
+            return render_template('process.html', form=input_form)
+
+    return render_template('process.html', form=input_form)
+
+
+@base_blueprint.route('/runstats', methods=['GET', 'POST'])
+def runbatch():
+    #TODO: start at top folder, search all for valid data files
+    #get inflections from output and create graphs
+    return render_template('stats.html')
+
