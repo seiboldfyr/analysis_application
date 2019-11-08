@@ -1,12 +1,14 @@
 import numpy as np
+import os
 from flask import flash, current_app
+from statistics import mean, stdev
 
-from framework.model.request.response import Response
-from framework.abstract.abstract_processor import AbstractProcessor
-from model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
-from model.functions import getDerivatives, getPeaks, getExpectedValues, getUniqueKeys
-from model.graphs import Grapher
-from filewriter.writer import Writer
+from flaskr.framework.model.request.response import Response
+from flaskr.framework.abstract.abstract_processor import AbstractProcessor
+from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
+from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues
+from flaskr.model.graphs import Grapher
+from flaskr.filewriter.writer import Writer
 
 class Processor(AbstractProcessor):
     def __init__(
@@ -25,12 +27,12 @@ class Processor(AbstractProcessor):
         self.groupings = groupings
         self.cycle = 27
         self.data = {}
-        self.labeldict = {}
-        self.output = {}
-        self.averageoutput = {}
+        self.time = []
         self.errorwells = errorwells
+        self.statistics = {}
 
     def execute(self) -> Response:
+        return Response(True, "Implementing data storage. Functionality coming soon!")
         self.getData()
         response = self.processData()
         flash('Processed to: %s' % self.paths['output'])
@@ -38,15 +40,13 @@ class Processor(AbstractProcessor):
         Grapher(paths=self.paths,
                 customtitle=self.customlabel,
                 data=self.data,
-                labels=self.labeldict,
-                output=self.output,
-                averageoutput=self.averageoutput,
-                errors=self.errorwells
+                errors=self.errorwells,
+                time=self.time
                 ).execute()
 
-        Writer(data=self.data,
-               output=self.output,
-               labels=self.labeldict).writebook(self.paths['output'])
+        Writer(data=self.data, time=self.time).writebook(self.paths['output'])
+
+        self.writeStatistics()
 
         return Response(response.is_success(), response.get_message())
 
@@ -61,7 +61,7 @@ class Processor(AbstractProcessor):
         message = ''
         self.errorwells = [well for well in self.errorwells.split(',')]
         for wellID in self.data.keys():
-            if wellID != 'Time' and self.labeldict[wellID][2] not in self.errorwells:
+            if wellID != 'Time' and self.data[wellID]['ExcelHeader'] not in self.errorwells:
                 derivatives = getDerivatives(self, int(wellID))
                 inflectionList = []
                 rfuList = []
@@ -75,7 +75,8 @@ class Processor(AbstractProcessor):
                     for index, inflectionPoint in enumerate(inflectionList):
                         rfuList.append(getExpectedValues(self, wellID, inflectionPoint,
                                                          borderList[index][0], borderList[index][1]))
-                self.output[wellID] = {'Inflections': inflectionList, 'RFUs': rfuList}
+                self.data[wellID]['Inflections'] = inflectionList
+                self.data[wellID]['RFUs'] = rfuList
         self.getPercentDifferences()
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
             message = 'Peaks were not found in wells:' + str(self.errorwells) #TODO: concatenate items in string
@@ -86,7 +87,7 @@ class Processor(AbstractProcessor):
         if type(peaks[0]) == str:
             return []
         for peakindex, peak in enumerate(peaks):
-            timediff = [(self.data['Time'][t] + self.data['Time'][t + 1]) / 2 for t in range(len(self.data['Time']) - 1)]
+            timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
             leftside = xstart[peakindex]
             rightside = min([xend[peakindex], len(derivative), len(timediff)])
             polycoefs = fitPolyEquation(timediff[leftside:rightside], derivative[leftside:rightside])
@@ -96,14 +97,11 @@ class Processor(AbstractProcessor):
     def getPercentDifferences(self):
         previousgroup = 0
         control = [0]
-        Triplicates = [self.data[int(well)]['Label'] for well in self.data.keys() if well != 'Time']
-        for triplicate in getUniqueKeys(Triplicates):
-            group = triplicate[-1]
+        for triplicate in sorted(self.data.items(), key=lambda x: x[1]['Triplicate']):
             triplicateGroup = []
             for well in self.data.keys():
-                if well != 'Time' and self.labeldict[well][2] not in self.errorwells and \
-                        self.data[int(well)]['Label'] == triplicate:
-                    wellinflections = self.output[int(well)]['Inflections']
+                if self.data[well]['ExcelHeader'] not in self.errorwells and self.data[well]['Triplicate'] == triplicate[1]['Triplicate']:
+                    wellinflections = self.data[well]['Inflections']
                     if len(wellinflections) != 4:
                         current_app.logger.info('Only %s inflections found in well: %s', str(len(wellinflections)), str(well))
                         continue
@@ -111,15 +109,32 @@ class Processor(AbstractProcessor):
             if len(triplicateGroup) == 0:
                 continue
             tripAverage = np.mean(triplicateGroup, axis=0)
-            if group != previousgroup:
+            if triplicate[1]['Group'] != previousgroup:
                 control = tripAverage
-                previousgroup = group
+                previousgroup = triplicate[1]['Group']
             if tripAverage.all() != 0 and control.all() != 0:
                 relativeDifference = [abs(a - b) / ((a + b) / 2) for a, b in zip(tripAverage, control)]
                 relativeDifference = [element * 100 for element in relativeDifference]
             else:
                 relativeDifference = 'err'
-            if self.averageoutput.get(triplicate) is None:
-                self.averageoutput[triplicate] = relativeDifference
-            else:
-                self.averageoutput[triplicate].append([relativeDifference])
+            individualDifference = [abs(a - b) / ((a + b) / 2) for a, b in zip(triplicate[1]['Inflections'], control)]
+            self.data[triplicate[0]]['Relative Difference'] = [individualDifference, relativeDifference]
+
+        self.statistics['StDev Relative Difference for Inflection 1'] = \
+            stdev([wellvalue['Relative Difference'][0][0] for wellvalue in self.data.values()
+                   if wellvalue.get('Relative Difference')])
+        self.statistics['StDev Relative Difference for Inflection 2,3,4'] = \
+            stdev([mean(wellvalue['Relative Difference'][0][1:]) for wellvalue in self.data.values()
+                   if wellvalue.get('Relative Difference')])
+        self.statistics['StDev Relative Difference for all'] = \
+            stdev([mean(wellvalue['Relative Difference'][0]) for wellvalue in self.data.values()
+                   if wellvalue.get('Relative Difference')])
+
+    def writeStatistics(self):
+        with open(os.path.join(self.paths['output'], 'metadata.txt'), 'a') as f:
+            f.write('\n')
+            f.write("Additional Statistics: ")
+            f.write('\n')
+            for item in self.statistics.keys():
+                line = str(item) + ': ' + str(self.statistics[item]) + '\n'
+                f.write(line)

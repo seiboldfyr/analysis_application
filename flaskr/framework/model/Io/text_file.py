@@ -7,7 +7,7 @@ from flask import current_app
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from framework.exception import InvalidArgument
+from flaskr.framework.exception import InvalidArgument
 
 
 class TextFile():

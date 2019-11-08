@@ -1,18 +1,17 @@
-#!/usr/bin/env python
-from flask import Flask, render_template, redirect, url_for, request, flash
-from forms import DataInputForm, ExperimentInputForm
-from model.processor import Processor
-from model.opener import OpenFile
-
 import os
-from filewriter.metadatawriter import WriteMetadata
+from flask import render_template, redirect, url_for, request, flash, Blueprint, current_app
+from forms import DataInputForm, ExperimentInputForm
 
-# create application
-APP = Flask(__name__)
+from flaskr.model.processor import Processor
+from flaskr.model.validators.import_validator import ImportValidator
+from flaskr.filewriter.metadatawriter import WriteMetadata
 
-APP.secret_key = b'\xd7^\x9d6j\xde"v\x12\x99r[\xed\xcb\x17\xba'
+base_blueprint = Blueprint('', __name__)
 
-Version = 'output_v2.1'
+
+@base_blueprint.route('/')
+def home():
+    return render_template('home.html')
 
 
 def buildGroupInputs(requestinfo):
@@ -24,6 +23,7 @@ def buildGroupInputs(requestinfo):
             groupdetails[item[-1]][item[:-2]] = requestinfo[item]
     return groupdetails
 
+
 def buildSwapInputs(requestinfo):
     swapdetails = {}
     for item in requestinfo.keys():
@@ -34,46 +34,53 @@ def buildSwapInputs(requestinfo):
     return swapdetails
 
 
-def checkFolder(requestdata):
-    folder = requestdata.form['folder']
-    files = OpenFile(path=folder).execute()
-    if files.filepaths is None:
-        return redirect(url_for('home'))
-    return files
-
-
-@APP.route('/')
-def home():
-    return render_template('home.html')
-
-
-@APP.route('/search', methods=['GET', 'POST'])
+@base_blueprint.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        if request.form['folder'] != '':
-            files = checkFolder(request)
-            folderurl = request.form['folder'].replace(os.sep, '+')
-            return render_template('search.html', result=files.data, folder=folderurl)
+
+        validator = ImportValidator()
+        result = validator.execute(request)
+        if not result.is_success():
+            flash('%s' % result.get_message(), 'error')
+            return redirect(url_for('home'))
+
+        folder = request.form['folder']
+        filedata = {}
+        for f in request.files:
+            if request.files.get(f).filename.endswith('INFO.xlsx'):
+                filedata['infofile'] = request.files.get(f)
+            else:
+                filedata['rfufile'] = request.files.get(f)
+                fileinfo = {}
+                fileinfo['Date'] = filedata['rfufile'].filename[:8]
+                fileinfo['Id'] = filedata['rfufile'].filename[8]
+                fileinfo['Initials'] = filedata['rfufile'].filename[10:12]
+
+        #TODO: Save data to database here
+
+        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'))
+
     return render_template('home.html')
 
 
-@APP.route('/manual/<folder>', methods=['GET', 'POST'])
+@base_blueprint.route('/manual/<folder>', methods=['GET', 'POST'])
 def manual(folder):
     input_form = DataInputForm()
     return render_template('manual.html', form=input_form, folder=folder)
 
 
-@APP.route('/process/<folder>', methods=['GET', 'POST'])
+@base_blueprint.route('/process/<folder>', methods=['GET', 'POST'])
+#TODO: pass folder and info as json
 def process(folder):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
         if folder is None:
-            flash('error', 'No folder found')
+            flash('error', 'No corrected information was found')
             return render_template('home.html')
 
         folderpath = folder.replace('+', os.sep)
 
-        outputPath = WriteMetadata(path=folderpath, data=request.form, version=Version).execute()
+        outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
 
         cutlength = request.form['cutlength']
         if len(request.form['cutlength']) == 0:
@@ -91,12 +98,15 @@ def process(folder):
             flash('%s' % response.get_message(), 'Processed successfully!')
             return render_template('process.html', form=input_form)
         else:
-            flash('%s' % response.get_message(), 'Error processing the file', 'error')
+            flash('%s' % response.get_message(), 'Error processing the file')
             return render_template('process.html', form=input_form)
 
     return render_template('process.html', form=input_form)
 
 
-if __name__ == '__main__':
-    APP.debug = True
-    APP.run()
+@base_blueprint.route('/runstats', methods=['GET', 'POST'])
+def runbatch():
+    #TODO: start at top folder, search all for valid data files
+    #get inflections from output and create graphs
+    return render_template('stats.html')
+

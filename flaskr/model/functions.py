@@ -67,7 +67,7 @@ def getTriplicateIndexes(data):
     return triplicateIndexList
 
 
-def getUniqueKeys(keylist):
+def getUnique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
 
@@ -80,6 +80,8 @@ def getTriplicateKeys(self, path, inputinfo) -> {}:
         control = label[0, 5]
         group = 1
         prevrow = 0
+        triplicate = -1
+        previoussample = ''
         for row in range(0, len(label[:, 1])):
             usedrow = row
             if label[row, 5] == control and row > 6 and row > prevrow + 6:
@@ -87,11 +89,15 @@ def getTriplicateKeys(self, path, inputinfo) -> {}:
                 prevrow = row
             if label[row, 1] in self.swaps.keys():
                 usedrow = replacementIndex(self, row, label[:, 1])
-            print(usedrow)
-            header = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6]) + '_' + str(group)
-            addHeader(self, usedrow, header, group, label[usedrow, 1])
+            sample = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6])
+            header = sample + '_' + str(group)
+            triplicate = getTriplicateNumber(triplicate, sample, previoussample)
+            previoussample = sample
+            addHeader(self, usedrow, header, label[usedrow, 1], group, triplicate, sample)
     else:
         row = 0
+        triplicate = -1
+        previoussample = ''
         for group in inputinfo.keys():
             groupsize = float(inputinfo[group]['Group Wells']) * float(inputinfo[group]['Group Samples'])
             if groupsize % 1 != 0:
@@ -104,8 +110,17 @@ def getTriplicateKeys(self, path, inputinfo) -> {}:
                     usedrow = replacementIndex(self, row, label[:, 1])
                 if row > len(label[:, 1]):
                     flash('The wells and samples added up to be more than the % s wells' % len(label[:, 1]), 'error')
-                header = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6]) + '_' + grouplabel + '_' + str(group)
-                addHeader(self, usedrow, header, group, label[usedrow, 1])
+                sample = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6])
+                header = sample + '_' + grouplabel + '_' + str(group)
+                triplicate = getTriplicateNumber(triplicate, sample, previoussample)
+                previoussample = sample
+                addHeader(self, usedrow, header, label[usedrow, 1], group, triplicate, sample)
+
+
+def getTriplicateNumber(triplicate, sample, previoussample):
+    if sample != previoussample:
+        return triplicate + 1
+    return triplicate
 
 
 def replacementIndex(self, row, labels):
@@ -115,9 +130,9 @@ def replacementIndex(self, row, labels):
             return searchidx
 
 
-def addHeader(self, row, header, group, excelindex):
-    self.data[row] = {'Label': header, 'Group': group, 'Values': []}
-    self.labeldict[row] = [header, group, excelindex]
+def addHeader(self, row, header, excelindex, group, triplicate, sample):
+    self.data[row] = {'Label': header, 'ExcelHeader': excelindex, 'Group': group, 'Triplicate': triplicate,
+                      'Sample': sample, 'Values': []}
 
 
 def getTriplicateValues(self, path):
@@ -125,7 +140,7 @@ def getTriplicateValues(self, path):
     sheet = wb.sheet_by_name('SYBR')
     for column in range(1, sheet.ncols):
         if column == 1:
-            self.data['Time'] = [self.cycle * time for time in sheet.col_values(column, start_rowx=int(self.cut))[1:]]
+            self.time = [self.cycle * time for time in sheet.col_values(column, start_rowx=int(self.cut))[1:]]
         else:
             self.data[column-2]['Values'] = sheet.col_values(column, start_rowx=int(self.cut))[1:]
 
@@ -185,7 +200,7 @@ def fitPolyEquation(timelist, observed):
 
 
 def getExpectedValues(self, wellid, xvalue, start, end) -> []:
-    polynomialcoefs = fitPolyEquation(self.data['Time'][start:end], self.data[wellid]['Values'][start:end])
+    polynomialcoefs = fitPolyEquation(self.time[start:end], self.data[wellid]['Values'][start:end])
     if isinstance(xvalue, float):
         xvalue = [xvalue]
     x2 = square(xvalue)

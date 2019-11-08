@@ -1,0 +1,32 @@
+{
+  "name": "app",
+  "version": "2.3",
+  "description": "An application that provides processing, analysis, and graphing tools for Fyr Diagnostics",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fyr-diagnostics/analysis_application.git"
+  },
+  "author": "Claire Seibold",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/fyr-diagnostics/analysis_application/issues"
+  },
+  "homepage": "https://github.com/fyr-diagnostics/analysis_application#readme",
+  "devDependencies": {
+    "rollup": "^1.26.3",
+    "rollup-plugin-commonjs": "^10.0.0",
+    "rollup-plugin-css-only": "^1.0.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.2"
+  },
+  "dependencies": {
+    "jquery": "^3.4.1",
+    "material-design-icons": "^3.0.1",
+    "sirv-cli": "^0.4.4"
+  },
+  "scripts": {
+  }
+}

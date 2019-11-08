@@ -14,9 +14,11 @@ line-height: 8px;
 <br>
 
 <div class="formwrapper">
-  <form action = "http://localhost:5000/search" method = "POST">
-     <p>Folder <input type = "text" name = "folder" /></p>
-     <p><input type = "submit" value = "Get Files " /></p>
+  <form action = "{{ url_for('.search') }}" method = "POST" enctype="multipart/form-data">
+      <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
+      <p>INFO File: <input name="file2" id="infofile" type="file"/></p>
+      <p>Path location where output folder should be created <input type = "text" name = "folder" /></p>
+     <p><input type = "submit" value = "Retrieve Files" /></p>
 
 {% endblock %}
 
