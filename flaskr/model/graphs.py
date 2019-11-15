@@ -104,8 +104,8 @@ class Grapher:
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
 
-        self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
-        self.RFUIndividualGraphsByGroup(max(Groups), datadf)
+        #self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
+        #self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
 

@@ -33,21 +33,21 @@ class Processor(AbstractProcessor):
         self.time = []
 
     def execute(self) -> Response:
+        collection = self.get_collection() # better name needed
+        self.swapWells()
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         collection = dataset.get_well_collection()
 
-        collection = self.swapWells(collection)
-        print('1')
-        print(collection)
-        for wellindex, well in enumerate(collection):
-            print(wellindex)
+
+        for well, wellindex in enumerate(collection):
+
             if wellindex < 2:
                 self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
                 print(self.time[:5])
             well['label'] = well.get_label() + '_' + well.get_group()
             response = self.processData(well, wellindex)
-            if not response.is_succes():
+            if not response.is_success():
                 return Response(False, response.get_message())
 
         # self.getPercentDifferences()
@@ -61,17 +61,20 @@ class Processor(AbstractProcessor):
 
         return Response(True, 'Successfully processed inflections')
 
-    def swapWells(self, collection):
+    def swapWells(self):
+        collection = self.get_collection()
         for well in collection:
-            if self.swaps.get(well['excelheader']):
+            if self.swaps.get(well.get_excelheader()):
+                collection = self.get_collection()
                 for destwell in collection:
-                    if destwell.get_excelheader() == self.swaps[well['excelheader']]:
+                    if destwell.get_excelheader() == self.swaps[well.get_excelheader()]:
                         well.edit_labels(dict(group=destwell.get_group(),
                                               sample=destwell.get_sample(),
                                               triplicate=destwell.get_triplicate(),
                                               label=destwell.get_label(),
                                               RFUs=destwell.get_rfus()))
-        return collection
+
+#TODO: Look into making changes to the collection permanent
 
     def processData(self, well, index):
         if well['excelheader'] not in self.errorwells:
@@ -154,3 +157,8 @@ class Processor(AbstractProcessor):
             for item in self.statistics.keys():
                 line = str(item) + ': ' + str(self.statistics[item]) + '\n'
                 f.write(line)
+    # pass in the dataset id and return the collection
+    def get_collection(self):
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        return dataset.get_well_collection()

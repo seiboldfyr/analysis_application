@@ -32,7 +32,7 @@ def create_app(test_config=None):
         VERSION='2.3',
         DB_HOST='localhost',
         DB_NAME='FyrDatabase',
-        MONGO_URI='mongodb+srv://seibold:<password>@cluster0-3ctdn.mongodb.net/test?retryWrites=true&w=majority',
+        #MONGO_URI='mongodb+srv://seibold:<password>@cluster0-3ctdn.mongodb.net/test?retryWrites=true&w=majority',
         DB_PORT=27017,
         APP_USER='test',
         APP_PASSWORD='test'

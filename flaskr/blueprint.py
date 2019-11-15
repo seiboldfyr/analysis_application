@@ -109,7 +109,7 @@ def process(folder, id):
                            path=folder,
                            customtitle=request.form['customlabel']#TODO: include manually changed header here
                            ).execute()
-        if not response.is_succes():
+        if not response.is_success():
             flash('%s' % response.get_message(), 'error')
             return render_template('process.html', form=input_form)
 
