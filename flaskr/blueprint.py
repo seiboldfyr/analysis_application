@@ -16,26 +16,6 @@ def home():
     return render_template('home.html')
 
 
-def buildGroupInputs(requestinfo):
-    groupdetails = {}
-    for item in requestinfo.keys():
-        if item.startswith('Group'):
-            if groupdetails.get(str(item[-1])) is None:
-                groupdetails[str(item[-1])] = {}
-            groupdetails[item[-1]][item[:-2]] = requestinfo[item]
-    return groupdetails
-
-
-def buildSwapInputs(requestinfo):
-    swapdetails = {}
-    for item in requestinfo.keys():
-        if item.startswith('Swap From'):
-            if swapdetails.get(requestinfo[item]) is None:
-                swapdetails[requestinfo[item]] = {}
-            swapdetails[requestinfo[item]] = requestinfo['Swap To ' + str(item[-1])]
-    return swapdetails
-
-
 @base_blueprint.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
@@ -86,24 +66,15 @@ def process(folder, id):
 
         folderpath = folder.replace('+', os.sep)
 
-        outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
+        # outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
 
-        cutlength = request.form['cutlength']
-        if len(request.form['cutlength']) == 0:
-            cutlength = 0
-
-        response = Processor(dataset_id=id,
-                             paths={'input': folderpath, 'output': outputPath},
-                             cut=cutlength,
-                             label=request.form['customlabel'],
-                             swaps=buildSwapInputs(request.form),
-                             groupings=buildGroupInputs(request.form),
-                             errorwells=request.form['errorwells']
-                             ).execute()
+        response = Processor(request,
+                             dataset_id=id).execute()
 
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
             return render_template('process.html', form=input_form)
+        flash('Processed successfully')
 
         response = Grapher(dataset_id=id,
                            path=folder,

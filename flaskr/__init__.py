@@ -2,8 +2,8 @@ import os
 from logging.config import dictConfig
 
 from flask import Flask
-from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.blueprint import base_blueprint
+from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr import db
 from . import framework
 

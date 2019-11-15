@@ -146,7 +146,7 @@ def getTriplicateValues(self, path):
 
 
 def getDerivatives(self, well) -> []:
-    derivative = {1: smooth(np.gradient(self.data[well]['Values']))}
+    derivative = {1: smooth(np.gradient(well.get_rfus()))}
     derivative[2] = np.gradient(derivative[1])
     return derivative
 
@@ -199,8 +199,8 @@ def fitPolyEquation(timelist, observed):
     return coefs
 
 
-def getExpectedValues(self, wellid, xvalue, start, end) -> []:
-    polynomialcoefs = fitPolyEquation(self.time[start:end], self.data[wellid]['Values'][start:end])
+def getExpectedValues(self, well, xvalue, start, end) -> []:
+    polynomialcoefs = fitPolyEquation(self.time[start:end], well.get_rfus()[start:end])
     if isinstance(xvalue, float):
         xvalue = [xvalue]
     x2 = square(xvalue)
@@ -232,3 +232,19 @@ def saveImage(self, plt, figuretitle):
         os.remove(strFile)
     plt.savefig(strFile)
     plt.close()
+
+def buildGroupInputs(requestinfo):
+    groupdetails = {}
+    for item in requestinfo.keys():
+        if item.startswith('Group'):
+            if groupdetails.get(str(item[-1])) is None:
+                groupdetails[str(item[-1])] = {}
+            groupdetails[item[-1]][item[:-2]] = requestinfo[item]
+    return groupdetails
+
+def buildSwapInputs(requestinfo):
+    swapdetails = {}
+    for item in requestinfo.keys():
+        if item.startswith('Swap From'):
+            swapdetails[requestinfo[item]] = requestinfo['Swap To ' + str(item[-1])]
+    return swapdetails

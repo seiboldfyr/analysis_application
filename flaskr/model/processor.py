@@ -7,45 +7,41 @@ from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
-from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues
+from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues, buildGroupInputs, buildSwapInputs
 from flaskr.filewriter.writer import Writer
+
 
 class Processor(AbstractProcessor):
     def __init__(
-            self,
-            dataset_id: str,
-            paths: dict = None,
-            cut: int = 0,
-            label: str = '',
-            swaps: dict = None,
-            groupings: dict = None,
-            errorwells: [] = None
+            self, request,
+            dataset_id: str
     ):
+        self.request = request
         self.dataset_id = dataset_id
-        self.paths = paths
-        self.cut = cut
-        self.customlabel = label
-        self.swaps = swaps
-        self.groupings = groupings
+        self.swaps = {}
+        self.groupings = None
         self.data = {}
-        self.errorwells = [well for well in errorwells.split(',')]
         self.statistics = {}
         self.time = []
 
     def execute(self) -> Response:
-        collection = self.get_collection() # better name needed
-        self.swapWells()
-        dataset_repository = Repository()
-        dataset = dataset_repository.get_by_id(self.dataset_id)
-        collection = dataset.get_well_collection()
+        cut = self.request.form['cutlength']
+        if cut is None:
+            cut = 0
+        customlabeladdition = self.request.form['customlabel'],
+        self.swaps = buildSwapInputs(self.request.form),
+        self.groupings = buildGroupInputs(self.request.form),
+        self.errorwells = [well for well in self.request.form['errorwells'].split(',')]
 
-
-        for well, wellindex in enumerate(collection):
+        for wellindex, well in enumerate(self.get_collection()):
+            if len(self.swaps[0]) != 0 and self.swaps[well.get_excelheader()]:
+                self.swapWells(well)
+            # if well.get_excelheader() in self.errorwells:
+                #TODO: well['is_valid'] = False
 
             if wellindex < 2:
                 self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
-                print(self.time[:5])
-            well['label'] = well.get_label() + '_' + well.get_group()
+            well['label'] = well.get_label() + '_' + str(well.get_group())
             response = self.processData(well, wellindex)
             if not response.is_success():
                 return Response(False, response.get_message())
@@ -56,29 +52,24 @@ class Processor(AbstractProcessor):
 
 
         # Writer(self.dataset_id, self.time).writebook(self.paths['output'])
-        #
+
         # self.writeStatistics()
 
         return Response(True, 'Successfully processed inflections')
 
-    def swapWells(self):
-        collection = self.get_collection()
-        for well in collection:
-            if self.swaps.get(well.get_excelheader()):
-                collection = self.get_collection()
-                for destwell in collection:
-                    if destwell.get_excelheader() == self.swaps[well.get_excelheader()]:
-                        well.edit_labels(dict(group=destwell.get_group(),
-                                              sample=destwell.get_sample(),
-                                              triplicate=destwell.get_triplicate(),
-                                              label=destwell.get_label(),
-                                              RFUs=destwell.get_rfus()))
-
+    def swapWells(self, originwell):
+        for destwell in self.get_collection():
+            if destwell.get_excelheader() == self.swaps[originwell.get_excelheader()]:
+                originwell.edit_labels(dict(group=destwell.get_group(),
+                                            sample=destwell.get_sample(),
+                                            triplicate=destwell.get_triplicate(),
+                                            label=destwell.get_label(),
+                                            RFUs=destwell.get_rfus()))
 #TODO: Look into making changes to the collection permanent
 
     def processData(self, well, index):
         if well['excelheader'] not in self.errorwells:
-            derivatives = getDerivatives(self, int(index))
+            derivatives = getDerivatives(self, well)
             inflectionList = []
             rfuList = []
             borderList = []
@@ -91,7 +82,7 @@ class Processor(AbstractProcessor):
             else:
                 inflectionList = np.sort(inflectionList)
                 for index, inflectionPoint in enumerate(inflectionList):
-                    rfuList.append(getExpectedValues(self, index, inflectionPoint,
+                    rfuList.append(getExpectedValues(self, well, inflectionPoint,
                                                      borderList[index][0], borderList[index][1]))
             well['inflections'] = inflectionList
             well['inflectionRFUs'] = rfuList
@@ -157,7 +148,7 @@ class Processor(AbstractProcessor):
             for item in self.statistics.keys():
                 line = str(item) + ': ' + str(self.statistics[item]) + '\n'
                 f.write(line)
-    # pass in the dataset id and return the collection
+
     def get_collection(self):
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
