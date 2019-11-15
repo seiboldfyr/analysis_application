@@ -3,6 +3,7 @@ import os
 from flask import flash, current_app
 from statistics import mean, stdev
 
+from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
@@ -13,6 +14,7 @@ from flaskr.filewriter.writer import Writer
 class Processor(AbstractProcessor):
     def __init__(
             self,
+            dataset_id: str,
             paths: dict = None,
             cut: int = 0,
             label: str = '',
@@ -20,70 +22,80 @@ class Processor(AbstractProcessor):
             groupings: dict = None,
             errorwells: [] = None
     ):
+        self.dataset_id = dataset_id
         self.paths = paths
         self.cut = cut
         self.customlabel = label
         self.swaps = swaps
         self.groupings = groupings
-        self.cycle = 27
         self.data = {}
-        self.time = []
-        self.errorwells = errorwells
+        self.errorwells = [well for well in errorwells.split(',')]
         self.statistics = {}
+        self.time = []
 
     def execute(self) -> Response:
-        return Response(True, "Implementing data storage. Functionality coming soon!")
-        self.getData()
-        response = self.processData()
-        flash('Processed to: %s' % self.paths['output'])
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        collection = dataset.get_well_collection()
 
-        Grapher(paths=self.paths,
-                customtitle=self.customlabel,
-                data=self.data,
-                errors=self.errorwells,
-                time=self.time
+        collection = self.swapWells(collection)
+        for wellindex, well in enumerate(collection):
+            if wellindex < 2:
+                self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
+                print(self.time[:5])
+            well['label'] = well.get_label() + '_' + well.get_group()
+            self.processData(well, wellindex)
+
+        # self.getPercentDifferences()
+        if len(self.errorwells) > 0 and self.errorwells[0] != '':
+            flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
+
+        Grapher(dataset_id=self.dataset_id,
+                paths=self.paths,
+                customtitle=self.customlabel
                 ).execute()
 
-        Writer(data=self.data, time=self.time).writebook(self.paths['output'])
+        Writer(self.dataset_id, self.time).writebook(self.paths['output'])
 
         self.writeStatistics()
 
-        return Response(response.is_success(), response.get_message())
+        return Response(True, 'Successfully processed inflections')
 
-    def getData(self) -> {}:
-        rfufilepath = getFile(self, 'RFU')
-        infofilepath = getFile(self, 'INFO')
-        getTriplicateKeys(self, infofilepath, self.groupings)
-        getTriplicateValues(self, rfufilepath)
-        getCycleLength(self, infofilepath, rfufilepath)
+    def swapWells(self, collection):
+        for well in collection:
+            if self.swaps.get(well['excelheader']):
+                for destwell in collection:
+                    if destwell.get_excelheader() == self.swaps[well['excelheader']]:
+                        well.edit_labels(dict(group=destwell.get_group(),
+                                              sample=destwell.get_sample(),
+                                              triplicate=destwell.get_triplicate(),
+                                              label=destwell.get_label(),
+                                              RFUs=destwell.get_rfus()))
+        return collection
 
-    def processData(self) -> Response:
-        message = ''
-        self.errorwells = [well for well in self.errorwells.split(',')]
-        for wellID in self.data.keys():
-            if wellID != 'Time' and self.data[wellID]['ExcelHeader'] not in self.errorwells:
-                derivatives = getDerivatives(self, int(wellID))
-                inflectionList = []
-                rfuList = []
-                borderList = []
-                for dIndex in derivatives.keys():
-                    self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
-                if inflectionList is [] or len(inflectionList) < 4:
-                    self.errorwells.append(wellID)
-                else:
-                    inflectionList = np.sort(inflectionList)
-                    for index, inflectionPoint in enumerate(inflectionList):
-                        rfuList.append(getExpectedValues(self, wellID, inflectionPoint,
-                                                         borderList[index][0], borderList[index][1]))
-                self.data[wellID]['Inflections'] = inflectionList
-                self.data[wellID]['RFUs'] = rfuList
-        self.getPercentDifferences()
-        if len(self.errorwells) > 0 and self.errorwells[0] != '':
-            message = 'Peaks were not found in wells:' + str(self.errorwells) #TODO: concatenate items in string
-        return Response(True, message)
+    def processData(self, well, index):
+        if well['excelheader'] not in self.errorwells:
+            derivatives = getDerivatives(self, int(index))
+            inflectionList = []
+            rfuList = []
+            borderList = []
+            for dIndex in derivatives.keys():
+                self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
+            if inflectionList is [] or len(inflectionList) < 4:
+                well['is_valid'] = False
+            else:
+                inflectionList = np.sort(inflectionList)
+                for index, inflectionPoint in enumerate(inflectionList):
+                    rfuList.append(getExpectedValues(self, index, inflectionPoint,
+                                                     borderList[index][0], borderList[index][1]))
+            well['inflections'] = inflectionList
+            well['inflectionRFUs'] = rfuList
+        else:
+            well['is_valid'] = False
 
     def getInflectionPoints(self, dindex, derivative, inflectionList, borderList):
         peaks, xstart, xend = getPeaks(dindex, derivative)
+        #TODO: improve peak finding to find the single largest, and then the second largest
         if type(peaks[0]) == str:
             return []
         for peakindex, peak in enumerate(peaks):

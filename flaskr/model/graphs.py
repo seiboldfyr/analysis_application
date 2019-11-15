@@ -3,23 +3,24 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 import pandas as pd
+
 from flaskr.model.functions import saveImage, getUnique, getGroupHeaders
+from flaskr.database.dataset_models.repository import Repository
 
 
 class Grapher:
     def __init__(
             self,
+            dataset_id: str,
             paths: dict = None,
             customtitle: str = '',
-            data=None,
-            errors=None,
             time: list = None
     ):
+        self.dataset_id = dataset_id
         self.paths = paths
         self.customtitle = customtitle
-        self.data = data
-        self.errors = errors
         self.time = time
+        self.data = {}
 
     def execute(self):
         self.setGraphSettings()
@@ -28,54 +29,80 @@ class Grapher:
         except OSError:
             pass
 
-        Groups = list(map(lambda d: d[1]['Group'], self.data.items()))
-        Headers = getGroupHeaders(list(map(lambda d: d[1]['Label'], self.data.items())))
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        collection = dataset.get_well_collection()
 
-        outputdf = pd.DataFrame(dict(index=list(self.data.keys()),
-                                     triplicate=[value['Triplicate'] for value in self.data.values()],
-                                     group=[value['Group'] for value in self.data.values()],
-                                     label=[value['Label'] for value in self.data.values()],
-                                     inflection1=[value['Inflections'][0] for value in self.data.values()],
-                                     inflection2=[value['Inflections'][1] if len(value['Inflections']) == 4 else 0
-                                                  for value in self.data.values()],
-                                     inflection3=[value['Inflections'][2] if len(value['Inflections']) == 4 else
-                                                  value['Inflections'][1] if len(value['Inflections']) == 2 else 0
-                                                  for value in self.data.values()],
-                                     inflection4=[value['Inflections'][3] if len(value['Inflections']) == 4 else 0
-                                                  for value in self.data.values()]))
-
-        averagedf = pd.DataFrame(dict(label=[value['Label'] for value in self.data.values()],
-                                     group=[value['Group'] for value in self.data.values()],
-                                     inflection1=[value['Relative Difference'][1][0] if value.get('Relative Difference')
-                                                  else 0 for value in self.data.values()],
-                                     inflection2=[value['Relative Difference'][1][1] if value.get('Relative Difference')
-                                                  else 0 for value in self.data.values()],
-                                     inflection3=[value['Relative Difference'][1][2] if value.get('Relative Difference')
-                                                  else 0 for value in self.data.values()],
-                                     inflection4=[value['Relative Difference'][1][3] if value.get('Relative Difference')
-                                                  else 0 for value in self.data.values()]))
-        averagedf = averagedf.melt(id_vars=['label', 'group'], var_name='inflection')
-        averagedf = averagedf[(averagedf != 'err')]
-        averagedf = averagedf.dropna()
-
+        outputdf = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'inflection1', 'inflection2',
+                                         'inflection3', 'inflection4'])
         datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
-        for well in self.data.keys():
-            tripdf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'value'])
-            tripdf['index'] = [well for i in range(len(self.data[well]['Values']))]
-            tripdf['group'] = [self.data[well]['Group'] for i in range(len(self.data[well]['Values']))]
-            tripdf['triplicate'] = [self.data[well]['Label'] for i in range(len(self.data[well]['Values']))]
-            tripdf['value'] = self.data[well]['Values']
-            tripdf.insert(4, 'time', [t / 60 for t in self.time])
-            datadf = datadf.append(tripdf, sort=True)
+        for wellindex, well in enumerate(collection):
+            #TODO: overhaul graphing
+
+            if len(well.get_inflections()) == 4 and well.is_valid():
+                outputdf.append(dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
+                                     label=well.get_label(), inflection1=well.get_inflections()[0], inflection2=well.get_inflections()[1],
+                                     inflection3=well.get_inflections()[2], inflection4=well.get_inflections()[3]))
+                tripdf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'value'])
+                tripdf['value'] = well.get_rfus()
+                tripdf['index'] = [wellindex for i in range(tripdf['value'])]
+                tripdf['group'] = [int(well.get_group()) for i in range(tripdf['value'])]
+                tripdf['label'] = [well.get_label() for i in range(tripdf['value'])]
+                tripdf.insert(4, 'time', [t / 60 for t in self.time])
+                datadf = datadf.append(tripdf, sort=True)
+
+            self.data[wellindex] = well
+            # TODO: reform here
 
 
-        self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
+        Groups = list(map(lambda d: d[1]['group'], self.data.items()))
+        # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
+
+        # outputdf = pd.DataFrame(dict(index=list(self.data.keys()),
+        #                              triplicate=[value['triplicate'] for value in self.data.values()],
+        #                              group=[value['group'] for value in self.data.values()],
+        #                              label=[value['label'] for value in self.data.values()],
+        #                              inflection1=[value['inflections'][0] for value in self.data.values()],
+        #                              inflection2=[value['inflections'][1] if len(value['inflections']) == 4 else 0
+        #                                           for value in self.data.values()],
+        #                              inflection3=[value['inflections'][2] if len(value['inflections']) == 4 else
+        #                                           value['inflections'][1] if len(value['inflections']) == 2 else 0
+        #                                           for value in self.data.values()],
+        #                              inflection4=[value['inflections'][3] if len(value['inflections']) == 4 else 0
+        #                                           for value in self.data.values()]))
+
+        # averagedf = pd.DataFrame(dict(label=[value['label'] for value in self.data.values()],
+        #                              group=[value['group'] for value in self.data.values()],
+        #                              inflection1=[value['percentdiffs'][1][0] if value.get('percentdiffs')
+        #                                           else 0 for value in self.data.values()],
+        #                              inflection2=[value['percentdiffs'][1][1] if value.get('percentdiffs')
+        #                                           else 0 for value in self.data.values()],
+        #                              inflection3=[value['percentdiffs'][1][2] if value.get('percentdiffs')
+        #                                           else 0 for value in self.data.values()],
+        #                              inflection4=[value['percentdiffs'][1][3] if value.get('percentdiffs')
+        #                                           else 0 for value in self.data.values()]))
+        # averagedf = averagedf.melt(id_vars=['label', 'group'], var_name='inflection')
+        # averagedf = averagedf[(averagedf != 'err')]
+        # averagedf = averagedf.dropna()
+
+        # datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
+        # for well in self.data.keys():
+        #     tripdf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'value'])
+        #     tripdf['index'] = [well for i in range(len(self.data[well]['Values']))]
+        #     tripdf['group'] = [self.data[well]['group'] for i in range(len(self.data[well]['RFUs']))]
+        #     tripdf['triplicate'] = [self.data[well]['label'] for i in range(len(self.data[well]['RFUs']))]
+        #     tripdf['value'] = self.data[well]['RFUs']
+        #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
+        #     datadf = datadf.append(tripdf, sort=True)
+
+
+        # self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
         self.RFUIndividualGraphsByGroup(max(Groups), datadf)
-        self.RFUAverageGraphsByGroup(max(Groups), datadf)
-        self.percentGraphs(max(Groups), averagedf)
+        # self.RFUAverageGraphsByGroup(max(Groups), datadf)
+        # self.percentGraphs(max(Groups), averagedf)
 
-        self.InflectionGraphsByNumber(getUnique(Headers), outputdf)
-        self.RFUAllGraphs(datadf.sort_values(['index']))
+        # self.InflectionGraphsByNumber(getUnique(Headers), outputdf)
+        # self.RFUAllGraphs(datadf.sort_values(['index']))
 
         return
 
@@ -130,7 +157,7 @@ class Grapher:
     def RFUAverageGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
             groupdf = df[df['group'] == group]
-            for triplicate in getUnique([welllabel['Label'] for welllabel in self.data.values()]):
+            for triplicate in getUnique([welllabel['label'] for welllabel in self.data.values()]):
                 if int(triplicate[-1]) == group:
                     subdf = groupdf[groupdf['triplicate'] == triplicate]
                     seaborn.lineplot(subdf['time'], subdf.mean(1), label=triplicate, linewidth=.7)

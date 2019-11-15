@@ -1,7 +1,6 @@
 import pytest
 
-from flaskr import create_app
-from flaskr import db
+from flaskr import create_app, db
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@ import os
 from flask import render_template, redirect, url_for, request, flash, Blueprint, current_app
 from forms import DataInputForm, ExperimentInputForm
 
+from flaskr.database.importprocessor import ImportProcessor
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.filewriter.metadatawriter import WriteMetadata
@@ -30,7 +31,7 @@ def buildSwapInputs(requestinfo):
         if item.startswith('Swap From'):
             if swapdetails.get(requestinfo[item]) is None:
                 swapdetails[requestinfo[item]] = {}
-            swapdetails[requestinfo[item]]['To'] = requestinfo['Swap To ' + str(item[-1])]
+            swapdetails[requestinfo[item]] = requestinfo['Swap To ' + str(item[-1])]
     return swapdetails
 
 
@@ -46,32 +47,36 @@ def search():
 
         folder = request.form['folder']
         filedata = {}
+        fileinfo = {}
         for f in request.files:
             if request.files.get(f).filename.endswith('INFO.xlsx'):
                 filedata['infofile'] = request.files.get(f)
             else:
                 filedata['rfufile'] = request.files.get(f)
-                fileinfo = {}
                 fileinfo['Date'] = filedata['rfufile'].filename[:8]
                 fileinfo['Id'] = filedata['rfufile'].filename[8]
                 fileinfo['Initials'] = filedata['rfufile'].filename[10:12]
 
-        #TODO: Save data to database here
+        processor = ImportProcessor()
+        response = processor.execute(request, fileinfo)
+        if not response.is_success():
+            flash('Error processing the data file')
 
-        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'))
+        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'),
+                               id=response.get_message())
 
     return render_template('home.html')
 
 
-@base_blueprint.route('/manual/<folder>', methods=['GET', 'POST'])
-def manual(folder):
+@base_blueprint.route('/manual/<folder>/<id>', methods=['GET', 'POST'])
+def manual(folder, id):
     input_form = DataInputForm()
-    return render_template('manual.html', form=input_form, folder=folder)
+    return render_template('manual.html', form=input_form, folder=folder, id=id)
 
 
-@base_blueprint.route('/process/<folder>', methods=['GET', 'POST'])
+@base_blueprint.route('/process/<folder>/<id>', methods=['GET', 'POST'])
 #TODO: pass folder and info as json
-def process(folder):
+def process(folder, id):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
         if folder is None:
@@ -86,7 +91,8 @@ def process(folder):
         if len(request.form['cutlength']) == 0:
             cutlength = 0
 
-        response = Processor(paths={'input': folderpath, 'output': outputPath},
+        response = Processor(dataset_id=id,
+                             paths={'input': folderpath, 'output': outputPath},
                              cut=cutlength,
                              label=request.form['customlabel'],
                              swaps=buildSwapInputs(request.form),

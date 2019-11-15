@@ -2,9 +2,9 @@ import os
 from logging.config import dictConfig
 
 from flask import Flask
-from flaskr.framework.model.Io.text_file import TextFile
+from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.blueprint import base_blueprint
-from flaskr.database import db
+from flaskr import db
 from . import framework
 
 dictConfig({
@@ -31,7 +31,8 @@ def create_app(test_config=None):
         UPLOAD_FOLDER=os.path.join(app.instance_path, 'upload'),
         VERSION='2.3',
         DB_HOST='localhost',
-        DB_NAME='dev_fyr_app',
+        DB_NAME='FyrDatabase',
+        MONGO_URI='mongodb+srv://claire@fyrdiagnostics.com:5basicMD@myfirstcluster-uyvei.mongodb.net/FyrDatabase?retryWrites=true',
         DB_PORT=27017,
         APP_USER='test',
         APP_PASSWORD='test'
@@ -58,7 +59,7 @@ def create_app(test_config=None):
 
     # create specific folders
     try:
-        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], TextFile.FOLDER))
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], XLSXFile.FOLDER))
     except OSError:
         pass
 
