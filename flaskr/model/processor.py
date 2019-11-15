@@ -8,7 +8,6 @@ from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
 from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues
-from flaskr.model.graphs import Grapher
 from flaskr.filewriter.writer import Writer
 
 class Processor(AbstractProcessor):
@@ -39,25 +38,26 @@ class Processor(AbstractProcessor):
         collection = dataset.get_well_collection()
 
         collection = self.swapWells(collection)
+        print('1')
+        print(collection)
         for wellindex, well in enumerate(collection):
+            print(wellindex)
             if wellindex < 2:
                 self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
                 print(self.time[:5])
             well['label'] = well.get_label() + '_' + well.get_group()
-            self.processData(well, wellindex)
+            response = self.processData(well, wellindex)
+            if not response.is_succes():
+                return Response(False, response.get_message())
 
         # self.getPercentDifferences()
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
             flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
 
-        Grapher(dataset_id=self.dataset_id,
-                paths=self.paths,
-                customtitle=self.customlabel
-                ).execute()
 
-        Writer(self.dataset_id, self.time).writebook(self.paths['output'])
-
-        self.writeStatistics()
+        # Writer(self.dataset_id, self.time).writebook(self.paths['output'])
+        #
+        # self.writeStatistics()
 
         return Response(True, 'Successfully processed inflections')
 
@@ -80,7 +80,9 @@ class Processor(AbstractProcessor):
             rfuList = []
             borderList = []
             for dIndex in derivatives.keys():
-                self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
+                response = self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
+                if not response.is_success():
+                    return Response(False, response.get_message())
             if inflectionList is [] or len(inflectionList) < 4:
                 well['is_valid'] = False
             else:
@@ -92,12 +94,13 @@ class Processor(AbstractProcessor):
             well['inflectionRFUs'] = rfuList
         else:
             well['is_valid'] = False
+        return Response(True, '')
 
     def getInflectionPoints(self, dindex, derivative, inflectionList, borderList):
         peaks, xstart, xend = getPeaks(dindex, derivative)
         #TODO: improve peak finding to find the single largest, and then the second largest
         if type(peaks[0]) == str:
-            return []
+            return Response(False, 'Error retrieving inflection points')
         for peakindex, peak in enumerate(peaks):
             timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
             leftside = xstart[peakindex]
@@ -105,6 +108,7 @@ class Processor(AbstractProcessor):
             polycoefs = fitPolyEquation(timediff[leftside:rightside], derivative[leftside:rightside])
             inflectionList.append((-polycoefs[1] / (2 * polycoefs[0]))/60)
             borderList.append([leftside, rightside])
+        return Response(True, '')
 
     def getPercentDifferences(self):
         previousgroup = 0

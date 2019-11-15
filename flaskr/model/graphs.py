@@ -1,23 +1,27 @@
 import numpy as np
 import os
-import matplotlib.pyplot as plt
 import seaborn
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 
+from matplotlib import pyplot as plt
 from flaskr.model.functions import saveImage, getUnique, getGroupHeaders
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.framework.model.request.response import Response
+
 
 
 class Grapher:
     def __init__(
             self,
             dataset_id: str,
-            paths: dict = None,
+            path: str = '',
             customtitle: str = '',
             time: list = None
     ):
         self.dataset_id = dataset_id
-        self.paths = paths
+        self.path = path
         self.customtitle = customtitle
         self.time = time
         self.data = {}
@@ -25,7 +29,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(os.path.join(self.paths['output'], 'graphs'))
+            os.mkdir(os.path.join(self.path, 'graphs'))
         except OSError:
             pass
 
@@ -35,6 +39,8 @@ class Grapher:
 
         outputdf = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'inflection1', 'inflection2',
                                          'inflection3', 'inflection4'])
+        Headers = []
+        Groups = []
         datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
         for wellindex, well in enumerate(collection):
             #TODO: overhaul graphing
@@ -43,6 +49,8 @@ class Grapher:
                 outputdf.append(dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
                                      label=well.get_label(), inflection1=well.get_inflections()[0], inflection2=well.get_inflections()[1],
                                      inflection3=well.get_inflections()[2], inflection4=well.get_inflections()[3]))
+                Headers.append(well.get_label())
+                Groups.append(well.get_group())
                 tripdf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'value'])
                 tripdf['value'] = well.get_rfus()
                 tripdf['index'] = [wellindex for i in range(tripdf['value'])]
@@ -55,7 +63,8 @@ class Grapher:
             # TODO: reform here
 
 
-        Groups = list(map(lambda d: d[1]['group'], self.data.items()))
+        print(Groups, Headers)
+        # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
 
         # outputdf = pd.DataFrame(dict(index=list(self.data.keys()),
@@ -95,8 +104,7 @@ class Grapher:
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
 
-
-        # self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
+        self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
         self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
@@ -104,12 +112,13 @@ class Grapher:
         # self.InflectionGraphsByNumber(getUnique(Headers), outputdf)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
 
-        return
+        return Response(True, 'Graphs created successfully')
 
     def InflectionGraphByGroup(self, groups, headers, df):
         for group in range(1, groups+1):
+            fig = plt.figure()
             idg = df.melt(id_vars=['triplicate', 'group', 'label', 'index'], var_name='inflection')
-            idg['inflection'] = idg['inflection'].str.replace(r'inflection', r'').astype('int')
+            # idg['inflection'] = idg['inflection'].str.replace(r'inflection', r'').astype('int')
             subinf = idg[(idg['group'] == group)].sort_values(['index', 'inflection', 'triplicate'])
             indplt = seaborn.swarmplot(x="inflection", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
@@ -133,6 +142,7 @@ class Grapher:
         xaxis = [i + 1 for i in range(numGroups)]
         xaxis = xaxis * int(len(df['index']) / numGroups)
         for inf in range(4):
+            fig = plt.figure()
             indplt = seaborn.swarmplot(x="triplicateIndex", y='inflection' + str(inf + 1), hue="label", data=gd,
                                        marker='o', s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=xaxis)
@@ -148,6 +158,7 @@ class Grapher:
 
     def RFUIndividualGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
+            fig = plt.figure()
             seaborn.lineplot(x='time', y='value', hue='triplicate', units='index', estimator=None, data=df[df['group'] == group],
                              linewidth=.7)
             plt.ylabel('RFU')
@@ -156,6 +167,7 @@ class Grapher:
 
     def RFUAverageGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
+            fig = plt.figure()
             groupdf = df[df['group'] == group]
             for triplicate in getUnique([welllabel['label'] for welllabel in self.data.values()]):
                 if int(triplicate[-1]) == group:
@@ -166,6 +178,7 @@ class Grapher:
             saveImage(self, plt, 'Averages_' + str(group))
 
     def RFUAllGraphs(self, df):
+        fig = plt.figure()
         manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
         seaborn.lineplot(x='time', y='value', hue='group', units='index', estimator=None, data=df,
                          palette=manualcolors[-np.max(df['group']):], linewidth=.7)  # hue='group', units='triplicate'
@@ -175,6 +188,7 @@ class Grapher:
 
     def percentGraphs(self, groups, df):
         for group in range(1, groups+1):
+            fig = plt.figure()
             subpc = df[(df['group'] == group)].sort_values(['inflection'])
             if not subpc.empty:
                 indplt = seaborn.swarmplot(x='label', y="value", hue="label", data=subpc, dodge=True, marker='o',
@@ -192,7 +206,7 @@ class Grapher:
         params = {'legend.fontsize': 5,
                   'legend.loc': 'best',
                   'legend.framealpha': 0.5,
-                  'figure.dpi': 300,
+                  'figure.dpi': 250,
                   'legend.handlelength': .8,
                   'legend.markerscale': .4,
                   'legend.labelspacing': .4,

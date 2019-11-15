@@ -223,10 +223,10 @@ def smooth(a):
 
 
 def saveImage(self, plt, figuretitle):
-    title = os.path.split(self.paths['input'])[1][:13] + '_' + self.customtitle
+    title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
     title = str(title + '_' + figuretitle)
     plt.title(title, fontsize=14)
-    path = os.path.join(self.paths['output'], 'Graphs')
+    path = os.path.join(self.path, 'Graphs')
     strFile = os.path.join(path, title+'.png')
     if os.path.isfile(strFile):
         os.remove(strFile)

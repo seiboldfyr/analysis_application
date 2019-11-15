@@ -6,6 +6,7 @@ from flaskr.database.importprocessor import ImportProcessor
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.filewriter.metadatawriter import WriteMetadata
+from flaskr.model.graphs import Grapher
 
 base_blueprint = Blueprint('', __name__)
 
@@ -100,12 +101,20 @@ def process(folder, id):
                              errorwells=request.form['errorwells']
                              ).execute()
 
-        if response.is_success():
-            flash('%s' % response.get_message(), 'Processed successfully!')
+        if not response.is_success():
+            flash('%s' % response.get_message(), 'error')
             return render_template('process.html', form=input_form)
-        else:
-            flash('%s' % response.get_message(), 'Error processing the file')
+
+        response = Grapher(dataset_id=id,
+                           path=folder,
+                           customtitle=request.form['customlabel']#TODO: include manually changed header here
+                           ).execute()
+        if not response.is_succes():
+            flash('%s' % response.get_message(), 'error')
             return render_template('process.html', form=input_form)
+
+        flash('%s' % response.get_message(), 'success')
+        return render_template('process.html', form=input_form)
 
     return render_template('process.html', form=input_form)
 
