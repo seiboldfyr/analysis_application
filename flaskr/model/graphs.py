@@ -6,10 +6,9 @@ import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
-from flaskr.model.functions import saveImage, getUnique, getGroupHeaders
+from flaskr.model.helpers.functions import saveImage, get_unique
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
-
 
 
 class Grapher:
@@ -44,13 +43,14 @@ class Grapher:
         datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
         for wellindex, well in enumerate(collection):
             #TODO: overhaul graphing
-
+            print(well.get_inflections())
             if len(well.get_inflections()) == 4 and well.is_valid():
                 outputdf.append(dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
                                      label=well.get_label(), inflection1=well.get_inflections()[0], inflection2=well.get_inflections()[1],
                                      inflection3=well.get_inflections()[2], inflection4=well.get_inflections()[3]))
                 Headers.append(well.get_label())
                 Groups.append(well.get_group())
+                print(well.get_label())
                 tripdf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'value'])
                 tripdf['value'] = well.get_rfus()
                 tripdf['index'] = [wellindex for i in range(tripdf['value'])]
@@ -61,9 +61,7 @@ class Grapher:
 
             self.data[wellindex] = well
             # TODO: reform here
-
-
-        print(Groups, Headers)
+        # print(Groups, Headers)
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
 
@@ -104,8 +102,8 @@ class Grapher:
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
 
-        #self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
-        #self.RFUIndividualGraphsByGroup(max(Groups), datadf)
+        # self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
+        # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
 
