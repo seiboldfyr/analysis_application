@@ -44,7 +44,7 @@ class Grapher:
         datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
         for wellindex, well in enumerate(collection):
             #TODO: overhaul graphing
-
+           # print(wellindex)
             if len(well.get_inflections()) == 4 and well.is_valid():
                 outputdf.append(dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
                                      label=well.get_label(), inflection1=well.get_inflections()[0], inflection2=well.get_inflections()[1],
@@ -58,7 +58,9 @@ class Grapher:
                 tripdf['label'] = [well.get_label() for i in range(tripdf['value'])]
                 tripdf.insert(4, 'time', [t / 60 for t in self.time])
                 datadf = datadf.append(tripdf, sort=True)
+                
 
+            print(well.get_label())
             self.data[wellindex] = well
             # TODO: reform here
 
