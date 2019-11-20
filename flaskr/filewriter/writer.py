@@ -2,55 +2,58 @@ import xlsxwriter
 import os
 from flaskr.filewriter.helper import addTimeMeasurements
 
+from flaskr.database.dataset_models.repository import Repository
+
 
 class Writer:
-    def __init__(
-            self,
-            data: {} = None,
+    def __init__(self,
+            dataset_id: str,
             time: {} = None):
-        self.data = data
+        self.dataset_id = dataset_id
         self.time = time
         self.workbook = None
 
     def writebook(self, path):
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        collection = dataset.get_well_collection()
+
         self.workbook = xlsxwriter.Workbook(os.path.join(path, 'OutputData.xlsx'), {'nan_inf_to_errors': True})
-        self.writeInflectionData()
+        self.writeInflectionData(collection)
         # TODO: write average inflections
-        self.writeRawData()
+        self.writeRawData(collection)
         # TODO: write average raw data
         # TODO: write corrected data
         self.workbook.close()
 
 
-    def writeInflectionData(self):
+    def writeInflectionData(self, collection):
         sheet = self.workbook.add_worksheet('Inflections')
         for row, label in enumerate(createLabels()):
             sheet.write(0, row + 1, label)
 
-        for row, key in enumerate(self.data.keys()):
+        for row, well in enumerate(collection):
             col = 0
-            sheet.write(row + 1, col, self.data[key]['Label'])
-            for inflection in self.data[key]['Inflections']:
+            sheet.write(row + 1, col, well.get_label())
+            for inflection in well.get_inflections():
                 col += 1
                 sheet.write(row, col, inflection)
-            for rfu in self.data[key]['RFUs']:
+            for rfu in well.get_inflectionrfus():
                 col += 1
                 sheet.write(row, col, rfu[0])
-            if not self.data[key].get('Relative Difference'):
+            if len(well.get_percentdiffs()) == 0:
                 continue
-            for reldiff in self.data[key]['Relative Difference'][1]:
+            for reldiff in well.get_percentdiffs():
                 col += 1
                 sheet.write(row, col, reldiff)
 
-    def writeRawData(self):
+    def writeRawData(self, collection):
         sheet = self.workbook.add_worksheet('Raw RFU')
         sheet = addTimeMeasurements(sheet, self.time)
-        for col, key in enumerate(self.data.keys()):
-            if key == 'Time':
-                continue
+        for col, well in enumerate(collection):
             row = 0
-            sheet.write(row, col, self.data[key]['Label'])  # header
-            for value in self.data[key]['Values']:
+            sheet.write(row, col, well.get_label)  # header
+            for value in well.get_rfus:
                 row += 1
                 sheet.write(row, col, value)
 
