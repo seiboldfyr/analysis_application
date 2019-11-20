@@ -24,3 +24,11 @@ class MethodNotImplemented(Exception):
 
 class InvalidArgument(Exception):
     pass
+
+
+class MissingMeasures(Exception):
+    pass
+
+
+class InvalidMeasurement(Exception):
+    pass

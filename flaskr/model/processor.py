@@ -1,140 +1,122 @@
-import numpy as np
-import os
-from flask import flash, current_app
-from statistics import mean, stdev
+from flask import flash
+import sys
 
+from flaskr.database.measurement_models.manager import Manager as MeasurementManager
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
-from flaskr.model.functions import getFile, getTriplicateKeys, getTriplicateValues, getCycleLength, fitPolyEquation
-from flaskr.model.functions import getDerivatives, getPeaks, getExpectedValues
-from flaskr.model.graphs import Grapher
-from flaskr.filewriter.writer import Writer
+from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection
+from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values, get_derivatives, \
+    get_percent_difference
+from flaskr.model.helpers.peakfunctions import get_peaks
+
 
 class Processor(AbstractProcessor):
     def __init__(
-            self,
-            paths: dict = None,
-            cut: int = 0,
-            label: str = '',
-            swaps: dict = None,
-            groupings: dict = None,
-            errorwells: [] = None
+            self, request,
+            dataset_id: str
     ):
-        self.paths = paths
-        self.cut = cut
-        self.customlabel = label
-        self.swaps = swaps
-        self.groupings = groupings
-        self.cycle = 27
+        self.request = request
+        self.dataset_id = dataset_id
+        self.swaps = {}
+        self.groupings = None
         self.data = {}
-        self.time = []
-        self.errorwells = errorwells
         self.statistics = {}
+        self.time = []
+        self.control = []
+        self.controlgroup = int
 
     def execute(self) -> Response:
-        return Response(True, "Implementing data storage. Functionality coming soon!")
-        self.getData()
-        response = self.processData()
-        flash('Processed to: %s' % self.paths['output'])
+        self.measurement_manager = MeasurementManager()
 
-        Grapher(paths=self.paths,
-                customtitle=self.customlabel,
-                data=self.data,
-                errors=self.errorwells,
-                time=self.time
-                ).execute()
+        cut = self.request.form['cutlength']
+        if cut is None:
+            cut = 0
+        customlabeladdition = self.request.form['customlabel'] #TODO: move this to wherever we use it
+        build_swap_inputs(self)
+        build_group_inputs(self)
+        self.errorwells = [well for well in self.request.form['errorwells'].split(',')]
 
-        Writer(data=self.data, time=self.time).writebook(self.paths['output'])
+        for wellindex, well in enumerate(get_collection(self)):
 
-        self.writeStatistics()
+            #swap wells
+            if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
+                self.swapWells(well)
 
-        return Response(response.is_success(), response.get_message())
+            #set well status to invalid if reported
+            if well.get_excelheader() in self.errorwells:
+                well['is_valid'] = False
+                self.measurement_manager.update(well)
 
-    def getData(self) -> {}:
-        rfufilepath = getFile(self, 'RFU')
-        infofilepath = getFile(self, 'INFO')
-        getTriplicateKeys(self, infofilepath, self.groupings)
-        getTriplicateValues(self, rfufilepath)
-        getCycleLength(self, infofilepath, rfufilepath)
+            #build time list from first well
+            if wellindex < 2:
+                self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
 
-    def processData(self) -> Response:
-        message = ''
-        self.errorwells = [well for well in self.errorwells.split(',')]
-        for wellID in self.data.keys():
-            if wellID != 'Time' and self.data[wellID]['ExcelHeader'] not in self.errorwells:
-                derivatives = getDerivatives(self, int(wellID))
-                inflectionList = []
-                rfuList = []
-                borderList = []
-                for dIndex in derivatives.keys():
-                    self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList, borderList)
-                if inflectionList is [] or len(inflectionList) < 4:
-                    self.errorwells.append(wellID)
-                else:
-                    inflectionList = np.sort(inflectionList)
-                    for index, inflectionPoint in enumerate(inflectionList):
-                        rfuList.append(getExpectedValues(self, wellID, inflectionPoint,
-                                                         borderList[index][0], borderList[index][1]))
-                self.data[wellID]['Inflections'] = inflectionList
-                self.data[wellID]['RFUs'] = rfuList
-        self.getPercentDifferences()
+            if well.get_label()[-2] != "_":
+                well['label'] = well.get_label() + '_' + str(well.get_group())
+
+            response = self.processData(well)
+
+            if not response.is_success():
+                return Response(False, response.get_message())
+
+        # todo: Writer(self.dataset_id, self.time).writebook(self.paths['output'])
+        # todo: self.writeStatistics()
+
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
-            message = 'Peaks were not found in wells:' + str(self.errorwells) #TODO: concatenate items in string
-        return Response(True, message)
+            flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
+        return Response(True, 'Successfully processed inflections')
 
-    def getInflectionPoints(self, dindex, derivative, inflectionList, borderList):
-        peaks, xstart, xend = getPeaks(dindex, derivative)
+    def swapWells(self, originwell):
+        for destwell in self.get_collection():
+            if destwell.get_excelheader() == self.swaps[originwell.get_excelheader()]:
+                originwell.edit_labels(dict(group=destwell.get_group(),
+                                            sample=destwell.get_sample(),
+                                            triplicate=destwell.get_triplicate(),
+                                            label=destwell.get_label(),
+                                            RFUs=destwell.get_rfus()))
+                self.measurement_manager.update(originwell)
+
+    def processData(self, well):
+        if well['excelheader'] not in self.errorwells:
+            derivatives = get_derivatives(well)
+            inflectionList = {} #
+            rfuList = []
+            for dIndex in derivatives.keys():
+                response = self.getInflectionPoints(dIndex, derivatives[dIndex], inflectionList)
+                if not response.is_success():
+                    return Response(False, response.get_message())
+            if inflectionList is [] or len(inflectionList) < 4:
+                well['is_valid'] = False
+            else:
+                inflectionList = dict(sorted(inflectionList.items()))
+                for index, key in enumerate(inflectionList):
+                    rfuList.append(get_expected_values(self, well, key, inflectionList[key])[0])
+            well['inflections'] = list(inflectionList.keys())
+            well['inflectionRFUs'] = list(rfuList)
+            if well.get_group() != self.controlgroup:
+                self.controlgroup = well.get_group()
+                self.control = well['inflections']
+            well['percentdiffs'] = get_percent_difference(self, well['inflections'])
+        else:
+            well['is_valid'] = False
+        self.measurement_manager.update(well)
+        return Response(True, '')
+
+
+    def getInflectionPoints(self, dindex, derivative, inflectionList):
+        peaks, xstarts, xends = get_peaks(dindex, derivative)
+        #TODO: Move this to it's own class
+        #TODO: improve peak finding to find the single largest, and then the second largest
         if type(peaks[0]) == str:
-            return []
+            return Response(False, 'Error retrieving inflection points')
         for peakindex, peak in enumerate(peaks):
             timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
-            leftside = xstart[peakindex]
-            rightside = min([xend[peakindex], len(derivative), len(timediff)])
-            polycoefs = fitPolyEquation(timediff[leftside:rightside], derivative[leftside:rightside])
-            inflectionList.append((-polycoefs[1] / (2 * polycoefs[0]))/60)
-            borderList.append([leftside, rightside])
+            leftside = xstarts[peakindex]
+            rightside = min([xends[peakindex], len(derivative), len(timediff)])
+            polycoefs = fit_poly_equation(timediff[leftside:rightside], derivative[leftside:rightside])
+            inflectionList[(-polycoefs[1] / (2 * polycoefs[0]))/60] = dict(left=leftside, right=rightside)
+        return Response(True, '')
 
-    def getPercentDifferences(self):
-        previousgroup = 0
-        control = [0]
-        for triplicate in sorted(self.data.items(), key=lambda x: x[1]['Triplicate']):
-            triplicateGroup = []
-            for well in self.data.keys():
-                if self.data[well]['ExcelHeader'] not in self.errorwells and self.data[well]['Triplicate'] == triplicate[1]['Triplicate']:
-                    wellinflections = self.data[well]['Inflections']
-                    if len(wellinflections) != 4:
-                        current_app.logger.info('Only %s inflections found in well: %s', str(len(wellinflections)), str(well))
-                        continue
-                    triplicateGroup.append(wellinflections)
-            if len(triplicateGroup) == 0:
-                continue
-            tripAverage = np.mean(triplicateGroup, axis=0)
-            if triplicate[1]['Group'] != previousgroup:
-                control = tripAverage
-                previousgroup = triplicate[1]['Group']
-            if tripAverage.all() != 0 and control.all() != 0:
-                relativeDifference = [abs(a - b) / ((a + b) / 2) for a, b in zip(tripAverage, control)]
-                relativeDifference = [element * 100 for element in relativeDifference]
-            else:
-                relativeDifference = 'err'
-            individualDifference = [abs(a - b) / ((a + b) / 2) for a, b in zip(triplicate[1]['Inflections'], control)]
-            self.data[triplicate[0]]['Relative Difference'] = [individualDifference, relativeDifference]
 
-        self.statistics['StDev Relative Difference for Inflection 1'] = \
-            stdev([wellvalue['Relative Difference'][0][0] for wellvalue in self.data.values()
-                   if wellvalue.get('Relative Difference')])
-        self.statistics['StDev Relative Difference for Inflection 2,3,4'] = \
-            stdev([mean(wellvalue['Relative Difference'][0][1:]) for wellvalue in self.data.values()
-                   if wellvalue.get('Relative Difference')])
-        self.statistics['StDev Relative Difference for all'] = \
-            stdev([mean(wellvalue['Relative Difference'][0]) for wellvalue in self.data.values()
-                   if wellvalue.get('Relative Difference')])
 
-    def writeStatistics(self):
-        with open(os.path.join(self.paths['output'], 'metadata.txt'), 'a') as f:
-            f.write('\n')
-            f.write("Additional Statistics: ")
-            f.write('\n')
-            for item in self.statistics.keys():
-                line = str(item) + ': ' + str(self.statistics[item]) + '\n'
-                f.write(line)
+
