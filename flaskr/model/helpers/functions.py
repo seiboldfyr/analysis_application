@@ -8,13 +8,16 @@ def get_unique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
 
+def get_unique_group(keylist):
+    temp = [item[-1] for item in keylist]
+    index = np.unique(temp, return_index=True)[1]
+    return [keylist[k] for k in index]
+
 
 def saveImage(self, plt, figuretitle):
-    title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
-    title = str(title + '_' + figuretitle)
-    plt.title(title, fontsize=14)
-    path = os.path.join(self.path, 'Graphs')
-    strFile = os.path.join(path, title+'.png')
+    plt.title(figuretitle, fontsize=14)
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'Graphs')
+    strFile = os.path.join(path, figuretitle + '.png')
     if os.path.isfile(strFile):
         os.remove(strFile)
     plt.savefig(strFile)
