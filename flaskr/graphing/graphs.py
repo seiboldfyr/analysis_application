@@ -3,11 +3,12 @@ import os
 import seaborn
 import sys
 import pandas as pd
+from flask import current_app
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
-from flaskr.model.helpers.functions import saveImage, get_unique
+from flaskr.model.helpers.functions import saveImage, get_unique_group
 from flaskr.model.helpers.buildfunctions import get_collection
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
@@ -30,7 +31,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(os.path.join(self.path, 'graphs'))
+            os.mkdir(os.path.join(current_app.config['UPLOAD_FOLDER'], 'graphs'))
         except OSError:
             pass
 
@@ -47,6 +48,7 @@ class Grapher:
                 base['variable'] = "Inflection " + str(idx)
                 base['value'] = item
                 df = df.append(base, ignore_index=True)
+                """
             for idx, item in enumerate(well.get_inflectionrfus()):
                 base['variable'] = "Inflection RFU " + str(idx)
                 base['value'] = item
@@ -55,10 +57,9 @@ class Grapher:
                 base['variable'] = "Percent Diff " + str(idx)
                 base['value'] = item
                 df = df.append(base, ignore_index=True)
+                """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
-
-        print(df.head(10))
 
         # TODO: reform here
 
@@ -104,8 +105,7 @@ class Grapher:
         #     tripdf['value'] = self.data[well]['RFUs']
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
-
-        # self.InflectionGraphByGroup(max(Groups), getUnique(Headers), outputdf)
+        self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
@@ -117,11 +117,8 @@ class Grapher:
 
     def InflectionGraphByGroup(self, groups, headers, df):
         for group in range(1, groups+1):
-            fig = plt.figure()
-            idg = df.melt(id_vars=['triplicate', 'group', 'label', 'index'], var_name='inflection')
-            # idg['inflection'] = idg['inflection'].str.replace(r'inflection', r'').astype('int')
-            subinf = idg[(idg['group'] == group)].sort_values(['index', 'inflection', 'triplicate'])
-            indplt = seaborn.swarmplot(x="inflection", y="value", hue="label", data=subinf, dodge=True, marker='o',
+            subinf = df[(df['group'] == group)].sort_values(['index', 'triplicate'])
+            indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=['Inflection 1', 'Inflection 2', 'Inflection 3', 'Inflection 4'])
             box = plt.gca().get_position()
