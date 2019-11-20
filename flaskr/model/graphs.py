@@ -56,12 +56,6 @@ class Grapher:
             Headers.append(well.get_label())
             Groups.append(well.get_group())
 
-        print(df.head(10))
-
-        seaborn.swarmplot(x="label", y="value", hue="triplicate", data=df[df['variable'] == 'Inflection 0'],
-                          dodge=True, marker='o', s=2.6, edgecolor='black', linewidth=.6)
-        saveImage(self, plt, "test")
-
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))

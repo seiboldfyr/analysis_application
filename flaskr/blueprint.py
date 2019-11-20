@@ -78,8 +78,8 @@ def process(id):
             flash('%s' % response.get_message(), 'error')
             return render_template('process.html', form=input_form)
 
-        flash('%s' % response.get_message(), 'success')
-        return render_template('process.html', form=input_form)
+        # flash('%s' % response.get_message(), 'success')
+        return render_template('graph.html', graph=response.get_message())
 
     return render_template('process.html', form=input_form)
 
