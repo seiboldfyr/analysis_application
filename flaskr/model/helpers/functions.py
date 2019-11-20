@@ -3,90 +3,10 @@ import numpy as np
 from flask import current_app, flash
 from statistics import mean, stdev
 
-# def getGroupHeaders(triplicateHeaders):
-#     headers = []
-#     previousgroup = 0
-#     for h in triplicateHeaders:
-#         if int(h[-1]) > previousgroup:
-#             headers.append(h[7:])
-#             previousgroup = int(h[-1])
-#     return headers
-
 
 def get_unique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
-
-
-# def getTriplicateKeys(self, path, inputinfo) -> {}:
-#     labelraw = pd.ExcelFile(path)
-#     labelsheet = labelraw.parse('0')
-#     label = labelsheet.values
-#     if len(inputinfo) == 0:
-#         control = label[0, 5]
-#         group = 1
-#         prevrow = 0
-#         triplicate = -1
-#         previoussample = ''
-#         for row in range(0, len(label[:, 1])):
-#             usedrow = row
-#             if label[row, 5] == control and row > 6 and row > prevrow + 6:
-#                 group += 1
-#                 prevrow = row
-#             if label[row, 1] in self.swaps.keys():
-#                 usedrow = replacementIndex(self, row, label[:, 1])
-#             sample = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6])
-#             header = sample + '_' + str(group)
-#             triplicate = getTriplicateNumber(triplicate, sample, previoussample)
-#             previoussample = sample
-#             addHeader(self, usedrow, header, label[usedrow, 1], group, triplicate, sample)
-#     else:
-#         row = 0
-#         triplicate = -1
-#         previoussample = ''
-#         for group in inputinfo.keys():
-#             groupsize = float(inputinfo[group]['Group Wells']) * float(inputinfo[group]['Group Samples'])
-#             if groupsize % 1 != 0:
-#                 flash('possible error with wells/samples', 'error')  # TODO: validator
-#             grouplabel = inputinfo[group]['Group Label']
-#             for well in range(int(groupsize)):
-#                 row += 1
-#                 usedrow = row
-#                 if label[row, 1] in self.swaps.keys():
-#                     usedrow = replacementIndex(self, row, label[:, 1])
-#                 if row > len(label[:, 1]):
-#                     flash('The wells and samples added up to be more than the % s wells' % len(label[:, 1]), 'error')
-#                 sample = str(label[usedrow, 5]) + '_' + str(label[usedrow, 6])
-#                 header = sample + '_' + grouplabel + '_' + str(group)
-#                 triplicate = getTriplicateNumber(triplicate, sample, previoussample)
-#                 previoussample = sample
-#                 addHeader(self, usedrow, header, label[usedrow, 1], group, triplicate, sample)
-
-
-# def getTriplicateNumber(triplicate, sample, previoussample):
-#     if sample != previoussample:
-#         return triplicate + 1
-#     return triplicate
-
-
-# def replacementIndex(self, row, labels):
-#     fromLabel = labels[row]
-#     for searchidx, search in enumerate(labels):
-#         if search == self.swaps[fromLabel]['To']:
-#             return searchidx
-
-#
-# def addHeader(self, row, header, excelindex, group, triplicate, sample):
-#     self.data[row] = {'Label': header, 'ExcelHeader': excelindex, 'Group': group, 'Triplicate': triplicate,
-#                       'Sample': sample, 'Values': []}
-
-
-# def ind2sub(array_shape, ind):
-#     ind[ind < 0] = -1
-#     ind[ind >= array_shape[0]*array_shape[1]] = -1
-#     rows = (ind.astype('int') / array_shape[1])
-#     cols = ind % array_shape[1]
-#     return rows, cols
 
 
 def saveImage(self, plt, figuretitle):

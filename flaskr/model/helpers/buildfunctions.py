@@ -1,3 +1,4 @@
+from flaskr.database.dataset_models.repository import Repository
 
 
 def build_swap_inputs(self):
@@ -12,3 +13,9 @@ def build_group_inputs(self):
             if self.groupings.get(str(item[-1])) is None:
                 self.groupings[str(item[-1])] = {}
             self.groupings[item[-1]][item[:-2]] = self.request.form[item]
+
+
+def get_collection(self):
+    dataset_repository = Repository()
+    dataset = dataset_repository.get_by_id(self.dataset_id)
+    return dataset.get_well_collection()

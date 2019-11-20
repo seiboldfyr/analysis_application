@@ -2,10 +2,9 @@ from flask import flash
 import sys
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
-from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
-from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs
+from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection
 from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values, get_derivatives, \
     get_percent_difference
 from flaskr.model.helpers.peakfunctions import get_peaks
@@ -37,7 +36,7 @@ class Processor(AbstractProcessor):
         build_group_inputs(self)
         self.errorwells = [well for well in self.request.form['errorwells'].split(',')]
 
-        for wellindex, well in enumerate(self.get_collection()):
+        for wellindex, well in enumerate(get_collection(self)):
 
             #swap wells
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
@@ -52,7 +51,8 @@ class Processor(AbstractProcessor):
             if wellindex < 2:
                 self.time = [n*well.get_cycle() for n in range(len(well.get_rfus()))]
 
-            well['label'] = well.get_label() + '_' + str(well.get_group())
+            if well.get_label()[-2] != "_":
+                well['label'] = well.get_label() + '_' + str(well.get_group())
 
             response = self.processData(well)
 
@@ -117,9 +117,6 @@ class Processor(AbstractProcessor):
             inflectionList[(-polycoefs[1] / (2 * polycoefs[0]))/60] = dict(left=leftside, right=rightside)
         return Response(True, '')
 
-    def get_collection(self):
-        dataset_repository = Repository()
-        dataset = dataset_repository.get_by_id(self.dataset_id)
-        return dataset.get_well_collection()
+
 
 
