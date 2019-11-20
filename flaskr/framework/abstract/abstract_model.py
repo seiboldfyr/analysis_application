@@ -40,3 +40,4 @@ class AbstractModel:
         data = self.get_data()
         data['_id'] = str(data['_id'])
         return json.dumps(data)
+

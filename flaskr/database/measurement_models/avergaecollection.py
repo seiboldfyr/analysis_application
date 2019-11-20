@@ -24,3 +24,4 @@ class Collection(AbstractCollection):
     def average(self, item):
         return np.nanmean(item)
 
+#TODO: this doesn't work... yet

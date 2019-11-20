@@ -1,11 +1,11 @@
 {% extends "master.html" %}
 
-{% block title %}Graphing Tool{% endblock %}
+{% block title %}Graphs{% endblock %}
 
 {% block body %}
 
 <br><br>
-<a href="{{ url_for('index') }}"><button>Home</button></a>
+<a href="{{ url_for('process', id=id) }}"><button>Back</button></a>
 
 {% endblock %}
 

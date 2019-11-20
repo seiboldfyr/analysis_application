@@ -10,11 +10,12 @@ def get_unique(keylist):
 
 
 def saveImage(self, plt, figuretitle):
-    title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
-    title = str(title + '_' + figuretitle)
-    plt.title(title, fontsize=14)
-    path = os.path.join(self.path, 'Graphs')
-    strFile = os.path.join(path, title+'.png')
+    #TODO: include manually built label here
+    # title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
+    # title = str(title + '_' + figuretitle)
+    plt.title(figuretitle, fontsize=14)
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'Graphs')
+    strFile = os.path.join(path, figuretitle+'.png')
     if os.path.isfile(strFile):
         os.remove(strFile)
     plt.savefig(strFile)

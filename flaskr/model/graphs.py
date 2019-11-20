@@ -6,10 +6,10 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 
+from flask import current_app
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique
 from flaskr.model.helpers.buildfunctions import get_collection
-from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 
 
@@ -17,12 +17,10 @@ class Grapher:
     def __init__(
             self,
             dataset_id: str,
-            path: str = '',
             customtitle: str = '',
             time: list = None
     ):
         self.dataset_id = dataset_id
-        self.path = path
         self.customtitle = customtitle
         self.time = time
         self.data = {}
@@ -30,7 +28,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(os.path.join(self.path, 'graphs'))
+            os.mkdir(os.path.join(current_app.config['UPLOAD_FOLDER'], 'graphs'))
         except OSError:
             pass
 
@@ -60,9 +58,9 @@ class Grapher:
 
         print(df.head(10))
 
-        # TODO: reform here
-
-
+        seaborn.swarmplot(x="label", y="value", hue="triplicate", data=df[df['variable'] == 'Inflection 0'],
+                          dodge=True, marker='o', s=2.6, edgecolor='black', linewidth=.6)
+        saveImage(self, plt, "test")
 
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))

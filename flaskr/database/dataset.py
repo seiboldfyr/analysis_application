@@ -7,6 +7,7 @@ class Dataset(AbstractModel):
 
     def __init__(self, name: str = ''):
         super().__init__()
+        # TODO: add as attributes: date, id, initials
         self['name'] = name
 
     def get_name(self) -> str:
@@ -24,3 +25,4 @@ class Dataset(AbstractModel):
             return self['measure_count']
         except KeyError:
             return -1
+

@@ -36,9 +36,9 @@
 {% block buttons %}
 <br>
 
-<a href="{{ url_for('.manual', folder=folder, id=id) }}"><button>Manually Enter File Info</button></a>
+<a href="{{ url_for('.manual', id=id) }}"><button>Manually Enter File Info</button></a>
 
-<a href="{{ url_for('.process', folder=folder, id=id) }}"><button>Process Data</button></a>
+<a href="{{ url_for('.process', id=id) }}"><button>Process Data</button></a>
 
 <br>
 {% endblock %}

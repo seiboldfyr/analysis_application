@@ -26,7 +26,6 @@ def search():
             flash('%s' % result.get_message(), 'error')
             return redirect(url_for('home'))
 
-        folder = request.form['folder']
         filedata = {}
         fileinfo = {}
         for f in request.files:
@@ -43,30 +42,26 @@ def search():
         if not response.is_success():
             flash('Error processing the data file')
 
-        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'),
-                               id=response.get_message())
+        return render_template('search.html', result=fileinfo, id=response.get_message())
 
     return render_template('home.html')
 
 
-@base_blueprint.route('/manual/<folder>/<id>', methods=['GET', 'POST'])
-def manual(folder, id):
+@base_blueprint.route('/manual/<id>', methods=['GET', 'POST'])
+def manual( id):
     input_form = DataInputForm()
-    return render_template('manual.html', form=input_form, folder=folder, id=id)
+    return render_template('manual.html', form=input_form, id=id)
 
 
-@base_blueprint.route('/process/<folder>/<id>', methods=['GET', 'POST'])
-#TODO: pass folder and info as json
-def process(folder, id):
+@base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
+def process(id):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
-        if folder is None:
-            flash('error', 'No corrected information was found')
+        if id is None:
+            flash('error', 'Error. No dataset information was found')
             return render_template('home.html')
 
-        folderpath = folder.replace('+', os.sep)
-
-        # outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
+        # outputPath = WriteMetadata(data=request.form).execute()
 
         response = Processor(request,
                              dataset_id=id).execute()
@@ -77,7 +72,6 @@ def process(folder, id):
         flash('Processed successfully')
 
         response = Grapher(dataset_id=id,
-                           path=folder,
                            customtitle=request.form['customlabel']#TODO: include manually changed header here
                            ).execute()
         if not response.is_success():
@@ -92,7 +86,7 @@ def process(folder, id):
 
 @base_blueprint.route('/runstats', methods=['GET', 'POST'])
 def runbatch():
-    #TODO: start at top folder, search all for valid data files
-    #get inflections from output and create graphs
+    #TODO: batch processing
+    #Create graphs and a file of summary stats
     return render_template('stats.html')
 
