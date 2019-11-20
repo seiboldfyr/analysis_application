@@ -30,3 +30,12 @@ class Manager:
 
         repository.bulk_save(batch)
         self.buffer.clear()
+
+    def update(self, measurement: Measurement):
+        repository = Repository()
+        if not measurement.is_valid():
+            raise InvalidMeasurement(
+                'Found invalid measurement in batch: %s' % str(measurement)
+            )
+        repository.save(measurement)
+        self.buffer.clear()
