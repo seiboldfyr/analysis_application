@@ -34,7 +34,6 @@ def create_app(test_config=None):
         DB_NAME='fyr_dev',
         DB_PORT=27017
     )
-    # print(app.config)
 
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
