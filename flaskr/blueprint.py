@@ -1,5 +1,6 @@
 import os
-from flask import render_template, redirect, url_for, request, flash, Blueprint
+
+from flask import render_template, redirect, url_for, current_app, request, flash, Blueprint, send_from_directory
 from forms import DataInputForm, ExperimentInputForm
 
 from flaskr.database.importprocessor import ImportProcessor
@@ -7,7 +8,7 @@ from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.graphing.graphs import Grapher
 
-base_blueprint = Blueprint('', __name__)
+base_blueprint = Blueprint('', __name__, template_folder='templates')
 
 
 @base_blueprint.route('/')
@@ -25,7 +26,6 @@ def search():
             flash('%s' % result.get_message(), 'error')
             return redirect(url_for('home'))
 
-        folder = request.form['folder']
         filedata = {}
         fileinfo = {}
         for f in request.files:
@@ -42,56 +42,57 @@ def search():
         if not response.is_success():
             flash('Error processing the data file')
 
-        return render_template('search.html', result=fileinfo, folder=folder.replace(os.sep, '+'),
-                               id=response.get_message())
+        return render_template('search.html', result=fileinfo, id=response.get_message())
 
     return render_template('home.html')
 
 
-@base_blueprint.route('/manual/<folder>/<id>', methods=['GET', 'POST'])
-def manual(folder, id):
+@base_blueprint.route('/manual/<id>', methods=['GET', 'POST'])
+def manual( id):
     input_form = DataInputForm()
-    return render_template('manual.html', form=input_form, folder=folder, id=id)
+    return render_template('manual.html', form=input_form, id=id)
 
 
-@base_blueprint.route('/process/<folder>/<id>', methods=['GET', 'POST'])
-#TODO: pass folder and info as json
-def process(folder, id):
+@base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
+def process(id):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
-        if folder is None:
-            flash('error', 'No corrected information was found')
+        if id is None:
+            flash('error', 'Error. No dataset information was found')
             return render_template('home.html')
 
-        folderpath = folder.replace('+', os.sep)
-
-        # outputPath = WriteMetadata(path=folderpath, data=request.form).execute()
+        # outputPath = WriteMetadata(data=request.form).execute()
 
         response = Processor(request,
                              dataset_id=id).execute()
 
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
-            return render_template('process.html', form=input_form)
+            return render_template('process.html', form=input_form, id=id)
         flash('Processed successfully')
 
         response = Grapher(dataset_id=id,
-                           path=folder,
                            customtitle=request.form['customlabel']#TODO: include manually changed header here
                            ).execute()
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
-            return render_template('process.html', form=input_form)
+            return render_template('process.html', form=input_form, id=id)
 
         flash('%s' % response.get_message(), 'success')
-        return render_template('process.html', form=input_form)
+        return render_template('process.html', form=input_form, id=id)
 
-    return render_template('process.html', form=input_form)
+    return render_template('process.html', form=input_form, id=id)
+
+
+@base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
+def graphs(id):
+    path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
+    graphs = [os.path.sep + os.path.join("static", "images", "graphs", item) for item in os.listdir(path)]
+    return render_template('graphs.html', id=id, graphs=graphs)
 
 
 @base_blueprint.route('/runstats', methods=['GET', 'POST'])
 def runbatch():
-    #TODO: start at top folder, search all for valid data files
-    #get inflections from output and create graphs
+    #TODO: batch processing
+    #Create graphs and a file of summary stats
     return render_template('stats.html')
-

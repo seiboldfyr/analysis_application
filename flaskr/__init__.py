@@ -29,12 +29,11 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         UPLOAD_FOLDER=os.path.join(app.instance_path, 'upload'),
+        IMAGE_FOLDER=os.path.join(app.static_folder, 'images'),
         VERSION='2.3',
         DB_HOST='localhost',
         DB_NAME='FyrDatabase',
-        DB_PORT=27017,
-        APP_USER='test',
-        APP_PASSWORD='test'
+        DB_PORT=27017
     )
 
     if test_config is None:
@@ -53,6 +52,11 @@ def create_app(test_config=None):
     # create the upload folder
     try:
         os.makedirs(app.config['UPLOAD_FOLDER'])
+    except OSError:
+        pass
+
+    try:
+        os.makedirs(app.config['IMAGE_FOLDER'])
     except OSError:
         pass
 

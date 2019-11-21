@@ -7,10 +7,11 @@ class Dataset(AbstractModel):
 
     def __init__(self, name: str = ''):
         super().__init__()
-        self['name'] = name
+        # TODO: add as attributes: date, id, initials
+        self['_id'] = name
 
     def get_name(self) -> str:
-        return self['name']
+        return self['_id']
 
     def get_well_collection(self) -> MeasurementCollection:
         if self.measurement_collection is None:
@@ -24,3 +25,4 @@ class Dataset(AbstractModel):
             return self['measure_count']
         except KeyError:
             return -1
+
