@@ -25,8 +25,8 @@ class ImportValidator(AbstractValidator):
             if not checkname(file).is_success():
                 return Response(False, checkname(file).get_message())
 
-        if request.form['folder'] is None:
-            return Response(False, 'Output location is required')
+        # if request.form['folder'] is None:
+        #     return Response(False, 'Output location is required')
 
         return Response(True)
 

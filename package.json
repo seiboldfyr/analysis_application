@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "2.3",
+  "version": "2",
   "description": "An application that provides processing, analysis, and graphing tools for Fyr Diagnostics",
   "main": "index.js",
   "repository": {
