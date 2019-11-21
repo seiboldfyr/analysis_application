@@ -1,8 +1,9 @@
 import datetime
+from bson import ObjectId
 import time
 import numpy
 
-from flask import flash
+from flask import flash, current_app
 
 from flaskr.database.dataset_models.factory import Factory
 from flaskr.database.dataset_models.repository import Repository
@@ -15,8 +16,11 @@ from flaskr.framework.model.request.response import Response
 
 
 def buildname(info):
-        return info['Date'] + info['Id'] + '_' + info['Initials']
+    return info['Date'] + info['Id'] + '_' + info['Initials']
 
+def buildid(info):
+    infoID = info['Date'] + info['Id'] + info['Initials'] + str(current_app.config['VERSION'].strip('.')) + '1212121212'
+    return ObjectId(infoID.encode())
 
 def getseconds(t):
     time = datetime.datetime.strptime(t[:-4], '%m/%d/%Y %H:%M:%S')
@@ -31,7 +35,13 @@ class ImportProcessor(AbstractImporter):
     def execute(self, request, info) -> Response:
         dataset_repository = Repository()
         factory = Factory()
-        model = factory.create({'name': buildname(info)})
+        model = factory.create()
+        found_dataset = dataset_repository.get_connection().find_one({'name': buildname(info)})
+        if found_dataset is None:
+            model = factory.create({'name': buildname(info)})
+        else:
+            model = factory.create({'_id': found_dataset['_id'],
+                                    'name': buildname(info)})
         dataset_repository.save(model)
         self.dataset = model
         self.measurement_factory = MeasurementFactory()
