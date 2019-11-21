@@ -33,9 +33,7 @@ def create_app(test_config=None):
         VERSION='2.3',
         DB_HOST='localhost',
         DB_NAME='FyrDatabase',
-        DB_PORT=27017,
-        APP_USER='test',
-        APP_PASSWORD='test'
+        DB_PORT=27017
     )
 
     if test_config is None:
