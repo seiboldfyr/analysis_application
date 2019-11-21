@@ -18,6 +18,8 @@ def home():
 
 @base_blueprint.route('/search', methods=['GET', 'POST'])
 def search():
+    current_app.logger.info(current_app.config)
+
     if request.method == 'POST':
 
         validator = ImportValidator()
