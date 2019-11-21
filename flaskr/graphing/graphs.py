@@ -10,7 +10,6 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique_group
 from flaskr.model.helpers.buildfunctions import get_collection
-from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 
 
@@ -18,12 +17,10 @@ class Grapher:
     def __init__(
             self,
             dataset_id: str,
-            path: str = '',
             customtitle: str = '',
             time: list = None
     ):
         self.dataset_id = dataset_id
-        self.path = path
         self.customtitle = customtitle
         self.time = time
         self.data = {}
@@ -31,7 +28,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(os.path.join(current_app.config['UPLOAD_FOLDER'], 'graphs'))
+            os.mkdir(os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs'))
         except OSError:
             pass
 
@@ -60,10 +57,6 @@ class Grapher:
                 """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
-
-        # TODO: reform here
-
-
 
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))

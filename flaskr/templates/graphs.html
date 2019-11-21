@@ -1,19 +1,16 @@
-<!doctype html>
 {% extends "master.html" %}
 
-{% block title %} Data Analysis Tool {% endblock %}
+{% block title %}Graphs{% endblock %}
+
 
 {% block body %}
-
- {% for key, value in result.items() %}
-    <tr>
-       <b>{{ key }}:</b> {{ value }} <br><br>
-    </tr>
- {% endfor %}
-
 {% endblock %}
 
-{% block content %}{% endblock %}
+{% block content %}
+  {%for graph in graphs %}
+    <img src="{{ graph }}" width="800" height="600"/>
+  {% endfor %}
+{% endblock %}
 
 
 {% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
@@ -33,15 +30,9 @@
 {% endif %}
 {% endblock %}
 
+
 {% block buttons %}
 <br>
-
-<a href="{{ url_for('.manual', id=id) }}"><button>Manually Enter File Info</button></a>
-
-<a href="{{ url_for('.process', id=id) }}"><button>Process Data</button></a>
-
+<a href="{{ url_for('.process', id=id) }}"><button>Back</button></a>
 <br>
 {% endblock %}
-
-
-

@@ -1,5 +1,5 @@
-import xlsxwriter
 import os
+import sys
 from flask import current_app
 from datetime import date
 
@@ -38,6 +38,7 @@ class WriteMetadata(AbstractProcessor):
                     continue
                 line = str(item) + ': ' + str(self.data[item]) + '\n'
                 f.write(line)
+        sys.exit()
         return path
 
     def getPreExistingOutputNumber(self):
