@@ -13,6 +13,7 @@ base_blueprint = Blueprint('', __name__, template_folder='templates')
 
 @base_blueprint.route('/')
 def home():
+    current_app.logger.info(current_app.config)
     return render_template('home.html')
 
 
