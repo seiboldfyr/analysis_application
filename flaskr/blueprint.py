@@ -48,7 +48,7 @@ def search():
 
 
 @base_blueprint.route('/manual/<id>', methods=['GET', 'POST'])
-def manual( id):
+def manual(id):
     input_form = DataInputForm()
     return render_template('manual.html', form=input_form, id=id)
 
