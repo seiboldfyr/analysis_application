@@ -1,4 +1,6 @@
 import os
+import io
+import base64
 import numpy as np
 from flask import current_app, flash
 from statistics import mean, stdev
@@ -19,8 +21,8 @@ def saveImage(self, plt, figuretitle):
     # title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
     # title = str(title + '_' + figuretitle)
     plt.title(figuretitle, fontsize=14)
-    path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'Graphs')
-    strFile = os.path.join(path, figuretitle+'.png')
+    path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
+    strFile = os.path.join(path, figuretitle + ".png")
     if os.path.isfile(strFile):
         os.remove(strFile)
     plt.savefig(strFile)

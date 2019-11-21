@@ -28,7 +28,7 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
         try:
-            os.mkdir(os.path.join(current_app.config['UPLOAD_FOLDER'], 'graphs'))
+            os.mkdir(os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs'))
         except OSError:
             pass
 

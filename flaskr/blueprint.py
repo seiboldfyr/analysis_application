@@ -1,5 +1,6 @@
 import os
-from flask import render_template, redirect, url_for, request, flash, Blueprint
+
+from flask import render_template, redirect, url_for, current_app, request, flash, Blueprint, send_from_directory
 from forms import DataInputForm, ExperimentInputForm
 
 from flaskr.database.importprocessor import ImportProcessor
@@ -7,7 +8,7 @@ from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.graphing.graphs import Grapher
 
-base_blueprint = Blueprint('', __name__)
+base_blueprint = Blueprint('', __name__, template_folder='templates')
 
 
 @base_blueprint.route('/')
@@ -67,7 +68,7 @@ def process(id):
 
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
-            return render_template('process.html', form=input_form)
+            return render_template('process.html', form=input_form, id=id)
         flash('Processed successfully')
 
         response = Grapher(dataset_id=id,
@@ -75,12 +76,19 @@ def process(id):
                            ).execute()
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
-            return render_template('process.html', form=input_form)
+            return render_template('process.html', form=input_form, id=id)
 
-        # flash('%s' % response.get_message(), 'success')
-        return render_template('graph.html', graph=response.get_message())
+        flash('%s' % response.get_message(), 'success')
+        return render_template('process.html', form=input_form, id=id)
 
-    return render_template('process.html', form=input_form)
+    return render_template('process.html', form=input_form, id=id)
+
+
+@base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
+def graphs(id):
+    path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
+    graphs = [os.path.sep + os.path.join("static", "images", "graphs", item) for item in os.listdir(path)]
+    return render_template('graphs.html', id=id, graphs=graphs)
 
 
 @base_blueprint.route('/runstats', methods=['GET', 'POST'])
@@ -88,4 +96,3 @@ def runbatch():
     #TODO: batch processing
     #Create graphs and a file of summary stats
     return render_template('stats.html')
-

@@ -6,9 +6,10 @@
 {% block body %}
 {% endblock %}
 
-
 {% block content %}
-    <img src="{{ graph }}" alt="Graph">
+  {%for graph in graphs %}
+    <img src="{{ graph }}" width="800" height="600"/>
+  {% endfor %}
 {% endblock %}
 
 
@@ -31,5 +32,7 @@
 
 
 {% block buttons %}
-<a href="{{ url_for('process', id=id) }}"><button>Back</button></a>
+<br>
+<a href="{{ url_for('.process', id=id) }}"><button>Back</button></a>
+<br>
 {% endblock %}
