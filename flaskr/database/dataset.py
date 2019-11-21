@@ -1,3 +1,5 @@
+from flask import current_app
+
 from flaskr.database.measurement_models.collection import Collection as MeasurementCollection
 from flaskr.framework.abstract.abstract_model import AbstractModel
 
@@ -5,13 +7,12 @@ from flaskr.framework.abstract.abstract_model import AbstractModel
 class Dataset(AbstractModel):
     measurement_collection = None
 
-    def __init__(self, name: str = ''):
+    def __init__(self):
         super().__init__()
-        # TODO: add as attributes: date, id, initials
-        self['_id'] = name
+        self['_id'] = None
 
     def get_name(self) -> str:
-        return self['_id']
+        return self['name']
 
     def get_well_collection(self) -> MeasurementCollection:
         if self.measurement_collection is None:

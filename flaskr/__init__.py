@@ -4,8 +4,7 @@ from logging.config import dictConfig
 from flask import Flask
 from flaskr.blueprint import base_blueprint
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
-from flaskr import db
-from . import framework
+from . import (db, framework)
 
 dictConfig({
     'version': 1,
@@ -32,9 +31,10 @@ def create_app(test_config=None):
         IMAGE_FOLDER=os.path.join(app.static_folder, 'images'),
         VERSION='2.3',
         DB_HOST='localhost',
-        DB_NAME='FyrDatabase',
+        DB_NAME='fyr_dev',
         DB_PORT=27017
     )
+    # print(app.config)
 
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
