@@ -160,6 +160,6 @@ function buildSwapHtml(swapnumber) {
 
 {% block buttons %}
 <!--TODO: hide this in 'GET'-->
-<a href="{{ url_for('.graphs', id=id) }}"><button>See Graphs</button></a>
+<a href="{{ url_for('.graphs', id=id,graphs=graphs) }}"><button>See Graphs</button></a>
 {% endblock %}
 
