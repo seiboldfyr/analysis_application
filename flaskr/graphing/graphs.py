@@ -37,9 +37,8 @@ class Grapher:
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value'])
         Headers = []
         Groups = []
-        # tmestart = time.time()
+        tmestart = time.time()
         for wellindex, well in enumerate(get_collection(self)):
-            #TODO: overhaul graphing
             if not well.is_valid():
                 continue
             base = dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
@@ -60,7 +59,7 @@ class Grapher:
                 """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
-        # print(time.time() - tmestart)
+        print(time.time() - tmestart)
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
@@ -128,7 +127,7 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            # saveImage(self, plt, 'Inflections_' + str(group))
+            plt.title('Inflections_' + str(group), fontsize=14)
             sio = io.BytesIO()
             plt.savefig(sio, format='png')
             plt.close()
