@@ -24,4 +24,4 @@ find $DIR -d -name '__pycache__' -exec rm -rf {} \;
 
 # create the zip file to be deployed
 cd $DIR
-zip $DIR/../web-kal.zip -r * .[^.]* -x .git\* node_modules\*
+zip $DIR/../app.zip -r * .[^.]* -x .git\* node_modules\*

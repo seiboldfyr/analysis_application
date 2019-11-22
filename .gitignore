@@ -2,4 +2,5 @@
 /flaskr/config.py
 __pycache__/
 *.log
+node_modules/
 FYR/
