@@ -1,4 +1,4 @@
 .idea
-/flaskr/config.py
+# /flaskr/config.py
 __pycache__/
 *.log
