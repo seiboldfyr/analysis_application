@@ -71,23 +71,27 @@ def process(id):
             return render_template('process.html', form=input_form, id=id)
         flash('Processed successfully')
 
-        response = Grapher(dataset_id=id,
+        graphs = Grapher(dataset_id=id,
                            customtitle=request.form['customlabel']#TODO: include manually changed header here
                            ).execute()
-        if not response.is_success():
-            flash('%s' % response.get_message(), 'error')
-            return render_template('process.html', form=input_form, id=id)
 
-        flash('%s' % response.get_message(), 'success')
+        if len(graphs) > 0:
+            return(render_template('graphs.html', id=id, graphs=graphs))
+
+        # if not response.is_success():
+        #     flash('%s' % response.get_message(), 'error')
+        #     return render_template('process.html', form=input_form, id=id)
+        #
+        # flash('%s' % response.get_message(), 'success')
         return render_template('process.html', form=input_form, id=id)
 
     return render_template('process.html', form=input_form, id=id)
 
 
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
-def graphs(id):
-    path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
-    graphs = [os.path.sep + os.path.join("static", "images", "graphs", item) for item in os.listdir(path)]
+def graphs(id, graphs):
+    # path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
+    # graphs = [os.path.sep + os.path.join("static", "images", "graphs", item) for item in os.listdir(path)]
     return render_template('graphs.html', id=id, graphs=graphs)
 
 

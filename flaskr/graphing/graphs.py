@@ -1,8 +1,10 @@
 import numpy as np
 import os
 import seaborn
-import sys
+import io
+import base64
 import pandas as pd
+import time
 from flask import current_app
 import matplotlib
 matplotlib.use('Agg')
@@ -35,6 +37,7 @@ class Grapher:
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value'])
         Headers = []
         Groups = []
+        # tmestart = time.time()
         for wellindex, well in enumerate(get_collection(self)):
             #TODO: overhaul graphing
             if not well.is_valid():
@@ -57,7 +60,7 @@ class Grapher:
                 """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
-
+        # print(time.time() - tmestart)
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
@@ -98,7 +101,8 @@ class Grapher:
         #     tripdf['value'] = self.data[well]['RFUs']
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
-        self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
+        pics = []
+        pics = self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
@@ -106,9 +110,11 @@ class Grapher:
         # self.InflectionGraphsByNumber(getUnique(Headers), outputdf)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
 
-        return Response(True, 'Graphs created successfully')
+        # return Response(True, 'Graphs created successfully')
+        return pics
 
     def InflectionGraphByGroup(self, groups, headers, df):
+        pics = []
         for group in range(1, groups+1):
             subinf = df[(df['group'] == group)].sort_values(['index', 'triplicate'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
@@ -122,7 +128,12 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            saveImage(self, plt, 'Inflections_' + str(group))
+            # saveImage(self, plt, 'Inflections_' + str(group))
+            sio = io.BytesIO()
+            plt.savefig(sio, format='png')
+            plt.close()
+            pics.append(base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', ''))
+        return pics
 
     def InflectionGraphsByNumber(self, headers, df):
         gd = df.sort_values(by=['triplicate', 'group'], ascending=True)

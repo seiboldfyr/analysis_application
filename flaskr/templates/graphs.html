@@ -8,7 +8,7 @@
 
 {% block content %}
   {%for graph in graphs %}
-    <img src="{{ graph }}" width="800" height="600"/>
+     <img src="data:image/png;base64,{{graph}}" width="800" height="600">
   {% endfor %}
 {% endblock %}
 
