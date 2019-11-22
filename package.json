@@ -1,6 +1,6 @@
 {
-  "name": "app",
-  "version": "2",
+  "name": "fyrapp",
+  "version": "1.0.0",
   "description": "An application that provides processing, analysis, and graphing tools for Fyr Diagnostics",
   "main": "index.js",
   "repository": {
@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/fyr-diagnostics/analysis_application#readme",
   "devDependencies": {
-    "rollup": "^1.26.3",
+    "rollup": "^1.27.3",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-css-only": "^1.0.0",
     "rollup-plugin-json": "^4.0.0",
@@ -27,5 +27,10 @@
     "material-design-icons": "^3.0.1",
     "sirv-cli": "^0.4.4"
   },
-  "scripts": {}
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "sirv public --single",
+    "start:dev": "sirv public --single --dev"
+  }
 }
