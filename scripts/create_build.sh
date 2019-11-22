@@ -11,6 +11,10 @@ CONFIG_FILE="config.py"
 RANDOM_STRING=$(openssl rand -base64 12 | sed 's/\\/-/')
 touch ${CONFIG_DIR}/${CONFIG_FILE}
 sed "s/{{random}}/$RANDOM_STRING/" ${CONFIG_DIR}/${CONFIG_DIST_FILE} > ${CONFIG_DIR}/${CONFIG_FILE}
+DATANAME='fyr_staging'
+sed "s/{{random}}/$DATANAME/" ${CONFIG_DIR}/${CONFIG_DIST_FILE} > ${CONFIG_DIR}/${CONFIG_FILE}
+DATAHOST='mongodb+srv://appuser:NtyzJBQYVjC7DdJs@cluster0-3ctdn.mongodb.net/test?retryWrites=true&w=majority'
+sed "s/{{random}}/$DATAHOST/" ${CONFIG_DIR}/${CONFIG_DIST_FILE} > ${CONFIG_DIR}/${CONFIG_FILE}
 
 # compile scss
 YARN=$(which yarn)
