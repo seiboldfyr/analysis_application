@@ -16,4 +16,14 @@ class Collection(AbstractCollection):
         model = self.factory.create(data)
         return model
 
+    def to_inflection_dataframe(self) -> []:
+        return []
+        # TODO: build pandas dataframe here
+
+    def to_rfu_dataframe(self) -> []:
+        return []
+        # TODO: build pandas dataframe here
+
+
+
 

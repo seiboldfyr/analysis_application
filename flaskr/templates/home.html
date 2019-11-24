@@ -1,6 +1,6 @@
 {% extends "master.html" %}
 
-{% block title %} Data Analysis Tool {% endblock %}
+{% block title %} Welcome to the Data Analysis Tool {% endblock %}
 
 {% block body %}
 <style>
@@ -17,30 +17,17 @@ line-height: 8px;
   <form action = "{{ url_for('.search') }}" method = "POST" enctype="multipart/form-data">
       <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
       <p>INFO File: <input name="file2" id="infofile" type="file"/></p>
-      <p>Output file formats coming soon...
-<!--          <input type = "text" name = "folder" /></p>-->
-     <p><input type = "submit" value = "Retrieve Files" /></p>
-
+      <p>Select an existing dataset: </p>
+<!--      TODO: input date, id, and initials as separate select statements-->
+          <select id="selectedDataset" name = "Coming Soon..." />
+          <option value="id">Coming Soon...</option>
+        </select>
+     <p><input type = "submit" value = "Continue to verify dataset information" /></p>
+  </form>
+</div>
 {% endblock %}
 
 {% block content %}{% endblock %}
-
-{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
-{% if error %}
-  <div class="alert alert-danger">{{error}}</div>
-{% endif %}
-
-{% if msg %}
-  <div class="alert alert-success">{{msg}}</div>
-{% endif %}
-{% endblock %}
 
 {% block buttons %}{% endblock %}
 

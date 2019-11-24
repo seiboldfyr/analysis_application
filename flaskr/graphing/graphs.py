@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import zipfile
 import seaborn
 import io
 import base64
@@ -26,6 +27,7 @@ class Grapher:
         self.customtitle = customtitle
         self.time = time
         self.data = {}
+        self.zip = None
 
     def execute(self):
         self.setGraphSettings()
@@ -33,6 +35,8 @@ class Grapher:
             os.mkdir(os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs'))
         except OSError:
             pass
+
+        self.zip = zipfile.ZipFile('graphs.zip', 'w')
 
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value'])
         Headers = []

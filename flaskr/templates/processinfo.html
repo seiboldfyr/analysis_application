@@ -73,7 +73,6 @@ function buildGroupHtml(group) {
 
 </script>
 
-
 <p class="huge"><br>
 <b> Optional parameters:</b><br>
     <p class="big">
@@ -129,34 +128,16 @@ function buildSwapHtml(swapnumber) {
     html += '<p class="big">'
     return html;
     }
-
 </script>
 
 
-        <p><input type="submit" name='Run' value="Run it!"/></p>
-        </form>
+<p><input type="submit" name='Run' value="Run it!"/></p>
+</form>
 </div>
 
-        {% endblock %}
+{% endblock %}
 
-        {% block content %}{% endblock %}
-
-        {% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        {% if error %}
-        <div class="alert alert-danger">{{error}}</div>
-        {% endif %}
-
-        {% if msg %}
-        <div class="alert alert-success">{{msg}}</div>
-        {% endif %}
-        {% endblock %}
+{% block content %}{% endblock %}
 
 {% block buttons %}
 <!--TODO: hide this in 'GET'-->

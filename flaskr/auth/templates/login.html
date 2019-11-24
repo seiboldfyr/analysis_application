@@ -1,0 +1,18 @@
+{% extends "authmaster.html" %}
+
+{% block title %} Login {% endblock %}
+
+{% block body %}
+
+
+<div class="formwrapper">
+  <form action = "{{ url_for('auth.login') }}" method = "POST">
+      <p>Username: <input name="username" type="text"/></p>
+      <p>Password: <input name="password" type="text"/></p>
+     <p><input type = "submit" value = "Submit" /></p>
+  </form>
+</div>
+{% endblock %}
+
+
+
