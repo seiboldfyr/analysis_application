@@ -80,7 +80,7 @@ def process(id):
                            ).execute()
 
         if len(graphs) > 0:
-            return(render_template('graphs.html', id=id, graphs=graphs))
+          return(render_template('graphs.html', id=id, graphs=graphs))
 
         # if not response.is_success():
         #     flash('%s' % response.get_message(), 'error')
