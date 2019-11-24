@@ -1,9 +1,9 @@
 
-from flask import render_template, redirect, url_for, request, flash, Blueprint
+from flask import render_template, redirect, url_for, request, flash, Blueprint, send_file
 
 from flaskr.forms import DataInputForm, ExperimentInputForm
 from flaskr.auth.blueprint import login_required
-from flaskr.database.importprocessor import ImportProcessor
+from flaskr.database.importprocessor import ImportProcessor, buildname
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.graphing.graphs import Grapher
@@ -28,21 +28,21 @@ def search():
             flash('%s' % result.get_message(), 'error')
             return redirect(url_for('base.home'))
 
-        filedata = {}
         fileinfo = {}
         for f in request.files:
-            if request.files.get(f).filename.endswith('INFO.xlsx'):
-                filedata['infofile'] = request.files.get(f)
-            else:
-                filedata['rfufile'] = request.files.get(f)
-                fileinfo['Date'] = filedata['rfufile'].filename[:8]
-                fileinfo['Id'] = filedata['rfufile'].filename[8]
-                fileinfo['Initials'] = filedata['rfufile'].filename[10:12]
+            [name, fileinfo] = buildname(request.files.get(f).filename)
 
         processor = ImportProcessor()
-        response = processor.execute(request, fileinfo)
+        dataset_exists = processor.search(name)
+        if dataset_exists is not None:
+            flash('A dataset was found.')
+            return render_template('search.html',
+                                   result={i: dataset_exists[i] for i in dataset_exists if i != '_id'},
+                                   id=dataset_exists['_id'])
+
+        response = processor.execute(request, name)
         if not response.is_success():
-            flash('Error processing the data file', category='error')
+            flash(response.get_message(), category='error')
 
         return render_template('search.html', result=fileinfo, id=response.get_message())
     return redirect(url_for('base.home'))
@@ -57,7 +57,7 @@ def manual(id):
 
 @base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
 @login_required
-def process(id):
+def process(id, graphs=[]):
     input_form = ExperimentInputForm()
     if request.method == 'POST':
         if id is None:
@@ -72,21 +72,18 @@ def process(id):
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
             return render_template('processinfo.html', form=input_form, id=id)
-        flash('Processed successfully', 'msg')
 
-        graphs = Grapher(dataset_id=id,
+        [graphs, zip] = Grapher(dataset_id=id,
                            customtitle=request.form['customlabel']
                          #TODO: include manually changed header here
                            ).execute()
 
         if len(graphs) > 0:
-          return(render_template('graphs.html', id=id, graphs=graphs))
+            # graphs(id, graphs, zip)
+            return(render_template('graphs.html', id=id, graphs=graphs, zip=zip))
+        else:
+            flash('Something went wrong with graphing :(', 'error')
 
-        # if not response.is_success():
-        #     flash('%s' % response.get_message(), 'error')
-        #     return render_template('processinfo.html', form=input_form, id=id)
-        #
-        # flash('%s' % response.get_message(), 'success')
         return render_template('processinfo.html', form=input_form, id=id)
 
     return render_template('processinfo.html', form=input_form, id=id)
@@ -94,8 +91,8 @@ def process(id):
 
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
-def graphs(id, graphs):
-    return render_template('graphs.html', id=id, graphs=graphs)
+def graphs(id, graphs, zip):
+    return render_template('graphs.html', id=id, graphs=graphs, zip=zip)
 
 
 @base_blueprint.route('/runstats', methods=['GET', 'POST'])

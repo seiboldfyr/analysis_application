@@ -10,7 +10,7 @@ class Dataset(AbstractModel):
     def __init__(self):
         super().__init__()
         self['_id'] = None
-        self['protocol'] = str
+        self['protocol'] = ''
         self['metadata'] = []
 
     def get_protocol(self) -> str:

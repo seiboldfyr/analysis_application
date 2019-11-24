@@ -11,7 +11,7 @@ line-height: 8px;
 </style>
 <br>
 
-<b>Please enter the following information:</b>
+<b>Please enter the corrected information:</b>
 <br>
 <p class="big">
 <br>
@@ -39,5 +39,5 @@ line-height: 8px;
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<a href="{{ url_for('.process', id=id, graphs=[]) }}"><button>Process Data</button></a>
+<a href="{{ url_for('base.process', id=id, graphs=[]) }}"><button>Coming Soon...</button></a>
 {% endblock %}

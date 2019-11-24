@@ -13,7 +13,6 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique_group
 from flaskr.model.helpers.buildfunctions import get_collection
-from flaskr.framework.model.request.response import Response
 
 
 class Grapher:
@@ -37,9 +36,8 @@ class Grapher:
         except OSError:
             pass
 
-        self.zip = zipfile.ZipFile('graphs.zip', 'w')
+        # self.zip = zipfile.ZipFile('graphs.zip', 'w')
 
-        df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value'])
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value', 'sample'])
         Headers = []
         Groups = []
@@ -115,7 +113,8 @@ class Grapher:
         # self.RFUAllGraphs(datadf.sort_values(['index']))
 
         # return Response(True, 'Graphs created successfully')
-        return self.graph_url
+        # self.zip.close()
+        return [self.graph_url, '']
 
     def InflectionGraphByGroup(self, groups, headers, df):
         for group in range(1, groups+1):
@@ -131,10 +130,12 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            plt.title('Inflections_' + str(group), fontsize=14)
+            title = 'Inflections_' + str(group)
+            plt.title(title, fontsize=14)
             sio = io.BytesIO()
             plt.savefig(sio, format='png')
             plt.close()
+            # self.zip.writestr(title, sio.getvalue())
             self.graph_url.append(base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', ''))
 
     def InflectionGraphsByNumber(self, headers, df):
