@@ -3,7 +3,7 @@ import os
 SECRET_KEY = '{{random}}'
 DB_HOST = os.environ['DB_HOST']
 DB_NAME = os.environ['DB_NAME']
-DB_PORT = 27017
-VERSION = 2.4
-APP_USERNAME = fyrapp
-APP_PASSWORD = 9abVuBVEz5AP5U3d
+DB_PORT = os.environ['DB_PORT']
+VERSION = os.environ['VERSION']
+APP_USERNAME = os.environ['APP_USERNAME']
+APP_PASSWORD = os.environ['APP_PASSWORD']
