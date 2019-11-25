@@ -2,32 +2,20 @@
 
 {% block title %}Graphs{% endblock %}
 
-
 {% block body %}
+<div class="formwrapper">
+  <form method = "POST">
+      <p><input type="submit" name='download' value="Download All"/></p>
+  </form>
+</div>
 {% endblock %}
+
 
 {% block content %}
-  {%for graph in graphs %}
-     <img src="data:image/png;base64,{{graph}}" width="600" height="400">
-  {% endfor %}
+    {%for graph in graphs %}
+        <img src="data:image/png;base64,{{graph}}" alt='' width="600" height="400">
+    {% endfor %}
 {% endblock %}
-
-<!--<button onclick="downloadzip(graphs)">Download Graphs</button>-->
-
-<script>
-    function downloadzip(graphs) {
-        var zip = new JSZip();
-        var img = zip.folder("graphs");
-        for (var i=0; i<graphs.length, i++) {
-            img.file("graph"+i+".png", graph[i], {base64: true});
-            zip.generateAsync({type: "blob"})
-                .then(function (content) {
-                    // see FileSaver.js
-                    saveAs(content, "graphs.zip");
-                });
-        }
-    }
-</script>
 
 
 {% block buttons %}

@@ -26,17 +26,10 @@ class Grapher:
         self.customtitle = customtitle
         self.time = time
         self.data = {}
-        self.graph_url = []
-        self.zip = None
+        self.graph_urls = {}
 
     def execute(self):
         self.setGraphSettings()
-        try:
-            os.mkdir(os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs'))
-        except OSError:
-            pass
-
-        # self.zip = zipfile.ZipFile('graphs.zip', 'w')
 
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value', 'sample'])
         Headers = []
@@ -112,9 +105,7 @@ class Grapher:
         self.InflectionGraphsByNumber(get_unique_group(Headers), df)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
 
-        # return Response(True, 'Graphs created successfully')
-        # self.zip.close()
-        return [self.graph_url, '']
+        return self.graph_urls
 
     def InflectionGraphByGroup(self, groups, headers, df):
         for group in range(1, groups+1):
@@ -130,13 +121,7 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            title = 'Inflections_' + str(group)
-            plt.title(title, fontsize=14)
-            sio = io.BytesIO()
-            plt.savefig(sio, format='png')
-            plt.close()
-            # self.zip.writestr(title, sio.getvalue())
-            self.graph_url.append(base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', ''))
+            self.saveimage(plt, 'Inflections_' + str(group))
 
     def InflectionGraphsByNumber(self, headers, df):
         df = df.sort_values(by=['sample', 'triplicate', 'group'], ascending=True)
@@ -149,7 +134,7 @@ class Grapher:
         for inf in range(4):
             gd = df[df['variable'] == "Inflection " + str(inf)]
             indplt = seaborn.swarmplot(x="triplicateIndex", y='value', hue="label", data=gd,
-                                          marker='o', s=2.6, edgecolor='black', linewidth=.6)
+                                       marker='o', s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=xaxis)
             plt.ylabel('Time (Min)')
             plt.xlabel('Group Number')
@@ -159,11 +144,7 @@ class Grapher:
             ax = plt.gca().add_artist(legend1)
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label) for idx, label in enumerate(headers)],
                        bbox_to_anchor=(1, .1), loc='lower left')
-            plt.title('Inflection' + str(inf + 1))
-            sio = io.BytesIO()
-            plt.savefig(sio, format='png')
-            plt.close()
-            self.graph_url.append(base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', ''))
+            self.saveimage(plt, 'Inflection' + str(inf + 1))
 
 
     def RFUIndividualGraphsByGroup(self, groups, df):
@@ -211,6 +192,12 @@ class Grapher:
                 plt.ylabel('Percent Difference from Control')
                 saveImage(self, plt, 'PercentDiff_' + str(group))
 
+    def saveimage(self, plt, title):
+        plt.title(title, fontsize=14)
+        sio = io.BytesIO()
+        plt.savefig(sio, format='png')
+        plt.close()
+        self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
     def setGraphSettings(self):
         params = {'legend.fontsize': 5,

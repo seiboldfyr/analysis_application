@@ -10,8 +10,8 @@ body {
  * Formatting the header area
  */
 header {
-    margin-top: 10px;
-    height: 60px;
+    margin-top: 3px;
+    height: 80px;
     width: 100%;
     background-image: url('../logo/FYR-logo.png');
     background-size: 210px 110px;

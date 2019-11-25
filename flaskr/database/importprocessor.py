@@ -40,6 +40,7 @@ class ImportProcessor(AbstractImporter):
         self.identifers = dict(group=1, sample=0, triplicate=0, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
+        self.protocoldict = {}
 
     def search(self, name) -> {}:
         info = {}
@@ -79,6 +80,7 @@ class ImportProcessor(AbstractImporter):
                 name = buildname(file.filename)
 
         self.getexperimentlength(infofile)
+        self.getprotocols(request)
         for info, rfu in zip(infofile.read(sheet='0', userows=True), rfufile.read(sheet='SYBR', usecolumns=True)):
             self.add_measurement(info, rfu)
 
@@ -86,16 +88,16 @@ class ImportProcessor(AbstractImporter):
 
         # TODO: remove files after reading
         xlsx_file.delete()
-        infofile.delete()
+        # infofile.delete()
         rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
         model['metadata'] = dict(Name=name,
-                                 ProtocolId='NA',
+                                 Protocols=self.protocoldict,
                                  Cut=0,
                                  Groupings={},
                                  Swaps={},
-                                 CustomLabel='',
+                                 CustomLabel=request.form['customlabel'],
                                  Error_Wells={},
                                  Cycle_Length=self.cyclelength)
         dataset_repository.save(model)
@@ -105,6 +107,11 @@ class ImportProcessor(AbstractImporter):
             True,
             self.dataset.get_id()
         )
+
+    def getprotocols(self, request):
+        for item in request.form.keys():
+            if item.startswith('pr'):
+                self.protocoldict[request.form[item]] = request.form['pr' + str(item[-1])]
 
     def getexperimentlength(self, info):
         start = 0
@@ -135,6 +142,8 @@ class ImportProcessor(AbstractImporter):
 
         data = {'dataset_id': self.dataset.get_id(),
                 'excelheader': inforow[1],
+                'cycle': self.cyclelength,
+                'protocol': self.protocoldict,
                 'label': inforow[5] + '_' + inforow[6],
                 'group': self.identifers['group'],
                 'sample': self.identifers['sample'],

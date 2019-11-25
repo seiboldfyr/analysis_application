@@ -1,6 +1,6 @@
 {% extends "master.html" %}
 
-{% block title %} Data Analysis Tool {% endblock %}
+{% block title %} Data Analysis {% endblock %}
 
 {% block body %}
 <style>
@@ -140,7 +140,13 @@ function buildSwapHtml(swapnumber) {
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<!--TODO: hide this in 'GET'-->
-<a href="{{ url_for('base.graphs', id=id, graphs=graphs) }}"><button>See Graphs</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>See Graphs</button></a>
+<script>
+    var visibility = 'visible';
+    if ("{{ graphed }}" == false) {
+        visibility = "hidden"
+    }
+    document.getElementById("graphbutton").style.visibility = visibility;
+</script>
 {% endblock %}
 
