@@ -15,12 +15,20 @@ from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.framework.model.request.response import Response
 
 
-def buildname(info):
-    return info['Date'] + info['Id'] + '_' + info['Initials']
+def buildname(excelfilename):
+    filename = excelfilename.split('_')
+    info = {}
+    info['Date'] = filename[0][:-1]
+    info['Id'] = filename[0][-1]
+    info['Initials'] = filename[1]
+    if len(excelfilename) > 4:
+        info['Other Info'] = filename[2:-1]
+    return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
 
-def buildid(info):
-    infoID = info['Date'] + info['Id'] + info['Initials'] + str(current_app.config['VERSION'].strip('.')) + '1212121212'
-    return ObjectId(infoID.encode())
+
+def buildid(name):
+    return name + '_' + str(current_app.config['VERSION'].strip('.'))
+
 
 def getseconds(t):
     time = datetime.datetime.strptime(t[:-4], '%m/%d/%Y %H:%M:%S')
@@ -31,17 +39,24 @@ class ImportProcessor(AbstractImporter):
     def __init__(self):
         self.identifers = dict(group=1, sample=0, triplicate=0, previous='')
         self.experimentlength = 0
+        self.cyclelength = 0
+        self.protocoldict = {}
 
-    def execute(self, request, info) -> Response:
+    def search(self, name) -> {}:
+        info = {}
+        dataset_repository = Repository()
+        #TODO: filter datasets by date
+        found_dataset = dataset_repository.get_connection().find_one({'name': buildid(name)})
+        if found_dataset is not None:
+            for key in found_dataset.keys():
+                info[key] = found_dataset[key]
+            return info
+        return None
+
+    def execute(self, request, name) -> Response:
         dataset_repository = Repository()
         factory = Factory()
-        model = factory.create()
-        found_dataset = dataset_repository.get_connection().find_one({'name': buildname(info)})
-        if found_dataset is None:
-            model = factory.create({'name': buildname(info)})
-        else:
-            model = factory.create({'_id': found_dataset['_id'],
-                                    'name': buildname(info)})
+        model = factory.create({'name': buildid(name)})
         dataset_repository.save(model)
         self.dataset = model
         self.measurement_factory = MeasurementFactory()
@@ -62,26 +77,41 @@ class ImportProcessor(AbstractImporter):
                 infofile = xlsx_file
             elif file.filename.endswith('RFU.xlsx'):
                 rfufile = xlsx_file
+                name = buildname(file.filename)
 
         self.getexperimentlength(infofile)
+        self.getprotocols(request)
         for info, rfu in zip(infofile.read(sheet='0', userows=True), rfufile.read(sheet='SYBR', usecolumns=True)):
             self.add_measurement(info, rfu)
 
             self.measurement_manager.save()
 
         # TODO: remove files after reading
-        # xlsx_file.delete()
+        xlsx_file.delete()
         # infofile.delete()
-        # rfufile.delete()
+        rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
+        model['metadata'] = dict(Name=name,
+                                 Protocols=self.protocoldict,
+                                 Cut=0,
+                                 Groupings={},
+                                 Swaps={},
+                                 CustomLabel=request.form['customlabel'],
+                                 Error_Wells={},
+                                 Cycle_Length=self.cyclelength)
         dataset_repository.save(model)
 
-        flash('File imported successfully.')
+        flash('File imported successfully', 'msg')
         return Response(
             True,
             self.dataset.get_id()
         )
+
+    def getprotocols(self, request):
+        for item in request.form.keys():
+            if item.startswith('pr'):
+                self.protocoldict[request.form[item]] = request.form['pr' + str(item[-1])]
 
     def getexperimentlength(self, info):
         start = 0
@@ -108,14 +138,16 @@ class ImportProcessor(AbstractImporter):
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
+        self.cyclelength = self.experimentlength/len(rfuvalues)
 
         data = {'dataset_id': self.dataset.get_id(),
                 'excelheader': inforow[1],
+                'cycle': self.cyclelength,
+                'protocol': self.protocoldict,
                 'label': inforow[5] + '_' + inforow[6],
                 'group': self.identifers['group'],
                 'sample': self.identifers['sample'],
                 'triplicate': self.identifers['triplicate'],
-                'cycle': self.experimentlength/len(rfuvalues),
                 'RFUs': []
                 }
 

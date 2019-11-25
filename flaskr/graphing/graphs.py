@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import zipfile
 import seaborn
 import io
 import base64
@@ -12,7 +13,6 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique_group
 from flaskr.model.helpers.buildfunctions import get_collection
-from flaskr.framework.model.request.response import Response
 
 
 class Grapher:
@@ -26,15 +26,12 @@ class Grapher:
         self.customtitle = customtitle
         self.time = time
         self.data = {}
+        self.graph_urls = {}
 
     def execute(self):
         self.setGraphSettings()
-        try:
-            os.mkdir(os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs'))
-        except OSError:
-            pass
 
-        df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value'])
+        df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value', 'sample'])
         Headers = []
         Groups = []
         tmestart = time.time()
@@ -42,7 +39,7 @@ class Grapher:
             if not well.is_valid():
                 continue
             base = dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
-                        label=well.get_label())
+                        label=well.get_label(), sample=well.get_sample())
             for idx, item in enumerate(well.get_inflections()):
                 base['variable'] = "Inflection " + str(idx)
                 base['value'] = item
@@ -100,20 +97,17 @@ class Grapher:
         #     tripdf['value'] = self.data[well]['RFUs']
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
-        pics = []
-        pics = self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
+        self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
 
-        # self.InflectionGraphsByNumber(getUnique(Headers), outputdf)
+        self.InflectionGraphsByNumber(get_unique_group(Headers), df)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
 
-        # return Response(True, 'Graphs created successfully')
-        return pics
+        return self.graph_urls
 
     def InflectionGraphByGroup(self, groups, headers, df):
-        pics = []
         for group in range(1, groups+1):
             subinf = df[(df['group'] == group)].sort_values(['index', 'triplicate'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
@@ -127,24 +121,19 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            plt.title('Inflections_' + str(group), fontsize=14)
-            sio = io.BytesIO()
-            plt.savefig(sio, format='png')
-            plt.close()
-            pics.append(base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', ''))
-        return pics
+            self.saveimage(plt, 'Inflections_' + str(group))
 
     def InflectionGraphsByNumber(self, headers, df):
-        gd = df.sort_values(by=['triplicate', 'group'], ascending=True)
-        gd['triplicateIndex'] = int(gd['group'].max())*(gd['triplicate'] % 8)+gd['group']
-        gd['label'] = [x[:-2] for x in gd['label']]
-        gd = gd.sort_values(by=['triplicateIndex', 'index', 'triplicate', 'group'], ascending=True)
-        numGroups = int(gd['group'].max())
+        df = df.sort_values(by=['sample', 'triplicate', 'group'], ascending=True)
+        df['triplicateIndex'] = int(df['group'].max())*(df['triplicate'] % 8)+df['group']
+        df['label'] = [x[:-2] for x in df['label']]
+        df = df.sort_values(by=['triplicateIndex', 'index', 'triplicate', 'group'], ascending=True)
+        numGroups = int(df['group'].max())
         xaxis = [i + 1 for i in range(numGroups)]
         xaxis = xaxis * int(len(df['index']) / numGroups)
         for inf in range(4):
-            fig = plt.figure()
-            indplt = seaborn.swarmplot(x="triplicateIndex", y='inflection' + str(inf + 1), hue="label", data=gd,
+            gd = df[df['variable'] == "Inflection " + str(inf)]
+            indplt = seaborn.swarmplot(x="triplicateIndex", y='value', hue="label", data=gd,
                                        marker='o', s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=xaxis)
             plt.ylabel('Time (Min)')
@@ -155,7 +144,8 @@ class Grapher:
             ax = plt.gca().add_artist(legend1)
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label) for idx, label in enumerate(headers)],
                        bbox_to_anchor=(1, .1), loc='lower left')
-            saveImage(self, plt, 'Inflection' + str(inf + 1))
+            self.saveimage(plt, 'Inflection' + str(inf + 1))
+
 
     def RFUIndividualGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
@@ -202,6 +192,12 @@ class Grapher:
                 plt.ylabel('Percent Difference from Control')
                 saveImage(self, plt, 'PercentDiff_' + str(group))
 
+    def saveimage(self, plt, title):
+        plt.title(title, fontsize=14)
+        sio = io.BytesIO()
+        plt.savefig(sio, format='png')
+        plt.close()
+        self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
     def setGraphSettings(self):
         params = {'legend.fontsize': 5,

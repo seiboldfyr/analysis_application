@@ -1,5 +1,6 @@
 from flask import flash
 import sys
+import time
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
 from flaskr.framework.model.request.response import Response
@@ -26,6 +27,7 @@ class Processor(AbstractProcessor):
         self.controlgroup = int
 
     def execute(self) -> Response:
+        timestart = time.time()
         self.measurement_manager = MeasurementManager()
 
         cut = self.request.form['cutlength']
@@ -59,12 +61,10 @@ class Processor(AbstractProcessor):
             if not response.is_success():
                 return Response(False, response.get_message())
 
-        # todo: Writer(self.dataset_id, self.time).writebook(self.paths['output'])
-        # todo: self.writeStatistics()
-
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
             flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
-        return Response(True, 'Successfully processed inflections')
+
+        return Response(True, str(round(time.time() - timestart, 2)))
 
     def swapWells(self, originwell):
         for destwell in get_collection(self):
@@ -104,7 +104,6 @@ class Processor(AbstractProcessor):
 
     def getInflectionPoints(self, dindex, derivative, inflection_list):
         peaks, xstarts, xends = get_peaks(dindex, derivative)
-        # TODO: Move this to it's own class
         # TODO: improve peak finding to find the single largest, and then the second largest
         if type(peaks[0]) == str:
             return Response(False, 'Error retrieving inflection points')

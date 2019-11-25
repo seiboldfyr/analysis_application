@@ -43,6 +43,9 @@ class Measurement(AbstractModel):
     def get_excelheader(self) -> '':
         return self['excelheader']
 
+    def get_cycle(self) -> float:
+        return self['cycle']
+
     def get_label(self) -> '':
         return self['label']
 

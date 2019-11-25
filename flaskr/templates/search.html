@@ -1,37 +1,26 @@
 <!doctype html>
 {% extends "master.html" %}
 
-{% block title %} Data Analysis Tool {% endblock %}
+{% block title %} Dataset Search {% endblock %}
 
 {% block body %}
 
  {% for key, value in result.items() %}
+    {% if key == 'metadata' %}
+<!--        {%for metakey, metavalue in value.items() %}-->
+<!--            <tr>-->
+<!--               {{ metakey }}: {{ metavalue }} <br>-->
+<!--            </tr>-->
+<!--        {% endfor %}-->
+    {% else %}
     <tr>
        <b>{{ key }}:</b> {{ value }} <br><br>
     </tr>
+    {% endif %}
  {% endfor %}
-
 {% endblock %}
 
 {% block content %}{% endblock %}
-
-
-{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
-{% if error %}
-  <div class="alert alert-danger">{{error}}</div>
-{% endif %}
-
-{% if msg %}
-  <div class="alert alert-success">{{msg}}</div>
-{% endif %}
-{% endblock %}
 
 {% block buttons %}
 <br>

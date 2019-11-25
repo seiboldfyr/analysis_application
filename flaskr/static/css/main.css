@@ -1,0 +1,48 @@
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #444;
+    margin-left: 10px;
+}
+/*
+ * Formatting the header area
+ */
+header {
+    margin-top: 3px;
+    height: 80px;
+    width: 100%;
+    background-image: url('../logo/FYR-logo.png');
+    background-size: 210px 110px;
+    background-position: left;
+    background-repeat: no-repeat;
+}
+.container {
+    width: 1200px;
+    margin: 0 auto;
+}
+div.home {
+  padding: 10px 0 30px 0;
+  background-color: #E6E6FA;
+  -webkit-border-radius: 6px;
+     -moz-border-radius: 6px;
+          border-radius: 6px;
+}
+h2 {
+    font-size: 2.2em;
+    margin-top: 30px;
+    text-align: center;
+    letter-spacing: -2px;
+}
+h3 {
+    font-size: 1.7em;
+    font-weight: 100;
+    margin-top: 30px;
+    text-align: center;
+    letter-spacing: -1px;
+    color: #999;
+}
+.error {
+    color: red
+}
