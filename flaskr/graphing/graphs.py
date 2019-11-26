@@ -46,7 +46,7 @@ class Grapher:
         self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
-        # self.percentGraphs(max(Groups), averagedf)
+        self.percentGraphs(max(Groups), df)
 
         self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
         # self.RFUAllGraphs(datadf.sort_values(['index']))
@@ -98,7 +98,6 @@ class Grapher:
 
     def RFUIndividualGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
-            fig = plt.figure()
             seaborn.lineplot(x='time', y='value', hue='triplicate', units='index', estimator=None, data=df[df['group'] == group],
                              linewidth=.7)
             plt.ylabel('RFU')
@@ -127,19 +126,19 @@ class Grapher:
         saveImage(self, plt, 'Averages_All')
 
     def percentGraphs(self, groups, df):
+        pd = df[df['variable'].str.startswith("Percent Diff")]
         for group in range(1, groups+1):
-            fig = plt.figure()
-            subpc = df[(df['group'] == group)].sort_values(['inflection'])
-            if not subpc.empty:
-                indplt = seaborn.swarmplot(x='label', y="value", hue="label", data=subpc, dodge=True, marker='o',
+            subpc = pd[pd['group'] == group]
+            indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                            s=2.6, edgecolor='black', linewidth=.6)
-                indplt.set(xticklabels='')
-                box = plt.gca().get_position()
-                plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
-                plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
-                plt.xlabel('')
-                plt.ylabel('Percent Difference from Control')
-                saveImage(self, plt, 'PercentDiff_' + str(group))
+            indplt.set(xticklabels='') #TODO: figure out appropriate labeling
+            box = plt.gca().get_position()
+            plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
+            plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
+            plt.xlabel('')
+            plt.ylabel('Percent Difference from Control')
+            self.saveimage(plt, 'PercentDiff_' + str(group))
+
 
     def saveimage(self, plt, title):
         plt.title(title, fontsize=14)
