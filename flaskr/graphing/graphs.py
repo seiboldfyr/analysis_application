@@ -46,7 +46,7 @@ class Grapher:
         self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
-        self.percentGraphs(max(Groups), df)
+        self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
 
         self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
         # self.RFUAllGraphs(datadf.sort_values(['index']))
@@ -125,10 +125,9 @@ class Grapher:
         plt.xlabel('Time (Min)')
         saveImage(self, plt, 'Averages_All')
 
-    def percentGraphs(self, groups, df):
-        pd = df[df['variable'].str.startswith("Percent Diff")]
-        for group in range(1, groups+1):
-            subpc = pd[pd['group'] == group]
+    def percentGraphs(self, df):
+        for group in range(1, int(df['group'].max())+1):
+            subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                            s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels='') #TODO: figure out appropriate labeling
