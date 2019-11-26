@@ -30,9 +30,9 @@ def buildid(name):
     return name + '_' + str(current_app.config['VERSION'].strip('.'))
 
 
-def getseconds(t):
+def getTime(t):
     time = datetime.datetime.strptime(t[:-4], '%m/%d/%Y %H:%M:%S')
-    return time.second + time.minute * 60 + time.hour * 3600
+    return time
 
 
 class ImportProcessor(AbstractImporter):
@@ -97,7 +97,7 @@ class ImportProcessor(AbstractImporter):
                                  Cut=0,
                                  Groupings={},
                                  Swaps={},
-                                 CustomLabel=[],
+                                 CustomLabel='',
                                  Error_Wells={},
                                  Cycle_Length=self.cyclelength)
         dataset_repository.save(model)
@@ -115,12 +115,17 @@ class ImportProcessor(AbstractImporter):
 
     def getexperimentlength(self, info):
         start = 0
+        end = 0
         for row in info.read(sheet='Run Information', userows=True):
             if row[0] == 'Run Ended':
-                self.experimentlength = getseconds(row[1])
-            elif row[0] == 'Run Started':
-                start = getseconds(row[1])
-        self.experimentlength -= start
+                end = getTime(row[1])
+                print('exp length: ', self.experimentlength)
+            if row[0] == 'Run Started':
+                start = getTime(row[1])
+                print('run start: ', start)
+        if start == 0 or end == 0:
+            current_app.logger("Error retrieving experiment length")
+        self.experimentlength = (end-start).total_seconds()
 
     def iterateidentifiers(self, label):
         if self.identifers['previous'] == '':

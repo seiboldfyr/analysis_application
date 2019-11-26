@@ -15,8 +15,8 @@ class Collection(AbstractCollection):
         if self.cursor is None:
             self.cursor = self.find()
         data = self.cursor.next()
-        model = self.factory.create(data)
-        return model
+        return data
 
-
+    def to_df(self):
+        return pd.DataFrame([model for model in self])
 

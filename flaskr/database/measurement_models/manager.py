@@ -21,10 +21,6 @@ class Manager:
             if counter > self.buffer_size:
                 repository.bulk_save(batch)
 
-            if not model.is_valid():
-                raise InvalidMeasurement(
-                    'Found invalid measurement in batch: %s' % str(model)
-                )
             batch.append(model)
             counter += 1
 
@@ -33,9 +29,5 @@ class Manager:
 
     def update(self, measurement: Measurement):
         repository = Repository()
-        if not measurement.is_valid():
-            raise InvalidMeasurement(
-                'Found invalid measurement in batch: %s' % str(measurement)
-            )
         repository.save(measurement)
         self.buffer.clear()
