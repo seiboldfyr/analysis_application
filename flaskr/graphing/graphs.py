@@ -1,18 +1,16 @@
 import numpy as np
-import os
-import zipfile
 import seaborn
 import io
 import base64
 import pandas as pd
 import time
-from flask import current_app
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique_group
 from flaskr.model.helpers.buildfunctions import get_collection
+from flaskr.database.dataset_models.repository import Repository
 
 
 class Grapher:
@@ -31,11 +29,22 @@ class Grapher:
     def execute(self):
         self.setGraphSettings()
 
+        startpd = time.time()
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        df = dataset.get_pd_well_collection()
+        print(df.iloc[0])
+        print('pdtest: ', time.time() - startpd)
+
+
         df = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'variable', 'value', 'sample'])
+        rfudf = pd.DataFrame(columns=['index', 'triplicate', 'group', 'label', 'time', 'rfu', 'sample'])
         Headers = []
         Groups = []
         tmestart = time.time()
         for wellindex, well in enumerate(get_collection(self)):
+            if wellindex > 5:
+                break
             if not well.is_valid():
                 continue
             base = dict(index=wellindex, triplicate=well.get_triplicate(), group=well.get_group(),
@@ -56,7 +65,7 @@ class Grapher:
                 """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
-        print(time.time() - tmestart)
+        print('df built: ', time.time() - tmestart)
 
         # Groups = list(map(lambda d: d[1]['group'], self.data.items()))
         # Headers = getGroupHeaders(list(map(lambda d: d[1]['label'], self.data.items())))
@@ -97,18 +106,18 @@ class Grapher:
         #     tripdf['value'] = self.data[well]['RFUs']
         #     tripdf.insert(4, 'time', [t / 60 for t in self.time])
         #     datadf = datadf.append(tripdf, sort=True)
-        self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
+        self.InflectionGraphByGroup(df)
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
         # self.percentGraphs(max(Groups), averagedf)
 
-        self.InflectionGraphsByNumber(get_unique_group(Headers), df)
+        self.InflectionGraphsByNumber(df)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
-
+        print('graphs finished: ', time.time() - tmestart)
         return self.graph_urls
 
-    def InflectionGraphByGroup(self, groups, headers, df):
-        for group in range(1, groups+1):
+    def InflectionGraphByGroup(self, df):
+        for group in range(1, max(df['group'])+1):
             subinf = df[(df['group'] == group)].sort_values(['index', 'triplicate'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
@@ -117,13 +126,14 @@ class Grapher:
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             legend1 = plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
             ax = plt.gca().add_artist(legend1)
-            plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label) for idx, label in enumerate(headers)],
+            plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
+                        for idx, label in enumerate(get_unique_group(df['label']))],
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
             self.saveimage(plt, 'Inflections_' + str(group))
 
-    def InflectionGraphsByNumber(self, headers, df):
+    def InflectionGraphsByNumber(self, df):
         df = df.sort_values(by=['sample', 'triplicate', 'group'], ascending=True)
         df['triplicateIndex'] = int(df['group'].max())*(df['triplicate'] % 8)+df['group']
         df['label'] = [x[:-2] for x in df['label']]
@@ -142,7 +152,8 @@ class Grapher:
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             legend1 = plt.legend(bbox_to_anchor=(1, 1), loc='upper left')
             ax = plt.gca().add_artist(legend1)
-            plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label) for idx, label in enumerate(headers)],
+            plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
+                        for idx, label in enumerate(get_unique_group(df['label']))],
                        bbox_to_anchor=(1, .1), loc='lower left')
             self.saveimage(plt, 'Inflection' + str(inf + 1))
 

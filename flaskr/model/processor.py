@@ -83,10 +83,9 @@ class Processor(AbstractProcessor):
             rfu_list = []
             for dIndex in derivatives.keys():
                 response = self.getInflectionPoints(dIndex, derivatives[dIndex], inflection_list)
-                if not response.is_success():
-                    return Response(False, response.get_message())
             if inflection_list is [] or len(inflection_list) < 4:
                 well['is_valid'] = False
+                flash('Inflections could not be found in well: %s' % well.get_excelheader(), 'error')
             else:
                 inflection_list = dict(sorted(inflection_list.items()))
                 for index, key in enumerate(inflection_list):
