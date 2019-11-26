@@ -88,8 +88,9 @@ def graphs(id):
     graph_urls = Grapher(dataset_id=id).execute()
     # TODO: include manually changed header here
     if len(graph_urls) == 0:
+        input_form = ExperimentInputForm()
         flash('Something went wrong with graphing', 'error')
-        return render_template('processinfo.html', id=id)
+        return render_template('processinfo.html', form=input_form, id=id)
     if request.method == 'POST':
         memory_file = BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:

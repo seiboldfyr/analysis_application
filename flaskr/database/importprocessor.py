@@ -97,7 +97,7 @@ class ImportProcessor(AbstractImporter):
                                  Cut=0,
                                  Groupings={},
                                  Swaps={},
-                                 CustomLabel=request.form['customlabel'],
+                                 CustomLabel=[],
                                  Error_Wells={},
                                  Cycle_Length=self.cyclelength)
         dataset_repository.save(model)

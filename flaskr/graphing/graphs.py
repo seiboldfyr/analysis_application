@@ -44,16 +44,17 @@ class Grapher:
                 base['variable'] = "Inflection " + str(idx)
                 base['value'] = item
                 df = df.append(base, ignore_index=True)
-                """
-            for idx, item in enumerate(well.get_inflectionrfus()):
-                base['variable'] = "Inflection RFU " + str(idx)
-                base['value'] = item
-                df = df.append(base, ignore_index=True)
+
             for idx, item in enumerate(well.get_percentdiffs()):
                 base['variable'] = "Percent Diff " + str(idx)
                 base['value'] = item
                 df = df.append(base, ignore_index=True)
-                """
+            """
+            for idx, item in enumerate(well.get_inflectionrfus()):
+                base['variable'] = "Inflection RFU " + str(idx)
+                base['value'] = item
+                df = df.append(base, ignore_index=True)
+            """
             Headers.append(well.get_label())
             Groups.append(well.get_group())
         print(time.time() - tmestart)
@@ -74,19 +75,8 @@ class Grapher:
         #                              inflection4=[value['inflections'][3] if len(value['inflections']) == 4 else 0
         #                                           for value in self.data.values()]))
 
-        # averagedf = pd.DataFrame(dict(label=[value['label'] for value in self.data.values()],
-        #                              group=[value['group'] for value in self.data.values()],
-        #                              inflection1=[value['percentdiffs'][1][0] if value.get('percentdiffs')
-        #                                           else 0 for value in self.data.values()],
-        #                              inflection2=[value['percentdiffs'][1][1] if value.get('percentdiffs')
-        #                                           else 0 for value in self.data.values()],
-        #                              inflection3=[value['percentdiffs'][1][2] if value.get('percentdiffs')
-        #                                           else 0 for value in self.data.values()],
-        #                              inflection4=[value['percentdiffs'][1][3] if value.get('percentdiffs')
-        #                                           else 0 for value in self.data.values()]))
-        # averagedf = averagedf.melt(id_vars=['label', 'group'], var_name='inflection')
-        # averagedf = averagedf[(averagedf != 'err')]
-        # averagedf = averagedf.dropna()
+
+
 
         # datadf = pd.DataFrame(columns=['index', 'group', 'triplicate', 'time', 'value'])
         # for well in self.data.keys():
@@ -100,7 +90,7 @@ class Grapher:
         self.InflectionGraphByGroup(max(Groups), get_unique_group(Headers), df)
         # self.RFUIndividualGraphsByGroup(max(Groups), datadf)
         # self.RFUAverageGraphsByGroup(max(Groups), datadf)
-        # self.percentGraphs(max(Groups), averagedf)
+        self.percentGraphs(max(Groups), df)
 
         self.InflectionGraphsByNumber(get_unique_group(Headers), df)
         # self.RFUAllGraphs(datadf.sort_values(['index']))
@@ -108,6 +98,7 @@ class Grapher:
         return self.graph_urls
 
     def InflectionGraphByGroup(self, groups, headers, df):
+        df = df[df['variable'].str.startswith('Inflection')]
         for group in range(1, groups+1):
             subinf = df[(df['group'] == group)].sort_values(['index', 'triplicate'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
@@ -124,6 +115,7 @@ class Grapher:
             self.saveimage(plt, 'Inflections_' + str(group))
 
     def InflectionGraphsByNumber(self, headers, df):
+        df = df[df['variable'].str.startswith('Inflection')]
         df = df.sort_values(by=['sample', 'triplicate', 'group'], ascending=True)
         df['triplicateIndex'] = int(df['group'].max())*(df['triplicate'] % 8)+df['group']
         df['label'] = [x[:-2] for x in df['label']]
@@ -149,7 +141,6 @@ class Grapher:
 
     def RFUIndividualGraphsByGroup(self, groups, df):
         for group in range(1, groups+1):
-            fig = plt.figure()
             seaborn.lineplot(x='time', y='value', hue='triplicate', units='index', estimator=None, data=df[df['group'] == group],
                              linewidth=.7)
             plt.ylabel('RFU')
@@ -178,19 +169,19 @@ class Grapher:
         saveImage(self, plt, 'Averages_All')
 
     def percentGraphs(self, groups, df):
+        pd = df[df['variable'].str.startswith("Percent Diff")]
         for group in range(1, groups+1):
-            fig = plt.figure()
-            subpc = df[(df['group'] == group)].sort_values(['inflection'])
-            if not subpc.empty:
-                indplt = seaborn.swarmplot(x='label', y="value", hue="label", data=subpc, dodge=True, marker='o',
+            subpc = pd[pd['group'] == group]
+            indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                            s=2.6, edgecolor='black', linewidth=.6)
-                indplt.set(xticklabels='')
-                box = plt.gca().get_position()
-                plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
-                plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
-                plt.xlabel('')
-                plt.ylabel('Percent Difference from Control')
-                saveImage(self, plt, 'PercentDiff_' + str(group))
+            indplt.set(xticklabels='') #TODO: figure out appropriate labeling
+            box = plt.gca().get_position()
+            plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
+            plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
+            plt.xlabel('')
+            plt.ylabel('Percent Difference from Control')
+            self.saveimage(plt, 'PercentDiff_' + str(group))
+
 
     def saveimage(self, plt, title):
         plt.title(title, fontsize=14)
@@ -212,6 +203,7 @@ class Grapher:
         manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
         seaborn.set_palette(manualcolors)
 
-
+    def format(self, plt):
+        return plt
 
 

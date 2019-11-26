@@ -7,11 +7,6 @@
 
  {% for key, value in result.items() %}
     {% if key == 'metadata' %}
-<!--        {%for metakey, metavalue in value.items() %}-->
-<!--            <tr>-->
-<!--               {{ metakey }}: {{ metavalue }} <br>-->
-<!--            </tr>-->
-<!--        {% endfor %}-->
     {% else %}
     <tr>
        <b>{{ key }}:</b> {{ value }} <br><br>
