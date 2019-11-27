@@ -34,13 +34,21 @@ class Grapher:
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
+        rfudf = df.copy()
+        for i in range(len(rfudf['RFUs'][0])):
+            rfudf[df['cycle'][0]*i] = [x[i] for x in rfudf['RFUs']]
+        rfudf = pd.melt(rfudf, id_vars=list(rfudf.columns)[:14],
+                        value_vars=list(rfudf.columns)[-(len(df['cycle'])):],
+                        var_name='time',
+                        value_name='rfu')
+        print(rfudf.head(30))
         for inf in range(4):
             df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
         df = pd.melt(df, id_vars=list(df.columns)[:-8],
-                value_vars=list(df.columns)[-8:],
-                var_name='variable',
-                value_name='value')
+                     value_vars=list(df.columns)[-8:],
+                     var_name='variable',
+                     value_name='value')
         print('pdtest: ', time.time() - startpd)
 
         self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
@@ -56,7 +64,6 @@ class Grapher:
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
             subinf = df[(df['group'] == group)].sort_values(['triplicate'])
-            subinf.head(15)
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=['Inflection 1', 'Inflection 2', 'Inflection 3', 'Inflection 4'])
