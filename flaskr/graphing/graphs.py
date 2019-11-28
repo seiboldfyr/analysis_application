@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
-from flaskr.model.helpers.functions import saveImage, get_unique_group, get_unique
+from flaskr.model.helpers.functions import saveImage, get_unique_group, get_unique, get_unique_name
 from flaskr.database.dataset_models.repository import Repository
 
 
@@ -31,12 +31,11 @@ class Grapher:
     def __init__(
             self,
             dataset_id: str,
-            customtitle: str = '',
-            time: list = None
+            customtitle: str = ''
     ):
         self.dataset_id = dataset_id
         self.customtitle = customtitle
-        self.time = time
+        self.time = []
         self.data = {}
         self.graph_urls = {}
 
@@ -48,12 +47,14 @@ class Grapher:
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
         rfudf = df.copy()
+        # testdf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
-            rfudf[df['cycle'][0]*i] = [x[i] for x in rfudf['RFUs']]
-        rfudf = pd.melt(rfudf, id_vars=list(rfudf.columns)[:14],
-                        value_vars=list(rfudf.columns)[-(len(df['cycle'])):],
-                        var_name='time',
-                        value_name='rfu')
+            self.time.append(df['cycle'][0]*i)
+            # rfudf[df['cycle'][0]*i] = [x[i] for x in rfudf['RFUs']]
+        # rfudf = pd.melt(rfudf, id_vars=list(rfudf.columns)[:14],
+        #                 value_vars=list(rfudf.columns)[-(len(df['cycle'])):],
+        #                 var_name='time',
+        #                 value_name='rfu')
         for inf in range(4):
             df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
@@ -66,7 +67,7 @@ class Grapher:
         startgraphing = time.time()
         self.RFUIndividualGraphsByGroup(rfudf)
         print('1', time.time() - startgraphing)
-        # self.RFUAverageGraphsByGroup(rfudf)
+        self.RFUAverageGraphsByGroup(rfudf)
         print('2', time.time() - startgraphing)
         self.RFUAllGraphs(rfudf)
         print('3', time.time() - startgraphing)
@@ -124,8 +125,10 @@ class Grapher:
 
     def RFUIndividualGraphsByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
-            seaborn.lineplot(x='time', y='rfu', hue='triplicate', units='excelheader', estimator=None,
-                             data=df[df['group'] == group], linewidth=.7)
+            for idx, row in enumerate(df[df['group'] == group].iterrows()):
+                index = row[0]
+                seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['triplicate'], units=index, estimator=None,
+                                 linewidth=.7)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Individuals_' + str(group))
@@ -133,26 +136,21 @@ class Grapher:
     def RFUAverageGraphsByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
             groupdf = df[df['group'] == group]
-            seaborn.lineplot(x='time', y='rfu', label='label', data=groupdf, linewidth=.7)
-            # for triplicate in get_unique(groupdf['triplicate']):
-            #     subdf = groupdf[groupdf['triplicate'] == triplicate]
-            #     print(subdf.head(10))
-            #     print(subdf.groupby('label').mean(1))
-                # sys.exit()
-                # seaborn.lineplot(subdf['time'], subdf.mean(1), label=subdf['label'], linewidth=.7)
-            print(groupdf.head(20))
-            groupdf = groupdf.groupby('label')
-            print(groupdf.head(20))
-            print(groupdf.groupby('time').mean())
-            seaborn.lineplot(y='rfu', label='label', data=groupdf, linewidth=.7)
+            for triplicate in get_unique_name(groupdf['label']):
+                tdf = groupdf[groupdf['label'] == triplicate]
+                sub2df = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
+                seaborn.lineplot(self.time, sub2df.mean(0), label=triplicate, linewidth=.7)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
     def RFUAllGraphs(self, df):
-        manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
-        seaborn.lineplot(x='time', y='rfu', hue='group', units='excelheader', estimator=None, data=df,
-                         palette=manualcolors[-np.max(df['group']):], linewidth=.7)  # hue='group', units='triplicate'
+        for idx, row in enumerate(df.iterrows()):
+            print(row[1]['group'])
+            seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['group'], units=idx, estimator=None,
+                             linewidth=.7)
+        # seaborn.lineplot(x='time', y='rfu', hue='group', units='excelheader', estimator=None, data=df,
+        #                  palette=manualcolors[-np.max(df['group']):], linewidth=.7)  # hue='group', units='triplicate'
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
