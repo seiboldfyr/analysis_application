@@ -4,6 +4,7 @@ import io
 import base64
 import pandas as pd
 import time
+from flask import flash
 import sys
 import matplotlib
 matplotlib.use('Agg')
@@ -146,7 +147,6 @@ class Grapher:
 
     def RFUAllGraphs(self, df):
         for idx, row in enumerate(df.iterrows()):
-            print(row[1]['group'])
             seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['group'], units=idx, estimator=None,
                              linewidth=.7)
         # seaborn.lineplot(x='time', y='rfu', hue='group', units='excelheader', estimator=None, data=df,
