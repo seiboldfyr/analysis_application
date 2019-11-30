@@ -119,23 +119,22 @@ class ImportProcessor(AbstractImporter):
         for row in info.read(sheet='Run Information', userows=True):
             if row[0] == 'Run Ended':
                 end = getTime(row[1])
-                print('exp length: ', self.experimentlength)
             if row[0] == 'Run Started':
                 start = getTime(row[1])
-                print('run start: ', start)
         if start == 0 or end == 0:
             current_app.logger("Error retrieving experiment length")
         self.experimentlength = (end-start).total_seconds()
 
     def iterateidentifiers(self, label):
         if self.identifers['previous'] == '':
-            self.identifers['control'] = label
+            self.identifers['control'] = label[:12]
 
         if self.identifers['previous'] != label:
             self.identifers['sample'] += 1
             self.identifers['triplicate'] += 1
 
-            if label == self.identifers['control'] and self.identifers['triplicate'] > 1:
+            # TODO: check if control is labeled with '_0'
+            if label[:12] == self.identifers['control'] and self.identifers['triplicate'] > 1:
                 self.identifers['group'] += 1
                 self.identifers['sample'] = 1
 

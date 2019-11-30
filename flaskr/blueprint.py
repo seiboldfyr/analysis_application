@@ -76,7 +76,7 @@ def process(id, graphs=None):
             flash('%s' % response.get_message(), 'error')
             return render_template('processinfo.html', form=input_form, id=id)
 
-        flash('Processed successfully in: %s seconds' % response.get_message(), 'msg')
+        flash('Processed successfully in %s seconds' % response.get_message(), 'msg')
         return render_template('processinfo.html', form=input_form, id=id, graphed=True)
 
     return render_template('processinfo.html', form=input_form, id=id)

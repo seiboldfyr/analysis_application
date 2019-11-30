@@ -10,6 +10,10 @@ def get_unique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
 
+def get_unique_name(keylist):
+    indexes = np.unique(keylist, return_index=False)
+    return indexes
+
 def get_unique_group(keylist):
     temp = [item[-1] for item in keylist]
     index = np.unique(temp, return_index=True)[1]
