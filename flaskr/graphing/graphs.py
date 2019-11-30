@@ -4,28 +4,12 @@ import io
 import base64
 import pandas as pd
 import time
-from flask import flash
-import sys
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import saveImage, get_unique_group, get_unique, get_unique_name
 from flaskr.database.dataset_models.repository import Repository
-
-
-def setGraphSettings():
-    params = {'legend.fontsize': 5,
-              'legend.loc': 'best',
-              'legend.framealpha': 0.5,
-              'figure.dpi': 250,
-              'legend.handlelength': .8,
-              'legend.markerscale': .4,
-              'legend.labelspacing': .4,
-              'font.size': 8}
-    plt.rcParams.update(params)
-    manualcolors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
-    seaborn.set_palette(manualcolors)
 
 
 class Grapher:
@@ -39,23 +23,18 @@ class Grapher:
         self.time = []
         self.data = {}
         self.graph_urls = {}
+        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
 
     def execute(self):
-        setGraphSettings()
+        self.setGraphSettings()
 
         startpd = time.time()
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
         rfudf = df.copy()
-        # testdf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i)
-            # rfudf[df['cycle'][0]*i] = [x[i] for x in rfudf['RFUs']]
-        # rfudf = pd.melt(rfudf, id_vars=list(rfudf.columns)[:14],
-        #                 value_vars=list(rfudf.columns)[-(len(df['cycle'])):],
-        #                 var_name='time',
-        #                 value_name='rfu')
         for inf in range(4):
             df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
@@ -123,34 +102,43 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             self.saveimage(plt, 'Inflection' + str(inf + 1))
 
-
     def RFUIndividualGraphsByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
+            rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
-                index = row[0]
-                seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['triplicate'], units=index, estimator=None,
-                                 linewidth=.7)
+                tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
+                                                  index=row[0]))
+                rdf = pd.concat([rdf, tdf])
+                # seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['triplicate'], units=index, estimator=None,
+                #                  linewidth=.7)
+            seaborn.lineplot(x='time', y='rfus', hue='triplicate', units='index', estimator=None,
+                             data=rdf, palette=self.colors, linewidth=.7)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Individuals_' + str(group))
 
     def RFUAverageGraphsByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
+            rdf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index'])
             groupdf = df[df['group'] == group]
-            for triplicate in get_unique_name(groupdf['label']):
+            for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
-                sub2df = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
-                seaborn.lineplot(self.time, sub2df.mean(0), label=triplicate, linewidth=.7)
+                tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
+                tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
+                                             triplicate=triplicate, index=idx))
+                rdf = pd.concat([rdf, tdf])
+            seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None, data=rdf, linewidth=.7)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
     def RFUAllGraphs(self, df):
+        rdf = pd.DataFrame(columns=['time', 'rfu', 'group', 'index'])
         for idx, row in enumerate(df.iterrows()):
-            seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['group'], units=idx, estimator=None,
-                             linewidth=.7)
-        # seaborn.lineplot(x='time', y='rfu', hue='group', units='excelheader', estimator=None, data=df,
-        #                  palette=manualcolors[-np.max(df['group']):], linewidth=.7)  # hue='group', units='triplicate'
+            tempdf = pd.DataFrame(data=dict(time=self.time, rfu=row[1]['RFUs'], group=row[1]['group'], index=idx))
+            rdf = pd.concat([rdf, tempdf])
+        seaborn.lineplot(x='time', y='rfu', hue='group', units='index', estimator=None, data=rdf,
+                         palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
@@ -175,7 +163,17 @@ class Grapher:
         plt.close()
         self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
-
+    def setGraphSettings(self):
+        params = {'legend.fontsize': 5,
+                  'legend.loc': 'best',
+                  'legend.framealpha': 0.5,
+                  'figure.dpi': 250,
+                  'legend.handlelength': .8,
+                  'legend.markerscale': .4,
+                  'legend.labelspacing': .4,
+                  'font.size': 8}
+        plt.rcParams.update(params)
+        seaborn.set_palette(self.colors)
 
 
 
