@@ -109,8 +109,6 @@ class Grapher:
                 tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
                                                   index=row[0]))
                 rdf = pd.concat([rdf, tdf])
-                # seaborn.lineplot(x=self.time, y=row[1]['RFUs'], hue=row[1]['triplicate'], units=index, estimator=None,
-                #                  linewidth=.7)
             seaborn.lineplot(x='time', y='rfus', hue='triplicate', units='index', estimator=None,
                              data=rdf, palette=self.colors, linewidth=.7)
             plt.ylabel('RFU')
