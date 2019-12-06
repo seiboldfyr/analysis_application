@@ -23,7 +23,7 @@ class Grapher:
         self.time = []
         self.data = {}
         self.graph_urls = {}
-        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
+        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"] # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self):
         self.setGraphSettings()
@@ -90,7 +90,7 @@ class Grapher:
             gd = df[df['variable'] == "Inflection " + str(inf)]
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="label", data=gd,
                                        marker='o', s=2.6, edgecolor='black', linewidth=.6)
-            indplt.set(xticklabels=xaxis)
+            indplt.set(xticklabels=[str(num % 4 + 1) for num in np.arange(32)])
             plt.ylabel('Time (Min)')
             plt.xlabel('Group Number')
             box = plt.gca().get_position()
@@ -102,7 +102,7 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             self.saveimage(plt, 'Inflection' + str(inf + 1))
 
-    def RFUIndividualGraphsByGroup(self, df):
+    def RFUIndividualGraphsByGroup(self, df): # TODO: Time axes are not scaled correctly
         for group in range(1, int(df['group'].max())+1):
             rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
@@ -130,7 +130,7 @@ class Grapher:
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
-    def RFUAllGraphs(self, df):
+    def RFUAllGraphs(self, df): # TODO: Currently this is plotting each individual trace, not the group averages. 'rfu' -> 'averagerfu'?
         rdf = pd.DataFrame(columns=['time', 'rfu', 'group', 'index'])
         for idx, row in enumerate(df.iterrows()):
             tempdf = pd.DataFrame(data=dict(time=self.time, rfu=row[1]['RFUs'], group=row[1]['group'], index=idx))
@@ -146,7 +146,7 @@ class Grapher:
             subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                            s=2.6, edgecolor='black', linewidth=.6)
-            indplt.set(xticklabels='') #TODO: figure out appropriate labeling
+            indplt.set(xticklabels=[str(num+1) for num in np.arange(4)]) #TODO: figure out appropriate labeling (12/05): Potentially resolved, labeling scheme is same as in old analysis JH
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
