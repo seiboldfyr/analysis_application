@@ -34,7 +34,7 @@ class Grapher:
         df = dataset.get_pd_well_collection()
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
-            self.time.append(df['cycle'][0]*i)
+            self.time.append(df['cycle'][0]*i/60)
         for inf in range(4):
             df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]

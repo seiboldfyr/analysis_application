@@ -1,8 +1,10 @@
 
-from flask import render_template, redirect, url_for, request, flash, Blueprint, send_file
+from flask import render_template, redirect, url_for, request, flash, Blueprint, send_file, app
 import zipfile
+import pandas as pd
 import base64
-from io import BytesIO
+import os
+from io import BytesIO, StringIO
 
 from flaskr.forms import DataInputForm, ExperimentInputForm
 from flaskr.auth.blueprint import login_required
@@ -10,6 +12,7 @@ from flaskr.database.importprocessor import ImportProcessor, buildname
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.graphing.graphs import Grapher
+from flaskr.filewriter.writer import Writer
 
 base_blueprint = Blueprint('base', __name__, template_folder='templates')
 
@@ -104,9 +107,20 @@ def graphs(id):
     return render_template('graphs.html', id=id, graphs=graph_urls.values())
 
 
-@base_blueprint.route('/runstats', methods=['GET', 'POST'])
+@base_blueprint.route('/download/<id>')
 @login_required
-def runbatch():
-    #TODO: batch processing
-    #Create graphs and a file of summary stats
-    return render_template('stats.html')
+def download(id):
+    title = 'analysisoutput.xlsx'
+    path = os.path.join('instance', title)
+    io = BytesIO()
+    excelwriter = pd.ExcelWriter(path, engine='xlsxwriter')
+    excelwriter.book.filename = io
+
+    writer = Writer(excelwriter=excelwriter, dataset_id=id)
+    workbook = writer.writebook()
+
+    excelwriter.save()
+    io.seek(0)
+    return send_file(io,
+                     attachment_filename=title,
+                     as_attachment=True)

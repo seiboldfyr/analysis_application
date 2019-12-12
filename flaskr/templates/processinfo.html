@@ -15,12 +15,12 @@ line-height: 16px;
 <br>
 <div class="formwrapper">
     <form method=post>
-        <div class="cutlength" name="Cut Length">
+        <div class="cutlength">
             {{ form.cutlength.label }} {{ form.cutlength(placeholder="default=0") }}
         </div>
         <p class="big">
 
-        <div class="customlabel" name="Custom Label">
+        <div class="customlabel">
             {{ form.customlabel.label }} {{ form.customlabel }}
         </div>
         <p class="big">
@@ -47,27 +47,25 @@ line-height: 16px;
 <script type="text/javascript">
 
 function otherSelect() {
-    var pick = document.getElementById("groupidentification").selectedIndex;
+    let pick = document.getElementById("groupidentification").selectedIndex;
     makeVisible(parseInt(pick));
     }
 
 function makeVisible(grouptotal) {
-    var groupdetails = document.getElementsByClassName("wellidentification");
-    document.getElementById("groupresult").innerHTML = ''
-
-    for(var group = 1; group <= grouptotal; group ++){
-        var formGroupHtml = buildGroupHtml(group);
+    document.getElementById("groupresult").innerHTML = '';
+    for(let group = 1; group <= grouptotal; group ++){
+        let formGroupHtml = buildGroupHtml(group);
         document.getElementById("groupresult").innerHTML += formGroupHtml;
         }
     }
 
 function buildGroupHtml(group) {
-    var html ='<div class="wellidentification"><div id="grouptitle"><b> {{ form.grouptitle.label }}'
-    html += group + '</b></div>'
-    html += '<div id="grouplabel">{{ form.grouplabel.label }} <input name="Group Label ' + group + '" type="text"/></div>'
-    html += '<div id="groupwells">{{ form.groupwells.label }} <input name="Group Wells ' + group + '" type="text"/></div>'
-    html += '<div id="groupsamples">{{ form.groupsamples.label }} <input name="Group Samples ' + group + '" type="text"/></div>'
-    html += '<p class="big">'
+    let html ='<div class="wellidentification"><div id="grouptitle"><b>{{form.grouptitle.label}}';
+    html += group + '</b></div>';
+    html += '<div id="grouplabel">{{form.grouplabel.label}}<input name="Group Label ' + group + '" type="text"/></div>';
+    html += '<div id="groupwells">{{form.groupwells.label}}<input name="Group Wells ' + group + '" type="text"/></div>';
+    html += '<div id="groupsamples">{{form.groupsamples.label}}<input name="Group Samples ' + group + '" type="text"/></div>';
+    html += '<p class="big">';
     return html;
     }
 
@@ -76,7 +74,7 @@ function buildGroupHtml(group) {
 <p class="huge"><br>
 <b> Optional parameters:</b><br>
     <p class="big">
-        <div class="errorwells", name="Wells designated as in error">
+        <div class="errorwells">
             {{ form.errorwells.label }} {{ form.errorwells(placeholder="A01, A02, ...") }}
         </div>
 
@@ -107,13 +105,12 @@ function buildGroupHtml(group) {
 
 <script type="text/javascript">
 function swapnumber() {
-    var pick = document.getElementById("labelswaps").selectedIndex;
+    let pick = document.getElementById("labelswaps").selectedIndex;
     makeSwapsVisible(parseInt(pick));
     }
 
 function makeSwapsVisible(swapnumber) {
-    var swapdetails = document.getElementsByClassName("labelidentification");
-    document.getElementById("swapinput").innerHTML = ''
+    document.getElementById("swapinput").innerHTML = '';
 
     for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
         var formSwapHtml = buildSwapHtml(wellswap);
@@ -122,10 +119,10 @@ function makeSwapsVisible(swapnumber) {
     }
 
 function buildSwapHtml(swapnumber) {
-    var html ='<div class="labelidentification"></div>'
-    html += '<div id="labelfrom">{{ form.labelfrom.label}} <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>'
-    html += '<div id="labelto">{{ form.labelto.label}} <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>'
-    html += '<p class="big">'
+    var html ='<div class="labelidentification"></div>';
+    html += '<div id="labelfrom">{{form.labelfrom.label}}<input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>';
+    html += '<div id="labelto">{{form.labelto.label}}<input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
+    html += '<p class="big">';
     return html;
     }
 </script>
@@ -141,12 +138,14 @@ function buildSwapHtml(swapnumber) {
 
 {% block buttons %}
 <a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>See Graphs</button></a>
+<a href="{{ url_for('base.download', id=id) }}" id="downloadbutton"><button>Download Results as Excel</button></a>
 <script>
     var visibility = 'visible';
     if ("{{ graphed }}" == false) {
         visibility = "hidden"
     }
     document.getElementById("graphbutton").style.visibility = visibility;
+    document.getElementById("downloadbutton").style.visibility = visibility;
 </script>
 {% endblock %}
 

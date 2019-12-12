@@ -51,7 +51,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n * well.get_cycle() for n in range(len(well.get_rfus()))]
+                self.time = [n * well.get_cycle()/60 for n in range(len(well.get_rfus()))]
 
             if well.get_label()[-2] != "_":
                 well['label'] = well.get_label() + '_' + str(well.get_group())
@@ -91,7 +91,7 @@ class Processor(AbstractProcessor):
                 for index, key in enumerate(inflection_list):
                     rfu_list.append(get_expected_values(self, well, key, inflection_list[key])[0])
             well['inflections'] = list(inflection_list.keys())
-            well['inflectionRFUs'] = list(rfu_list)
+            well['inflectionRFUs'] = list(rfu_list) #TODO: correct inflection RFUs #3 and #4
             if well.get_group() != self.controlgroup:
                 self.controlgroup = well.get_group()
                 self.control = well['inflections']
