@@ -137,8 +137,7 @@ function buildSwapHtml(swapnumber) {
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>See Graphs</button></a>
-<a href="{{ url_for('base.download', id=id) }}" id="downloadbutton"><button>Download Results as Excel</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>View Graphs and Download</button></a>
 <script>
     var visibility = 'visible';
     if ("{{ graphed }}" == false) {

@@ -1,5 +1,5 @@
-import sys
 import pandas as pd
+from flaskr.framework.model.request.response import Response
 
 from flaskr.database.dataset_models.repository import Repository
 
@@ -47,10 +47,10 @@ class Writer:
                 for triplicateA in gdf['triplicate'].unique():
                     columns.append(len(gdf.columns))
                     rowA = gdf[gdf['triplicate'] == triplicateA]
-                    gdf.insert(len(gdf.columns), str(triplicateA) + ' ' + inf_label, gdf[inf_label] - float(rowA[inf_label]))
+                    gdf.insert(len(gdf.columns), str(rowA['label']) + ' ' + inf_label, gdf[inf_label] - float(rowA[inf_label]))
             self.write_to_sheet('Differences', gdf, columns, group)
 
-        return df
+        return Response(True, '')
 
     def build_dataframe(self, df):
         df = df[(df['is_valid'] == True)]
@@ -72,7 +72,6 @@ class Writer:
     def excel_formatting(self, sheetname, df):
         worksheet = self.excelwriter.sheets[sheetname]
         maxlength = max(df.astype('str').applymap(lambda x: len(x)).max())
-        # worksheet.set_column(0, 0, maxlength)
         worksheet.set_column(1, len(df.columns), 2*maxlength/3)
 
     def build_averages(self, df):

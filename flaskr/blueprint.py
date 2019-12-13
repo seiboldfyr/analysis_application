@@ -1,5 +1,6 @@
 
-from flask import render_template, redirect, url_for, request, flash, Blueprint, send_file, app
+from flask import render_template, redirect, url_for, request, flash, Blueprint, \
+    send_file, current_app
 import zipfile
 import pandas as pd
 import base64
@@ -89,38 +90,41 @@ def process(id, graphs=None):
 @login_required
 def graphs(id):
     graph_urls = Grapher(dataset_id=id).execute()
+
+    input_form = ExperimentInputForm()
     # TODO: include manually changed header here
     if len(graph_urls) == 0:
-        input_form = ExperimentInputForm()
         flash('Something went wrong with graphing', 'error')
         return render_template('processinfo.html', form=input_form, id=id)
+
     if request.method == 'POST':
         memory_file = BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
+
             for itemtitle in graph_urls.keys():
                 data = zipfile.ZipInfo()
                 data.filename = itemtitle
                 zf.writestr(data, base64.decodebytes(graph_urls[itemtitle].encode('ascii')))
+
+            io = BytesIO()
+            analysistitle = 'analysisoutput.xlsx'
+            excelwriter = pd.ExcelWriter(analysistitle, engine='xlsxwriter')
+            excelwriter.book.filename = io
+            writer = Writer(excelwriter=excelwriter, dataset_id=id)
+            response = writer.writebook()
+            if not response.is_success():
+                return render_template('processinfo.html', form=input_form, id=id)
+            excelwriter.save()
+            io.seek(0)
+
+            data = zipfile.ZipInfo()
+            data.filename = analysistitle
+            zf.writestr(data, io.getvalue())
+
         memory_file.seek(0)
-        return send_file(memory_file, attachment_filename='graphs.zip', as_attachment=True)
+        #TODO: include data identification in ZIP filename
+        zipfilename = 'output_v' + current_app.config['VERSION'] + '.zip'
+        return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graph_urls.values())
 
-
-@base_blueprint.route('/download/<id>')
-@login_required
-def download(id):
-    title = 'analysisoutput.xlsx'
-    path = os.path.join('instance', title)
-    io = BytesIO()
-    excelwriter = pd.ExcelWriter(path, engine='xlsxwriter')
-    excelwriter.book.filename = io
-
-    writer = Writer(excelwriter=excelwriter, dataset_id=id)
-    workbook = writer.writebook()
-
-    excelwriter.save()
-    io.seek(0)
-    return send_file(io,
-                     attachment_filename=title,
-                     as_attachment=True)
