@@ -1,5 +1,6 @@
 import numpy as np
 import seaborn
+from seaborn import color_palette
 import io
 import base64
 import pandas as pd
@@ -19,11 +20,11 @@ class Grapher:
             customtitle: str = ''
     ):
         self.dataset_id = dataset_id
-        self.customtitle = customtitle
+        self.customtitle = customtitle      # TODO: set customtitle to be the filename
         self.time = []
         self.data = {}
         self.graph_urls = {}
-        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"] # TODO: make these colors adaptable when the total number of concentrations =/= 8
+        self.colors = ["gray", "lime", "cyan", "magenta", "gold", "dodgerblue", "red", "darkgreen"] # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self):
         self.setGraphSettings()
@@ -34,7 +35,7 @@ class Grapher:
         df = dataset.get_pd_well_collection()
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
-            self.time.append(df['cycle'][0]*i)
+            self.time.append(df['cycle'][0]*i / 60.)
         for inf in range(4):
             df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
@@ -60,8 +61,8 @@ class Grapher:
         print('6', time.time() - startgraphing)
 
         print('graphs finished: ', time.time() - startpd)
-        return self.graph_urls
 
+        return self.graph_urls
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
             subinf = df[(df['group'] == group)].sort_values(['triplicate'])
@@ -77,7 +78,7 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
             plt.ylabel('Time (Min)')
-            self.saveimage(plt, 'Inflections_' + str(group))
+            self.saveimage(plt, str(self.customtitle) + '_Inflections_' + str(group))
 
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['triplicate'] % 8)+df['group'])
@@ -122,21 +123,26 @@ class Grapher:
             for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
-                tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
-                                             triplicate=triplicate, index=idx))
+                tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0), triplicate=triplicate, index=idx))
                 rdf = pd.concat([rdf, tdf])
             seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None, data=rdf, linewidth=.7)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
-    def RFUAllGraphs(self, df): # TODO: Currently this is plotting each individual trace, not the group averages. 'rfu' -> 'averagerfu'?
-        rdf = pd.DataFrame(columns=['time', 'rfu', 'group', 'index'])
-        for idx, row in enumerate(df.iterrows()):
-            tempdf = pd.DataFrame(data=dict(time=self.time, rfu=row[1]['RFUs'], group=row[1]['group'], index=idx))
-            rdf = pd.concat([rdf, tempdf])
-        seaborn.lineplot(x='time', y='rfu', hue='group', units='index', estimator=None, data=rdf,
-                         palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
+    def RFUAllGraphs(self, df): # TODO: labelling needs fixed
+        for group in range(1, int(df['group'].max()) + 1):
+            rdf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index', 'group'])
+            groupdf = df[df['group'] == group]
+            for idx, triplicate in enumerate(groupdf['label']):
+                tdf = groupdf[groupdf['label'] == triplicate]
+                tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
+                tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
+                                             triplicate=triplicate, index=idx))
+                rdf = pd.concat([rdf, tdf])
+            seaborn.lineplot(x='time', y='averagerfu', data=rdf, hue='group', units='index', estimator=None, palette=self.colors,
+                             linewidth=.7, legend="full")
+            print(rdf['group'])
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
@@ -146,7 +152,7 @@ class Grapher:
             subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                            s=2.6, edgecolor='black', linewidth=.6)
-            indplt.set(xticklabels=[str(num+1) for num in np.arange(4)]) #TODO: figure out appropriate labeling (12/05): Potentially resolved, labeling scheme is same as in old analysis JH
+            indplt.set(xticklabels=[str(num+1) for num in np.arange(4)])
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)

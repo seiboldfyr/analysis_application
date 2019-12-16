@@ -51,7 +51,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n * well.get_cycle() for n in range(len(well.get_rfus()))]
+                self.time = [n /60.  * well.get_cycle() for n in range(len(well.get_rfus()))]
 
             if well.get_label()[-2] != "_":
                 well['label'] = well.get_label() + '_' + str(well.get_group())
