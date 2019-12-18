@@ -30,19 +30,23 @@ class Processor(AbstractProcessor):
         timestart = time.time()
         self.measurement_manager = MeasurementManager()
 
+        #TODO: if dataset has metadata, use that info instead of request.form
+
         cut = self.request.form['cutlength']
         if cut is None:
             cut = 0
-        customlabeladdition = self.request.form['customlabel']  # TODO: move this to wherever we use it
+
         build_swap_inputs(self)
         build_group_inputs(self)
         self.errorwells = [well for well in self.request.form['errorwells'].split(',')]
 
         for wellindex, well in enumerate(get_collection(self)):
 
-            # swap wells
+            # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
                 self.swapWells(well)
+            if cut > 0:
+                self.editRFUs(well, cut)
 
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
@@ -51,7 +55,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n * well.get_cycle() for n in range(len(well.get_rfus()))]
+                self.time = [n * well.get_cycle() / 60 for n in range(cut, len(well.get_rfus()))]
 
             if well.get_label()[-2] != "_":
                 well['label'] = well.get_label() + '_' + str(well.get_group())
@@ -76,28 +80,34 @@ class Processor(AbstractProcessor):
                                             RFUs=destwell.get_rfus()))
                 self.measurement_manager.update(originwell)
 
+    def editRFUs(self, originwell, cut):
+        originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
+        self.measurement_manager.update(originwell)
+
     def processData(self, well):
-        if well['excelheader'] not in self.errorwells:
+        if well['excelheader'] in self.errorwells:
+            well['is_valid'] = False
+
+        else:
             derivatives = get_derivatives(well)
             inflection_list = {}  #
             rfu_list = []
             for dIndex in derivatives.keys():
                 response = self.getInflectionPoints(dIndex, derivatives[dIndex], inflection_list)
-            if inflection_list is [] or len(inflection_list) < 4:
-                well['is_valid'] = False
-                flash('Inflections could not be found in well: %s' % well.get_excelheader(), 'error')
-            else:
-                inflection_list = dict(sorted(inflection_list.items()))
-                for index, key in enumerate(inflection_list):
-                    rfu_list.append(get_expected_values(self, well, key, inflection_list[key])[0])
+                if not response.is_success():
+                    well['is_valid'] = False
+                    flash(response.get_message() + ' %s' % well.get_excelheader(), 'error')
+                    break
+            inflection_list = dict(sorted(inflection_list.items()))
+            for index, key in enumerate(inflection_list):
+                rfu_list.append(get_expected_values(self, well, key, inflection_list[key])[0])
             well['inflections'] = list(inflection_list.keys())
-            well['inflectionRFUs'] = list(rfu_list) #TODO: correct inflection RFUs #3 and #4
+            well['inflectionRFUs'] = list(rfu_list)
             if well.get_group() != self.controlgroup:
                 self.controlgroup = well.get_group()
                 self.control = well['inflections']
             well['percentdiffs'] = get_percent_difference(self, well['inflections'])
-        else:
-            well['is_valid'] = False
+
         self.measurement_manager.update(well)
         return Response(True, '')
 
@@ -111,5 +121,7 @@ class Processor(AbstractProcessor):
             leftside = xstarts[peakindex]
             rightside = min([xends[peakindex], len(derivative), len(timediff)])
             polycoefs = fit_poly_equation(timediff[leftside:rightside], derivative[leftside:rightside])
-            inflection_list[(-polycoefs[1] / (2 * polycoefs[0])) / 60] = dict(left=leftside, right=rightside)
+            inflection_list[(-polycoefs[1] / (2 * polycoefs[0]))] = dict(left=leftside, right=rightside)
+        if inflection_list is {} or len(inflection_list) < 4:
+            return Response(False, '%s of 4 inflections were found in well: ' % len(inflection_list))
         return Response(True, '')

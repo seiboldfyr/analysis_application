@@ -48,29 +48,37 @@ class Grapher:
                      value_vars=list(df.columns)[-8:],
                      var_name='variable',
                      value_name='value')
-        print('pdtest: ', time.time() - startpd)
+        print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
         self.RFUIndividualGraphsByGroup(rfudf)
         print('1', time.time() - startgraphing)
+        startgraphing = time.time()
+
         self.RFUAverageGraphsByGroup(rfudf)
         print('2', time.time() - startgraphing)
+        startgraphing = time.time()
+
         self.RFUAllGraphs(rfudf)
         print('3', time.time() - startgraphing)
+        startgraphing = time.time()
 
         self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
         print('4', time.time() - startgraphing)
+        startgraphing = time.time()
+
         self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
         print('5', time.time() - startgraphing)
+        startgraphing = time.time()
+
         self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
         print('6', time.time() - startgraphing)
 
-        print('graphs finished: ', time.time() - startpd)
         return self.graph_urls
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
-            subinf = df[(df['group'] == group)].sort_values(['triplicate'])
+            subinf = df[(df['group'] == group)].sort_values(['triplicate', 'value'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=['Inflection 1', 'Inflection 2', 'Inflection 3', 'Inflection 4'])
@@ -145,8 +153,12 @@ class Grapher:
             tempdf = pd.DataFrame(data=dict(time=self.time, rfu=row[1]['RFUs'], group=row[1]['group'], index=idx))
             rdf = pd.concat([rdf, tempdf])
         rfuplot = seaborn.lineplot(x='time', y='rfu', hue='group', units='index', estimator=None, data=rdf,
-                         palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
+                                   palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
         rfuplot = removeLegendTitle(rfuplot)
+        #TODO: add group label to averages_all
+        # plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
+        #             for idx, label in enumerate(get_unique_group(df['label']))],
+        #            bbox_to_anchor=(1, .1), loc='lower left')
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
