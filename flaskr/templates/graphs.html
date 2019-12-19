@@ -5,9 +5,11 @@
 {% block body %}
 <div class="formwrapper">
   <form method = "POST">
-      <p><input type="submit" name='download' value="Download All"/></p>
+      <p><input type="submit" name='download' value="Download a ZIP file of the graphs and the analysis"/></p>
   </form>
 </div>
+
+<div><font color="red"> Please note, these graphs are still in progress and not for official use (yet).</font> </div>
 {% endblock %}
 
 
@@ -20,6 +22,6 @@
 
 {% block buttons %}
 <br>
-<a href="{{ url_for('.process', id=id, graphs=graphs) }}"><button>Back</button></a>
+<a href="{{ url_for('.process', id=id) }}"><button>Back</button></a>
 <br>
 {% endblock %}
