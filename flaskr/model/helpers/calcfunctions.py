@@ -16,7 +16,7 @@ def get_expected_values(self, well, x, borders) -> []:
     # For estimating the 'y' of a given 'x'
     # x can be a list or a single element
     polynomialcoefs = fit_poly_equation(self.time[borders['left']:borders['right']],
-                                      well.get_rfus()[borders['left']:borders['right']])
+                                        well.get_rfus()[borders['left']:borders['right']])
     if isinstance(x, float):
         x = [x]
     x2 = square(x)
