@@ -33,7 +33,7 @@ class Processor(AbstractProcessor):
         #TODO: if dataset has metadata, use that info instead of request.form
 
         cut = self.request.form['cutlength']
-        if cut is None:
+        if cut is None or isinstance(cut, str):
             cut = 0
 
         build_swap_inputs(self)

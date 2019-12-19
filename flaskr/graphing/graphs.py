@@ -155,10 +155,7 @@ class Grapher:
         rfuplot = seaborn.lineplot(x='time', y='rfu', hue='group', units='index', estimator=None, data=rdf,
                                    palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
         rfuplot = removeLegendTitle(rfuplot)
-        #TODO: add group label to averages_all
-        # plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
-        #             for idx, label in enumerate(get_unique_group(df['label']))],
-        #            bbox_to_anchor=(1, .1), loc='lower left')
+        rfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
@@ -167,7 +164,7 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
-                                        s=2.6, edgecolor='black', linewidth=.6)
+                                       s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=[str(num+1) for num in np.arange(4)]) #TODO: figure out appropriate labeling (12/05): Potentially resolved, labeling scheme is same as in old analysis JH
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
