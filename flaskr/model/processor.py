@@ -101,6 +101,7 @@ class Processor(AbstractProcessor):
             inflection_list = dict(sorted(inflection_list.items()))
             for index, key in enumerate(inflection_list):
                 rfu_list.append(get_expected_values(self, well, key, inflection_list[key])[0])
+            # TODO: save inflections in a dictionary from the get-go
             well['inflections'] = list(inflection_list.keys())
             well['inflectionRFUs'] = list(rfu_list)
             if well.get_group() != self.controlgroup:
@@ -115,13 +116,13 @@ class Processor(AbstractProcessor):
         peaks, xstarts, xends = get_peaks(dindex, derivative)
         # TODO: improve peak finding to find the single largest, and then the second largest
         if type(peaks[0]) == str:
-            return Response(False, 'Error retrieving inflection points')
+            return Response(False, 'Error retrieving inflection points for well: ')
         for peakindex, peak in enumerate(peaks):
             timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
             leftside = xstarts[peakindex]
             rightside = min([xends[peakindex], len(derivative), len(timediff)])
             polycoefs = fit_poly_equation(timediff[leftside:rightside], derivative[leftside:rightside])
             inflection_list[(-polycoefs[1] / (2 * polycoefs[0]))] = dict(left=leftside, right=rightside)
-        if inflection_list is {} or len(inflection_list) < 4:
+        if inflection_list is {} or len(inflection_list) < 2:
             return Response(False, '%s of 4 inflections were found in well: ' % len(inflection_list))
         return Response(True, '')

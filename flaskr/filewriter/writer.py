@@ -46,11 +46,10 @@ class Writer:
                 gdf = adf[(adf['group'] == group)]
                 inf_label = 'Inflection ' + str(inf + 1)
                 columns.append(6)
-                # TODO: can we add the sample number to the label?
                 for triplicateA in gdf['triplicate'].unique():
                     columns.append(len(gdf.columns))
                     rowA = gdf[gdf['triplicate'] == triplicateA]
-                    gdf.insert(len(gdf.columns), str(triplicateA - 1) + ' ' + inf_label,
+                    gdf.insert(len(gdf.columns), str(len(columns) - 2) + ' ' + inf_label,
                                [label - float(rowA[inf_label]) if triplicateB >= triplicateA else 'NA'
                                 for label, triplicateB in zip(gdf[inf_label], gdf['triplicate'])])
                 spacedifferencematrices = (len(columns)+4) * inf
@@ -58,10 +57,8 @@ class Writer:
         return Response(True, '')
 
     def build_dataframe(self, df):
-        df = df[(df['is_valid'] == True)]
         for i in range(len(df['RFUs'][0])):
             self.time.append(df['cycle'][0] * i/60)
-
         for inf in range(4):
             df['Inflection ' + str(inf + 1)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
         for inf in range(4):
@@ -90,7 +87,7 @@ class Writer:
 
     def build_averages(self, df):
         adf = pd.DataFrame(columns=df.columns.tolist())
-        for triplicate in range(1, int(df['triplicate'].max()) + 1):
+        for triplicate in range(int(df['triplicate'].max())):
             label = df.loc[0, 'label']
             gdf = df[(df['triplicate'] == triplicate)].groupby('label').mean()
             gdf['label'] = label
