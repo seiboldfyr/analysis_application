@@ -19,7 +19,7 @@ def buildname(excelfilename):
     info['Id'] = filename[0][-1]
     info['Initials'] = filename[1]
     if len(excelfilename) > 4:
-        info['Other Info'] = filename[2:-1]
+        info['Other Info'] = filename[2:-1][0]
     return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
 
 
@@ -87,6 +87,7 @@ class ImportProcessor(AbstractImporter):
         rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
+        model['version'] = current_app.config['VERSION']
         model['metadata'] = dict(Protocols=self.protocoldict,
                                  Cut=0,
                                  Groupings={},
@@ -96,7 +97,7 @@ class ImportProcessor(AbstractImporter):
                                  Cycle_Length=self.cyclelength)
         dataset_repository.save(model)
 
-        flash('File imported successfully', 'msg')
+        flash('File imported successfully', 'success')
         return Response(
             True,
             self.dataset.get_id()

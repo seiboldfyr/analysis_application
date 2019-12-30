@@ -1,8 +1,10 @@
 from flask import flash
-import sys
+import pandas as pd
+import numpy as np
 import time
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
+from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection
@@ -19,8 +21,7 @@ class Processor(AbstractProcessor):
         self.dataset_id = dataset_id
         self.swaps = {}
         self.groupings = None
-        self.data = {}
-        self.statistics = {}
+        self.statistics = pd.DataFrame()
         self.time = []
         self.control = []
         self.controlgroup = int
@@ -67,6 +68,8 @@ class Processor(AbstractProcessor):
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
             flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
 
+        self.getStatistics()
+
         return Response(True, str(round(time.time() - timestart, 2)))
 
     def swapWells(self, originwell):
@@ -98,7 +101,8 @@ class Processor(AbstractProcessor):
             inflectiondict = dict(sorted(inflectiondict.items()))
             if len(inflectiondict.keys()) < 4:
                 well['is_valid'] = False
-                flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)), well.get_excelheader()), 'error')
+                flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
+                                                                      well.get_excelheader()), 'error')
 
             well['inflections'] = list(inflectiondict.keys())
             well['inflectionRFUs'] = [item['rfu'] for item in inflectiondict.values()]
@@ -107,6 +111,25 @@ class Processor(AbstractProcessor):
                 self.control = well['inflections']
             well['percentdiffs'] = get_percent_difference(self, well['inflections'])
 
+            if well['is_valid']:
+                stats = [well.get_group(), well.get_sample()]
+                stats.extend(list(inflectiondict.keys()))
+                self.statistics = self.statistics.append([stats])
+
         self.measurement_manager.update(well)
         return Response(True, '')
 
+    def getStatistics(self):
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+
+        self.statistics.columns = ['group', 'sample', '0', '1', '2', '3']
+        dataset['statistics'] = {'sample variation': self.statistics.groupby('sample').std()
+                                                              [['0', '1', '2', '3']].mean(1).tolist(),
+                                 'group variation': self.statistics.groupby('group').std()
+                                                             [['0', '1', '2', '3']].mean(1).tolist()}
+        flash('Average variation for each concentration is: %s' %
+              ', '.join([str(round(item, 3)) for item in dataset['statistics']['sample variation']]), 'msg')
+        flash('Average variation for each group is: %s' %
+              ', '.join([str(round(item, 3)) for item in dataset['statistics']['group variation']]), 'msg')
+        dataset_repository.save(dataset)

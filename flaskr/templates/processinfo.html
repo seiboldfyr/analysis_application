@@ -15,18 +15,16 @@ line-height: 16px;
 <br>
 <div class="formwrapper">
     <form method=post>
-        <div class="cutlength">
-            {{ form.cutlength.label }} {{ form.cutlength(placeholder="default=0") }}
-        </div>
+        Fluorescence Error Cut Time
+        <input type="text" name="cutlength" placeholder="default=0"><br>
         <p class="big">
 
-        <div class="customlabel">
-            {{ form.customlabel.label }} {{ form.customlabel }}
-        </div>
+        Custom Label Addition
+        <input type="text" name="customlabel"><br>
         <p class="big">
 
         <div class="groupidentification">
-        {{ form.groupnum.label }}
+        Group Number
             <select id="groupidentification" name="number of groups" onchange="otherSelect()">
                 <option value="0">Autoselect</option>
                 <option value="1">1</option>
@@ -60,11 +58,11 @@ function makeVisible(grouptotal) {
     }
 
 function buildGroupHtml(group) {
-    let html ='<div class="wellidentification"><div id="grouptitle"><b>{{form.grouptitle.label}}';
+    let html ='<div class="wellidentification"><div id="grouptitle"><b>Group Number ';
     html += group + '</b></div>';
-    html += '<div id="grouplabel">{{form.grouplabel.label}}<input name="Group Label ' + group + '" type="text"/></div>';
-    html += '<div id="groupwells">{{form.groupwells.label}}<input name="Group Wells ' + group + '" type="text"/></div>';
-    html += '<div id="groupsamples">{{form.groupsamples.label}}<input name="Group Samples ' + group + '" type="text"/></div>';
+    html += '<div id="grouplabel">Custom label <input name="Group Label ' + group + '" type="text"/></div>';
+    html += '<div id="groupwells">Number of wells <input name="Group Wells ' + group + '" type="text"/></div>';
+    html += '<div id="groupsamples">Number of samples <input name="Group Samples ' + group + '" type="text"/></div>';
     html += '<p class="big">';
     return html;
     }
@@ -73,20 +71,13 @@ function buildGroupHtml(group) {
 
 <p class="huge"><br>
 <b> Optional parameters:</b><br>
-    <p class="big">
-        <div class="errorwells">
-            {{ form.errorwells.label }} {{ form.errorwells(placeholder="A01, A02, ...") }}
-        </div>
-
         <p class="big">
-        <div class="widesearch">
-           {{ form.widesearch.label }}
-            <input type="checkbox" name="Broad search" value="true">
-        </div>
-        <p class="big"></p>
+        Any wells with known errors
+        <input type="text" name="errorwells" placeholder="A01, A02, ..."><br>
+        <p class="big">
 
         <div class="labelswaps">
-        {{ form.swaplabel.label }}
+        Swapping well positions - how many swaps do you want to make?
             <select id="labelswaps" name="labels that were swapped" onchange="swapnumber()">
                 <option value="0">None</option>
                 <option value="1">1</option>
@@ -120,8 +111,8 @@ function makeSwapsVisible(swapnumber) {
 
 function buildSwapHtml(swapnumber) {
     var html ='<div class="labelidentification"></div>';
-    html += '<div id="labelfrom">{{form.labelfrom.label}}<input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>';
-    html += '<div id="labelto">{{form.labelto.label}}<input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
+    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>';
+    html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
     html += '<p class="big">';
     return html;
     }

@@ -11,14 +11,19 @@ class Dataset(AbstractModel):
     def __init__(self):
         super().__init__()
         self['_id'] = None
+        self['version'] = float
         self['protocol'] = ''
         self['metadata'] = []
+        self['statistics'] = dict()
 
     def get_protocol(self) -> str:
         return self['protocol']
 
     def get_metadata(self) -> []:
         return self['metadata']
+
+    def get_stats(self) -> []:
+        return self['statistics']
 
     def get_name(self) -> str:
         return self['name']
