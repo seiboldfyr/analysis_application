@@ -6,8 +6,7 @@ from flaskr.database.measurement_models.manager import Manager as MeasurementMan
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection
-from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values, get_derivatives, \
-    get_percent_difference
+from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -90,20 +89,19 @@ class Processor(AbstractProcessor):
 
         else:
             derivatives = get_derivatives(well)
-            inflection_list = {}  #
-            rfu_list = []
+            inflectiondict = {}
             for dIndex in derivatives.keys():
-                response = self.getInflectionPoints(dIndex, derivatives[dIndex], inflection_list)
-                if not response.is_success():
-                    well['is_valid'] = False
-                    flash(response.get_message() + ' %s' % well.get_excelheader(), 'error')
-                    break
-            inflection_list = dict(sorted(inflection_list.items()))
-            for index, key in enumerate(inflection_list):
-                rfu_list.append(get_expected_values(self, well, key, inflection_list[key])[0])
-            # TODO: save inflections in a dictionary from the get-go
-            well['inflections'] = list(inflection_list.keys())
-            well['inflectionRFUs'] = list(rfu_list)
+                inflectiondict = get_peaks(self, well=well,
+                                           derivativenumber=dIndex,
+                                           derivative=derivatives[dIndex],
+                                           allpeaks=inflectiondict)
+            inflectiondict = dict(sorted(inflectiondict.items()))
+            if len(inflectiondict.keys()) < 4:
+                well['is_valid'] = False
+                flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)), well.get_excelheader()), 'error')
+
+            well['inflections'] = list(inflectiondict.keys())
+            well['inflectionRFUs'] = [item['rfu'] for item in inflectiondict.values()]
             if well.get_group() != self.controlgroup:
                 self.controlgroup = well.get_group()
                 self.control = well['inflections']
@@ -112,17 +110,3 @@ class Processor(AbstractProcessor):
         self.measurement_manager.update(well)
         return Response(True, '')
 
-    def getInflectionPoints(self, dindex, derivative, inflection_list):
-        peaks, xstarts, xends = get_peaks(dindex, derivative)
-        # TODO: improve peak finding to find the single largest, and then the second largest
-        if type(peaks[0]) == str:
-            return Response(False, 'Error retrieving inflection points for well: ')
-        for peakindex, peak in enumerate(peaks):
-            timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
-            leftside = xstarts[peakindex]
-            rightside = min([xends[peakindex], len(derivative), len(timediff)])
-            polycoefs = fit_poly_equation(timediff[leftside:rightside], derivative[leftside:rightside])
-            inflection_list[(-polycoefs[1] / (2 * polycoefs[0]))] = dict(left=leftside, right=rightside)
-        if inflection_list is {} or len(inflection_list) < 2:
-            return Response(False, '%s of 4 inflections were found in well: ' % len(inflection_list))
-        return Response(True, '')

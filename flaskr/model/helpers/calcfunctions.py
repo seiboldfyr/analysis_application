@@ -15,8 +15,8 @@ def get_expected_values(self, well, x, borders) -> []:
     # Fits a 2nd degree polynomial to the original line
     # For estimating the 'y' of a given 'x'
     # x can be a list or a single element
-    polynomialcoefs = fit_poly_equation(self.time[borders['left']:borders['right']],
-                                        well.get_rfus()[borders['left']:borders['right']])
+    polynomialcoefs = fit_poly_equation(self.time[borders[0]:borders[1]],
+                                        well.get_rfus()[borders[0]:borders[1]])
     if isinstance(x, float):
         x = [x]
     x2 = square(x)
@@ -36,13 +36,6 @@ def get_derivatives(well) -> []:
     derivative = {1: smooth(np.gradient(well.get_rfus()))}
     derivative[2] = np.gradient(derivative[1])
     return derivative
-
-
-def get_max_width(widths) -> []:
-    # Defines the width of the peak we estimate
-    # For calculating the inflection location
-    # TODO: use something different then the generic 4
-    return np.maximum(widths / 2, 4)
 
 
 def smooth(a):

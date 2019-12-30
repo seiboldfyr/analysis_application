@@ -41,9 +41,7 @@ def search():
 
         processor = ImportProcessor()
         dataset_exists = processor.search(name)
-        print('name: ', name)
         if dataset_exists is not None:
-            print(dataset_exists)
             flash('A dataset was found.')
             return render_template('search.html',
                                    result={i: dataset_exists[i] for i in dataset_exists if i not in ['_id', 'Name']},
@@ -67,7 +65,6 @@ def manual(id):
 @base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
 @login_required
 def process(id):
-    print('process: ', id)
     input_form = ExperimentInputForm()
     if request.method == 'POST':
         if id is None:
@@ -90,7 +87,6 @@ def process(id):
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
 def graphs(id):
-    print('graph: ', id)
     graph_urls = Grapher(dataset_id=id).execute()
 
     input_form = ExperimentInputForm()

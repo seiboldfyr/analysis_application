@@ -83,9 +83,7 @@ class ImportProcessor(AbstractImporter):
 
             self.measurement_manager.save()
 
-        # TODO: remove files after reading
         xlsx_file.delete()
-        # infofile.delete()
         rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
@@ -135,7 +133,6 @@ class ImportProcessor(AbstractImporter):
                 self.identifers['sample'] = 0
 
         self.identifers['previous'] = label
-        print(self.identifers)
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
