@@ -123,16 +123,19 @@ class Processor(AbstractProcessor):
         return Response(True, '')
 
     def getStatistics(self):
-        dataset_repository = Repository()
-        dataset = dataset_repository.get_by_id(self.dataset_id)
+        if not self.statistics.empty:
 
-        self.statistics.columns = ['group', 'sample', '0', '1', '2', '3']
-        dataset['statistics'] = {'sample variation': self.statistics.groupby('sample').std()
-                                                              [['0', '1', '2', '3']].mean(1).tolist(),
-                                 'group variation': self.statistics.groupby('group').std()
-                                                             [['0', '1', '2', '3']].mean(1).tolist()}
-        flash('Average variation for each concentration is: %s' %
-              ', '.join([str(round(item, 3)) for item in dataset['statistics']['sample variation']]), 'msg')
-        flash('Average variation for each group is: %s' %
-              ', '.join([str(round(item, 3)) for item in dataset['statistics']['group variation']]), 'msg')
-        dataset_repository.save(dataset)
+            dataset_repository = Repository()
+            dataset = dataset_repository.get_by_id(self.dataset_id)
+
+            self.statistics.columns = ['group', 'sample', '0', '1', '2', '3']
+
+            dataset['statistics'] = {'sample variation': self.statistics.groupby('sample').std()
+                                                                  [['0', '1', '2', '3']].mean(1).tolist(),
+                                     'group variation': self.statistics.groupby('group').std()
+                                                                 [['0', '1', '2', '3']].mean(1).tolist()}
+            flash('Average variation for each concentration is: %s' %
+                  ', '.join([str(round(item, 3)) for item in dataset['statistics']['sample variation']]), 'msg')
+            flash('Average variation for each group is: %s' %
+                  ', '.join([str(round(item, 3)) for item in dataset['statistics']['group variation']]), 'msg')
+            dataset_repository.save(dataset)
