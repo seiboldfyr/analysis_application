@@ -46,3 +46,9 @@ h3 {
 .error {
     color: red
 }
+.success {
+    color: limegreen;
+}
+.timing {
+    color: grey
+}

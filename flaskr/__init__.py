@@ -4,6 +4,7 @@ from logging.config import dictConfig
 from flask import Flask
 from flaskr.blueprint import base_blueprint
 from flaskr.auth.blueprint import auth_blueprint
+from flaskr.components.blueprint import comp_blueprint
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from . import (db, framework)
 
@@ -72,6 +73,7 @@ def create_app(test_config=None):
     framework.init_framework(app)
 
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(comp_blueprint)
     app.register_blueprint(base_blueprint)
 
     return app

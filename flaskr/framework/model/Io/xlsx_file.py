@@ -1,7 +1,5 @@
 import os
-import re
 import pandas as pd
-import numpy as np
 
 from flask import current_app
 from werkzeug.datastructures import FileStorage
@@ -12,7 +10,7 @@ from flaskr.framework.exception import InvalidArgument
 
 class XLSXFile():
     FOLDER = 'excel'
-    ALLOWED_EXTENSION = ['xlsx']
+    ALLOWED_EXTENSION = ['xlsx', 'xls']
 
     file = None
 
@@ -43,6 +41,8 @@ class XLSXFile():
         self.error_count = 0
 
         raw = pd.ExcelFile(self.get_file_save_path())
+        if sheet == '':
+            sheet = raw.sheet_names[0]
         sheetvalues = raw.parse(sheet).values
         [rows, columns] = sheetvalues.shape
 

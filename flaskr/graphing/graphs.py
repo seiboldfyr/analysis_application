@@ -29,7 +29,8 @@ class Grapher:
         self.time = []
         self.data = {}
         self.graph_urls = {}
-        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"] # TODO: make these colors adaptable when the total number of concentrations =/= 8
+        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
+        # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self):
         self.setGraphSettings()
@@ -55,24 +56,20 @@ class Grapher:
         print('1', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.RFUAverageGraphsByGroup(rfudf)
+        self.RFUGraphs(rfudf)
         print('2', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.RFUAllGraphs(rfudf)
+        self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
         print('3', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
+        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
         print('4', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-        print('5', time.time() - startgraphing)
-        startgraphing = time.time()
-
         self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-        print('6', time.time() - startgraphing)
+        print('5', time.time() - startgraphing)
 
         return self.graph_urls
 
@@ -121,7 +118,7 @@ class Grapher:
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
                 tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
                                         index=row[0], label=row[1]['label']))
-                rdf = pd.concat([rdf, tdf], sort='False')
+                rdf = pd.concat([rdf, tdf], sort=False)
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
                                        data=rdf, palette=self.colors, linewidth=.7)
             snsplot = removeLegendTitle(snsplot)
@@ -129,33 +126,29 @@ class Grapher:
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Individuals_' + str(group))
 
-
-    def RFUAverageGraphsByGroup(self, df):
+    def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            rdf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index'])
+            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index', 'group'])
             groupdf = df[df['group'] == group]
             for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
                                              triplicate=triplicate, index=idx))
-                rdf = pd.concat([rdf, tdf])
-            rfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
-                             data=rdf, linewidth=.7)
-            rfuplot = removeLegendTitle(rfuplot)
+                adf = pd.concat([adf, tdf], sort=False)
+            plt.figure(0)
+            grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
+                                            data=adf, linewidth=.7)
+            grouprfuplot = removeLegendTitle(grouprfuplot)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
-    def RFUAllGraphs(self, df): # TODO: Currently this is plotting each individual trace, not the group averages. 'rfu' -> 'averagerfu'?
-        rdf = pd.DataFrame(columns=['time', 'rfu', 'group', 'index'])
-        for idx, row in enumerate(df.iterrows()):
-            tempdf = pd.DataFrame(data=dict(time=self.time, rfu=row[1]['RFUs'], group=row[1]['group'], index=idx))
-            rdf = pd.concat([rdf, tempdf])
-        rfuplot = seaborn.lineplot(x='time', y='rfu', hue='group', units='index', estimator=None, data=rdf,
-                                   palette=self.colors[-np.max(rdf['group']):], linewidth=.7)
-        rfuplot = removeLegendTitle(rfuplot)
-        rfuplot.legend(labels=get_unique_group(df['label']))
+            plt.figure(1)
+            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, hue='group', units='index', estimator=None,
+                                          palette=self.colors, linewidth=.7, legend="full")
+            allrfuplot = removeLegendTitle(allrfuplot)
+            allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')
