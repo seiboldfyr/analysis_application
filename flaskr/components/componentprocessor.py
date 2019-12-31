@@ -30,7 +30,15 @@ class ImportComponents:
         for row in xlsx_file.read(sheet='', userows=True):
             if not search(row[1], row[2]):
                 continue
-            model = factory.create({'type': row[0], 'name': row[1], 'unit': row[2]})
+
+            baseprotocol = row[3]
+            if not isinstance(baseprotocol, int):
+                baseprotocol = 0
+
+            model = factory.create({'type': row[0],
+                                    'name': row[1],
+                                    'unit': row[2],
+                                    'base_protocol': baseprotocol})
             component_repository.save(model)
 
         xlsx_file.delete()

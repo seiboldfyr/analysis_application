@@ -11,6 +11,7 @@ class Component(AbstractModel):
         self['type'] = ''
         self['name'] = ''
         self['unit'] = ''
+        self['base_protocol'] = 0
 
     def get_name(self) -> str:
         return self['name']
