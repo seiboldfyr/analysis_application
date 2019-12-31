@@ -29,8 +29,7 @@ class Grapher:
         self.time = []
         self.data = {}
         self.graph_urls = {}
-        self.colors = ["gray", "darkgreen", "cyan", "gold", "dodgerblue", "red", "lime", "magenta"]
-        # TODO: make these colors adaptable when the total number of concentrations =/= 8
+        self.colors = ["gray", "lime", "cyan", "magenta", "gold", "dodgerblue", "red", "darkgreen"] # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self):
         self.setGraphSettings()
