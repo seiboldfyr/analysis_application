@@ -1,10 +1,10 @@
-from flaskr.database.dataset import Dataset
+from flaskr.components.component_models.component import Component
 from flaskr.framework.abstract.abstract_factory import AbstractFactory
 
 
 class Factory(AbstractFactory):
-    def create(self, data=None) -> Dataset:
-        model = Dataset()
+    def create(self, data=None) -> Component:
+        model = Component()
         if data is not None:
             model.set_data(data)
 

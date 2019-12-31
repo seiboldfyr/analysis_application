@@ -12,6 +12,8 @@ class Writer:
         self.dataset_id = dataset_id
         self.time = []
         self.workbook = None
+        self.rowshift = 0
+        self.columnshift = 0
 
     def writebook(self):
         dataset_repository = Repository()
@@ -23,7 +25,8 @@ class Writer:
         variablecolumns = [14 + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 4)
         for group in range(1, int(df['group'].max()) + 1):
-            self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns, group)
+            self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
+            self.rowshift += df[(df['group'] == group)].shape[0] + 4
 
         adf = self.build_averages(df)
         variablecolumns.pop(0)
@@ -40,20 +43,28 @@ class Writer:
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=(group-1)*(gdf.shape[0]+3))
             self.excel_formatting('Averages', gdf, 0)
 
+        self.rowshift = 0
         for group in range(1, int(adf['group'].max()) + 1):
+            gdf = adf[(adf['group'] == group)]
+            pdf = adf[(adf['group'] == group)]
             for inf in range(4):
                 columns = []
-                gdf = adf[(adf['group'] == group)]
                 inf_label = 'Inflection ' + str(inf + 1)
+                pcnt_label = 'Percent Diff ' + str(inf + 1)
                 columns.append(6)
                 for triplicateA in gdf['triplicate'].unique():
                     columns.append(len(gdf.columns))
                     rowA = gdf[gdf['triplicate'] == triplicateA]
                     gdf.insert(len(gdf.columns), str(len(columns) - 2) + ' ' + inf_label,
-                               [label - float(rowA[inf_label]) if triplicateB >= triplicateA else 'NA'
+                               [label - float(rowA[inf_label]) if triplicateB <= triplicateA else 'nan'
                                 for label, triplicateB in zip(gdf[inf_label], gdf['triplicate'])])
+                    pdf.insert(len(pdf.columns), str(len(columns) - 2) + ' ' + pcnt_label,
+                               [label - float(rowA[pcnt_label]) if triplicateB >= triplicateA else 'nan'
+                                for label, triplicateB in zip(pdf[pcnt_label], pdf['triplicate'])])
                 spacedifferencematrices = (len(columns)+4) * inf
-                self.write_to_sheet('Differences', gdf, columns, group, spacedifferencematrices)
+                self.write_to_sheet('Inf Differences', gdf, columns, spacedifferencematrices)
+                self.write_to_sheet('Percent Differences', pdf, columns, spacedifferencematrices)
+            self.rowshift += gdf.shape[0] + 4
         return Response(True, '')
 
     def build_dataframe(self, df):
@@ -67,10 +78,10 @@ class Writer:
             df['Percent Diff ' + str(inf + 1)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
         return df
 
-    def write_to_sheet(self, sheetname, df, columns, group, shiftcolumn=0):
+    def write_to_sheet(self, sheetname, df, columns, shiftcolumn=0):
         df = df.iloc[:, columns]
         df.to_excel(self.excelwriter, sheet_name=sheetname,
-                    startrow=(group - 1) * (df.shape[0] + 3), startcol=shiftcolumn)
+                    startrow=self.rowshift, startcol=shiftcolumn)
         self.excel_formatting(sheetname, df, shiftcolumn)
 
     def excel_formatting(self, sheetname, df, startcolumn):
@@ -87,10 +98,8 @@ class Writer:
 
     def build_averages(self, df):
         adf = pd.DataFrame(columns=df.columns.tolist())
-        for triplicate in range(int(df['triplicate'].max())):
-            label = df.loc[0, 'label']
+        for triplicate in range(int(df['triplicate'].max())+1):
             gdf = df[(df['triplicate'] == triplicate)].groupby('label').mean()
-            gdf['label'] = label
             adf = pd.concat([adf, gdf], sort=False)
         return adf
 

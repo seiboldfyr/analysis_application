@@ -42,6 +42,7 @@ def search():
         if dataset_exists is not None:
             flash('A dataset was found.', 'success')
             fileinfo['Version'] = dataset_exists['version']
+            #TODO: get components and list on search screen
             return render_template('search.html',
                                    result=fileinfo,
                                    id=dataset_exists['_id'])
@@ -49,6 +50,7 @@ def search():
         response = processor.execute(request, name)
         if not response.is_success():
             flash(response.get_message(), 'error')
+            #TODO: get components and list on search screen
 
         return render_template('search.html',
                                result=fileinfo,
@@ -122,4 +124,5 @@ def graphs(id):
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graph_urls.values())
+
 

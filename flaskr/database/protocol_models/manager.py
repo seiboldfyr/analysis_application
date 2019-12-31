@@ -1,13 +1,14 @@
-from flaskr.database.measurement_models.measurement import Measurement
-from flaskr.database.measurement_models.repository import Repository
+
+from flaskr.database.protocol_models.protocol import Protocol
+from flaskr.database.protocol_models.repository import Repository
 
 
 class Manager:
     buffer = []
     buffer_size = 1000
 
-    def add(self, measurement: Measurement):
-        self.buffer.append(measurement)
+    def add(self, protocol: Protocol):
+        self.buffer.append(protocol)
         if len(self.buffer) >= self.buffer_size:
             self.save()
             self.buffer.clear()
@@ -26,7 +27,7 @@ class Manager:
         repository.bulk_save(batch)
         self.buffer.clear()
 
-    def update(self, measurement: Measurement):
+    def update(self, measurement: Protocol):
         repository = Repository()
         repository.save(measurement)
         self.buffer.clear()
