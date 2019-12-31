@@ -10,9 +10,11 @@ def get_unique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
     return [keylist[value] for value in sorted(indexes)]
 
+
 def get_unique_name(keylist):
     indexes = np.unique(keylist, return_index=False)
     return indexes
+
 
 def get_unique_group(keylist):
     temp = [item[-1] for item in keylist]
@@ -22,8 +24,6 @@ def get_unique_group(keylist):
 
 def saveImage(self, plt, figuretitle):
     #TODO: include manually built label here
-    # title = os.path.split(self.path)[1][:13] + '_' + self.customtitle
-    # title = str(title + '_' + figuretitle)
     plt.title(figuretitle, fontsize=14)
     path = os.path.join(current_app.config['IMAGE_FOLDER'], 'graphs')
     strFile = os.path.join(path, figuretitle + ".png")

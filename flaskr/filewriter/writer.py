@@ -22,7 +22,7 @@ class Writer:
         df = self.build_dataframe(df)
 
         variablesofinterest = 12
-        variablecolumns = [14 + n for n in range(variablesofinterest)]
+        variablecolumns = [15 + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 4)
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)

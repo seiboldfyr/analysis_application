@@ -1,6 +1,5 @@
 from flask import flash
 import pandas as pd
-import numpy as np
 import time
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
@@ -23,8 +22,7 @@ class Processor(AbstractProcessor):
         self.groupings = None
         self.statistics = pd.DataFrame()
         self.time = []
-        self.control = []
-        self.controlgroup = int
+        self.control = None
 
     def execute(self) -> Response:
         timestart = time.time()
@@ -91,8 +89,9 @@ class Processor(AbstractProcessor):
             well['is_valid'] = False
 
         else:
-            derivatives = get_derivatives(well)
+            percentdiffs = [0, 0, 0, 0]
             inflectiondict = {}
+            derivatives = get_derivatives(well)
             for dIndex in derivatives.keys():
                 inflectiondict = get_peaks(self, well=well,
                                            derivativenumber=dIndex,
@@ -106,10 +105,14 @@ class Processor(AbstractProcessor):
 
             well['inflections'] = list(inflectiondict.keys())
             well['inflectionRFUs'] = [item['rfu'] for item in inflectiondict.values()]
-            if well.get_group() != self.controlgroup:
-                self.controlgroup = well.get_group()
-                self.control = well['inflections']
-            well['percentdiffs'] = get_percent_difference(self, well['inflections'])
+            if self.control is None or well.get_group() != self.control.get_group():
+                self.control = well
+
+            #TODO: the percent differences for the control individuals aren't getting calculated, just zeroed out
+
+            if self.control.get_sample() != well.get_sample():
+                percentdiffs = get_percent_difference(self, well['inflections'])
+            well['percentdiffs'] = percentdiffs
 
             if well['is_valid']:
                 stats = [well.get_group(), well.get_sample()]
