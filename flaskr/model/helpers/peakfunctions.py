@@ -11,12 +11,13 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
         if derivativenumber == 2 and i == 0:
             timediff = [(timediff[t] + timediff[t + 1]) / 2 for t in range(len(timediff) - 1)]
         maxpeak = list(np.where(derivative == max(derivative)))[0]
-        try:
-            widths = peak_widths(derivative, maxpeak)
-        except PeakPropertyWarning:
+        widths = peak_widths(derivative, maxpeak)
+        if widths[0] == 0:
             break
         leftside = int(widths[2][0])
         rightside = int(np.min([widths[3][0], len(derivative)-1]))
+        if rightside - leftside < 2:
+            break
         polycoefs = fit_poly_equation(timediff[leftside:rightside],
                                       derivative[leftside:rightside])
 
