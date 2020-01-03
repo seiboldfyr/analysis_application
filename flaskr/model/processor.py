@@ -19,7 +19,7 @@ class Processor(AbstractProcessor):
         self.request = request
         self.dataset_id = dataset_id
         self.swaps = {}
-        self.groupings = None
+        self.groupings = None           #TODO: this doesn't allow us to use the build_group_inputs in buildfunctions.py (*)
         self.data = {}
         self.statistics = {}
         self.time = []
@@ -51,7 +51,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n /60.  * well.get_cycle() for n in range(len(well.get_rfus()))]
+                self.time = [n * well.get_cycle() for n in range(len(well.get_rfus()))]
 
             if well.get_label()[-2] != "_":
                 well['label'] = well.get_label() + '_' + str(well.get_group())
