@@ -64,14 +64,14 @@ class Grapher:
         print('3', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
+        self.InflectionGraphsByNumber(df[df['variable'].str.startswith("Inflection ")])
         print('4', time.time() - startgraphing)
         startgraphing = time.time()
 
         self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
         print('5', time.time() - startgraphing)
 
-        return self.graph_urls
+        return dict(urls=self.graph_urls, name=dataset.get_name())
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
@@ -96,8 +96,8 @@ class Grapher:
         grouplabels = get_unique_group(df['label'])
         df.loc[:, 'label'] = [x[:-2] for x in df['label']]
         for inf in range(4):
-            gd = df[df['variable'] == "Inflection " + str(inf)]
-            indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="label", data=gd,
+            indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="label",
+                                       data=df[df['variable'] == "Inflection " + str(inf)],
                                        marker='o', s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=[str(num % 4 + 1) for num in np.arange(32)])
             indplt = removeLegendTitle(indplt)
@@ -128,13 +128,13 @@ class Grapher:
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index', 'group'])
+            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             groupdf = df[df['group'] == group]
             for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
-                                             triplicate=triplicate, index=idx))
+                                             triplicate=triplicate, index=idx, group=group))
                 adf = pd.concat([adf, tdf], sort=False)
             plt.figure(0)
             grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
@@ -145,8 +145,8 @@ class Grapher:
             self.saveimage(plt, 'Averages_' + str(group))
 
             plt.figure(1)
-            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, hue='group', units='index', estimator=None,
-                                          palette=self.colors, linewidth=.7, legend="full")
+            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
+                                          linewidth=.7, legend="full", label=int(group))
             allrfuplot = removeLegendTitle(allrfuplot)
             allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
