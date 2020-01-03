@@ -1,7 +1,4 @@
 import datetime
-from bson import ObjectId
-import time
-import numpy
 
 from flask import flash, current_app
 
@@ -37,7 +34,7 @@ def getTime(t):
 
 class ImportProcessor(AbstractImporter):
     def __init__(self):
-        self.identifers = dict(group=1, sample=0, triplicate=0, previous='')
+        self.identifers = dict(group=0, sample=-1, triplicate=-1, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
         self.protocoldict = {}
@@ -92,8 +89,7 @@ class ImportProcessor(AbstractImporter):
         rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
-        model['metadata'] = dict(Name=name,
-                                 Protocols=self.protocoldict,
+        model['metadata'] = dict(Protocols=self.protocoldict,
                                  Cut=0,
                                  Groupings={},
                                  Swaps={},
@@ -134,11 +130,12 @@ class ImportProcessor(AbstractImporter):
             self.identifers['triplicate'] += 1
 
             # TODO: check if control is labeled with '_0'
-            if label[:12] == self.identifers['control'] and self.identifers['triplicate'] > 1:
+            if label[:12] == self.identifers['control']:
                 self.identifers['group'] += 1
-                self.identifers['sample'] = 1
+                self.identifers['sample'] = 0
 
         self.identifers['previous'] = label
+        print(self.identifers)
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
