@@ -123,6 +123,6 @@ def graphs(id):
         zipfilename = 'output_v' + current_app.config['VERSION'] + '.zip'
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
-    return render_template('graphs.html', id=id, graphs=graphs['urls'].values())
+    return render_template('graphs.html', id=id, graphs=graphs['urls'].values(), name=graphs['name'])
 
 

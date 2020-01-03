@@ -130,7 +130,7 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             groupdf = df[df['group'] == group]
-            for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
+            for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),

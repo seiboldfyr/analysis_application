@@ -1,14 +1,12 @@
 import os
-import io
-import base64
 import numpy as np
-from flask import current_app, flash
+from flask import current_app
 from statistics import mean, stdev
 
 
 def get_unique(keylist):
     indexes = np.unique(keylist, return_index=True)[1]
-    return [keylist[value] for value in sorted(indexes)]
+    return [list(keylist)[value] for value in sorted(indexes)]
 
 
 def get_unique_name(keylist):
