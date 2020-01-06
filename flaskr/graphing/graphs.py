@@ -25,7 +25,7 @@ class Grapher:
             customtitle: str = ''
     ):
         self.dataset_id = dataset_id
-        self.customtitle = customtitle      # TODO: set customtitle to be the filename
+        self.customtitle = customtitle
         self.time = []
         self.data = {}
         self.graph_urls = {}
@@ -34,11 +34,12 @@ class Grapher:
 
     def execute(self):
         self.setGraphSettings()
-
         startpd = time.time()
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
+        self.name = dataset.get_name()
+        self.label = self.name[:-4]
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
@@ -71,7 +72,7 @@ class Grapher:
         self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
         print('5', time.time() - startgraphing)
 
-        return self.graph_urls
+        return self.graph_urls, self.name
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
@@ -167,7 +168,7 @@ class Grapher:
             self.saveimage(plt, 'PercentDiff_' + str(group))
 
     def saveimage(self, plt, title):
-        plt.title(title, fontsize=14)
+        plt.title(self.label + title, fontsize=14)
         sio = io.BytesIO()
         plt.savefig(sio, format='png')
         plt.close()

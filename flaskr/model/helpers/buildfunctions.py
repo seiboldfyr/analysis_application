@@ -3,9 +3,16 @@ from flaskr.database.dataset_models.repository import Repository
 
 def build_swap_inputs(self):
     for item in self.request.form.keys():
+        #print(self.request.form[item])
+        #print(item)
         if item.startswith('Swap From'):
             self.swaps[self.request.form[item]] = self.request.form['Swap To ' + str(item[-1])]
-
+            #print(item)
+        if item.startswith('Bidirectional Swap') == True:
+            self.swaps[self.request.form['Swap To ' + str(item[-1])]] = self.request.form['Swap From ' + str(item[-1])]
+            #print(self.swaps)
+    print(self.swaps)
+    print()
 
 def build_group_inputs(self):
     for item in self.request.form.keys():

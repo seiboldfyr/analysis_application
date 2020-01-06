@@ -88,7 +88,7 @@ def process(id):
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
 def graphs(id):
-    graph_urls = Grapher(dataset_id=id).execute()
+    graph_urls, name = Grapher(dataset_id=id).execute()
     # TODO: include manually changed header here
     if len(graph_urls) == 0:
         flash('Something went wrong with graphing', 'error')
@@ -119,8 +119,7 @@ def graphs(id):
             zf.writestr(data, io.getvalue())
 
         memory_file.seek(0)
-        #TODO: include data identification in ZIP filename
-        zipfilename = 'output_v' + current_app.config['VERSION'] + '.zip'
+        zipfilename = 'output' + '_' + name + '.zip'
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graph_urls.values())

@@ -118,7 +118,7 @@ function makeSwapsVisible(swapnumber) {
 
 function buildSwapHtml(swapnumber) {
     var html ='<div class="labelidentification"></div>';
-    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/></div>';
+    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/><input type="checkbox" name="Bidirectional Swap '+ swapnumber +'">Bidirectional Swap</div>';
     html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
     html += '<p class="big">';
     return html;
