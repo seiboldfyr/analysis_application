@@ -88,7 +88,7 @@ class Grapher:
         self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
         print('6', time.time() - startgraphing)
 
-        return dict(urls=self.graph_urls, name=dataset.get_name())
+        return [dict(urls=self.graph_urls, name=dataset.get_name()), self.name]
       
 
     def InflectionGraphByGroup(self, df):
