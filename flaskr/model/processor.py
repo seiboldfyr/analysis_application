@@ -128,7 +128,6 @@ class Processor(AbstractProcessor):
         return Response(True, '')
 
     def getStatistics(self):
-        print(self.statistics)
         if not self.statistics.empty:
 
             dataset_repository = Repository()
