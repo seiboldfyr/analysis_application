@@ -3,7 +3,7 @@ import seaborn
 import io
 import base64
 import pandas as pd
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression
 import time
 import re
 import matplotlib
@@ -107,35 +107,6 @@ class Grapher:
             plt.ylabel('Time (Min)')
             self.saveimage(plt, 'Inflections_' + str(group))
 
-    def CurveFitByGroup(self, df):
-        for group in range(1, int(df['group'].max()) + 1):
-            cdf = df[(df['group'] == group)].sort_values(['triplicate', 'value'])
-            cdf.insert(0, 'concentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
-                                               for item in cdf['label']])
-            cdf = cdf[cdf['concentration'] >= .1]
-            for inf in range(4):
-                curveplt = seaborn.swarmplot(x="concentration", y="value",
-                                             data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
-                                             edgecolor='black', palette=["black"], linewidth=.6)
-
-                [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
-
-                #get rvalue not including the .1pM concentration
-                [lessrvalue, _] = getRegression(cdf[cdf['concentration'] >= 1])
-
-                concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
-                Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
-                label = 'Inflection ' + str(inf + 1) + ' ' + \
-                        str(float(linear_regressor.coef_[0])) + 'x + ' + str(float(linear_regressor.intercept_)) + \
-                        ' Rvalue: ' + str(round(rvalue, 5)) + \
-                        ' (' + str(round(lessrvalue, 5)) + ')'
-
-                curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
-                plt.ylabel('Time (Min)')
-                plt.xlabel('Concentration (pM)')
-            self.saveimage(plt, 'CurveFit_' + str(group))
-
-
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
@@ -210,6 +181,34 @@ class Grapher:
             plt.xlabel('')
             plt.ylabel('Percent Difference from Control')
             self.saveimage(plt, 'PercentDiff_' + str(group))
+
+    def CurveFitByGroup(self, df):
+        for group in range(1, int(df['group'].max()) + 1):
+            cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
+            cdf.insert(0, 'concentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
+                                            for item in cdf['label']])
+            cdf = cdf[cdf['concentration'] >= .1]
+            for inf in range(4):
+                curveplt = seaborn.swarmplot(x="concentration", y="value",
+                                             data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
+                                             edgecolor='black', palette=["black"], linewidth=.6)
+
+                [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
+
+                #get rvalue not including the .1pM concentration
+                [lessrvalue, _] = getRegression(cdf[cdf['concentration'] >= 1])
+
+                concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
+                Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
+                label = 'Inflection ' + str(inf + 1) + ' ' + \
+                        str(float(linear_regressor.coef_[0])) + 'x + ' + str(float(linear_regressor.intercept_)) + \
+                        ' Rvalue: ' + str(round(rvalue, 5)) + \
+                        ' (' + str(round(lessrvalue, 5)) + ')'
+
+                curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
+                plt.ylabel('Time (Min)')
+                plt.xlabel('Concentration (pM)')
+            self.saveimage(plt, 'CurveFit_' + str(group))
 
     def saveimage(self, plt, title):
         plt.title(title, fontsize=14)
