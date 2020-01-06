@@ -1,18 +1,20 @@
 {% extends "master.html" %}
 
-{% block title %}Graphs{% endblock %}
+{% block title %}
+Graphs for dataset {{name}}
+{% endblock %}
 
 {% block body %}
+
 <div class="formwrapper">
   <form method = "POST">
       <p><input type="submit" name='download' value="Download a ZIP file of the graphs and the analysis"/></p>
   </form>
 </div>
-
 {% endblock %}
 
-
 {% block content %}
+
     {%for graph in graphs %}
         <img src="data:image/png;base64,{{graph}}" alt='' width="300" height="200">
     {% endfor %}

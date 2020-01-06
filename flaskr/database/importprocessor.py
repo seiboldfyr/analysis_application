@@ -29,10 +29,6 @@ def buildname(excelfilename):
     return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
 
 
-def buildid(name):
-    return name + '_' + str(current_app.config['VERSION'].strip('.'))
-
-
 def getTime(t):
     time = datetime.datetime.strptime(t[:-4], '%m/%d/%Y %H:%M:%S')
     return time
@@ -49,7 +45,7 @@ class ImportProcessor(AbstractImporter):
         info = {}
         dataset_repository = Repository()
         #TODO: filter datasets by date
-        found_dataset = dataset_repository.get_connection().find_one({'name': buildid(name)})
+        found_dataset = dataset_repository.get_connection().find_one({'name': name})
         if found_dataset is not None:
             for key in found_dataset.keys():
                 info[key] = found_dataset[key]
@@ -59,7 +55,7 @@ class ImportProcessor(AbstractImporter):
     def execute(self, request, name) -> Response:
         dataset_repository = Repository()
         factory = Factory()
-        model = factory.create({'name': buildid(name)})
+        model = factory.create({'name': name})
         dataset_repository.save(model)
         self.dataset = model
         self.component_repository = ComponentRepository()

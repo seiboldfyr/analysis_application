@@ -27,7 +27,9 @@ def get_expected_values(self, well, x, borders) -> []:
 
 
 def get_percent_difference(self, inflections):
-    relativeDifference = [abs(a - b) / ((a + b) / 2) for a, b in zip(inflections, self.control.get_inflections())]
+    relativeDifference = [abs(a[1] - b[1]) / ((a[1] + b[1]) / 2)
+                          for a, b in zip(inflections, self.control.get_inflections())
+                          if a[0] == b[0]]
     return [element * 100 for element in relativeDifference]
 
 
