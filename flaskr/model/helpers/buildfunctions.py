@@ -10,7 +10,7 @@ def build_swap_inputs(self):
 def build_group_inputs(self):
     for item in self.request.form.keys():
         if item.startswith('Group'):
-            if self.groupings.get(str(item[-1])) is None:
+            if self.groupings.get(str(item[-1])) is None:    #TODO: see the (*) TODO item in processor.py, this is source of error
                 self.groupings[str(item[-1])] = {}
             self.groupings[item[-1]][item[:-2]] = self.request.form[item]
 

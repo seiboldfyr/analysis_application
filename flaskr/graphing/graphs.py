@@ -25,7 +25,7 @@ class Grapher:
             customtitle: str = ''
     ):
         self.dataset_id = dataset_id
-        self.customtitle = customtitle
+        self.customtitle = customtitle      # TODO: set customtitle to be the filename
         self.time = []
         self.data = {}
         self.graph_urls = {}
@@ -158,7 +158,7 @@ class Grapher:
             subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
-            indplt.set(xticklabels=[str(num+1) for num in np.arange(4)]) #TODO: figure out appropriate labeling (12/05): Potentially resolved, labeling scheme is same as in old analysis JH
+            indplt.set(xticklabels=[str(num+1) for num in np.arange(4)])
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
