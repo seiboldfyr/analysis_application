@@ -88,9 +88,9 @@ def process(id):
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
 def graphs(id):
-    graph_urls = Grapher(dataset_id=id).execute()
+    graphs = Grapher(dataset_id=id).execute()
     # TODO: include manually changed header here
-    if len(graph_urls) == 0:
+    if len(graphs['urls']) == 0:
         flash('Something went wrong with graphing', 'error')
         return render_template('processinfo.html', id=id)
 
@@ -98,13 +98,13 @@ def graphs(id):
         memory_file = BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
 
-            for itemtitle in graph_urls.keys():
+            for itemtitle in graphs['urls'].keys():
                 data = zipfile.ZipInfo()
                 data.filename = itemtitle
-                zf.writestr(data, base64.decodebytes(graph_urls[itemtitle].encode('ascii')))
+                zf.writestr(data, base64.decodebytes(graphs['urls'][itemtitle].encode('ascii')))
 
             io = BytesIO()
-            analysistitle = 'analysisoutput.xlsx'
+            analysistitle = graphs['name'] + '_output.xlsx'
             excelwriter = pd.ExcelWriter(analysistitle, engine='xlsxwriter')
             excelwriter.book.filename = io
             writer = Writer(excelwriter=excelwriter, dataset_id=id)
@@ -123,6 +123,6 @@ def graphs(id):
         zipfilename = 'output_v' + current_app.config['VERSION'] + '.zip'
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
-    return render_template('graphs.html', id=id, graphs=graph_urls.values())
+    return render_template('graphs.html', id=id, graphs=graphs['urls'].values(), name=graphs['name'])
 
 

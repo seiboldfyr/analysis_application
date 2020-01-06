@@ -3,12 +3,15 @@ import seaborn
 import io
 import base64
 import pandas as pd
+from sklearn.linear_model import LinearRegression, LogisticRegression
 import time
+import re
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
-from flaskr.model.helpers.functions import saveImage, get_unique_group, get_unique, get_unique_name
+from flaskr.model.helpers.functions import get_unique_group, get_unique
+from flaskr.model.helpers.buildfunctions import get_concentrations
 from flaskr.database.dataset_models.repository import Repository
 
 
@@ -16,6 +19,15 @@ def removeLegendTitle(plot):
     handles, labels = plot.get_legend_handles_labels()
     plot.legend(handles=handles[1:], labels=labels[1:])
     return plot
+
+def getRegression(df):
+    df = df.groupby('triplicate').mean()
+    linear_regressor = LinearRegression()
+    linear_regressor.fit(np.asarray(np.log(df['concentration'])).reshape(-1, 1),
+                         np.asarray(df['value']).reshape(-1, 1))
+    rvalue = linear_regressor.score(np.asarray(np.log(df['concentration'])).reshape(-1, 1),
+                                    np.asarray(df['value']).reshape(-1, 1))
+    return [rvalue, linear_regressor]
 
 
 class Grapher:
@@ -43,7 +55,7 @@ class Grapher:
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
         for inf in range(4):
-            df['Inflection ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
+            df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
         df = pd.melt(df, id_vars=list(df.columns)[:-8],
                      value_vars=list(df.columns)[-8:],
@@ -70,8 +82,12 @@ class Grapher:
 
         self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
         print('5', time.time() - startgraphing)
+        startgraphing = time.time()
 
-        return self.graph_urls
+        self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
+        print('6', time.time() - startgraphing)
+
+        return dict(urls=self.graph_urls, name=dataset.get_name())
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
@@ -91,13 +107,42 @@ class Grapher:
             plt.ylabel('Time (Min)')
             self.saveimage(plt, 'Inflections_' + str(group))
 
+    def CurveFitByGroup(self, df):
+        for group in range(1, int(df['group'].max()) + 1):
+            cdf = df[(df['group'] == group)].sort_values(['triplicate', 'value'])
+            cdf.insert(0, 'concentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
+                                               for item in cdf['label']])
+            cdf = cdf[cdf['concentration'] >= .1]
+            for inf in range(4):
+                curveplt = seaborn.swarmplot(x="concentration", y="value",
+                                             data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
+                                             edgecolor='black', palette=["black"], linewidth=.6)
+
+                [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
+
+                #get rvalue not including the .1pM concentration
+                [lessrvalue, _] = getRegression(cdf[cdf['concentration'] >= 1])
+
+                concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
+                Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
+                label = 'Inflection ' + str(inf + 1) + ' ' + \
+                        str(float(linear_regressor.coef_[0])) + 'x + ' + str(float(linear_regressor.intercept_)) + \
+                        ' Rvalue: ' + str(round(rvalue, 5)) + \
+                        ' (' + str(round(lessrvalue, 5)) + ')'
+
+                curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
+                plt.ylabel('Time (Min)')
+                plt.xlabel('Concentration (pM)')
+            self.saveimage(plt, 'CurveFit_' + str(group))
+
+
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
-        df.loc[:, 'label'] = [x[:-2] for x in df['label']]
+        df.insert(0, 'labelwithoutgroup', [x[:-2] for x in df['label']])
         for inf in range(4):
-            gd = df[df['variable'] == "Inflection " + str(inf)]
-            indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="label", data=gd,
+            indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
+                                       data=df[df['variable'] == "Inflection " + str(inf)],
                                        marker='o', s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=[str(num % 4 + 1) for num in np.arange(32)])
             indplt = removeLegendTitle(indplt)
@@ -128,13 +173,13 @@ class Grapher:
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'index', 'group'])
+            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             groupdf = df[df['group'] == group]
-            for idx, triplicate in enumerate(get_unique_name(groupdf['label'])):
+            for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
-                                             triplicate=triplicate, index=idx))
+                                             triplicate=triplicate, index=idx, group=group))
                 adf = pd.concat([adf, tdf], sort=False)
             plt.figure(0)
             grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
@@ -145,8 +190,8 @@ class Grapher:
             self.saveimage(plt, 'Averages_' + str(group))
 
             plt.figure(1)
-            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, hue='group', units='index', estimator=None,
-                                          palette=self.colors, linewidth=.7, legend="full")
+            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
+                                          linewidth=.7, legend="full", label=int(group))
             allrfuplot = removeLegendTitle(allrfuplot)
             allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
