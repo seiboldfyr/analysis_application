@@ -60,7 +60,6 @@ class AbstractCollection:
             raise MissingCriticalProperty('"name" property not found')
         return db.get_db()[self.name]
 
-    # TODO move this to an adapter
     def find(self):
         cursor = self.get_connection().find(self.filters, self.select)
         if len(self.order) > 0:

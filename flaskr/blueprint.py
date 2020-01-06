@@ -4,10 +4,8 @@ from flask import render_template, redirect, url_for, request, flash, Blueprint,
 import zipfile
 import pandas as pd
 import base64
-import os
-from io import BytesIO, StringIO
+from io import BytesIO
 
-from flaskr.forms import DataInputForm, ExperimentInputForm
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
 from flaskr.model.processor import Processor
@@ -41,34 +39,34 @@ def search():
 
         processor = ImportProcessor()
         dataset_exists = processor.search(name)
-        print('name: ', name)
         if dataset_exists is not None:
-            print(dataset_exists)
-            flash('A dataset was found.')
+            flash('A dataset was found.', 'success')
+            fileinfo['Version'] = dataset_exists['version']
+            #TODO: get components and list on search screen
             return render_template('search.html',
-                                   result={i: dataset_exists[i] for i in dataset_exists if i not in ['_id', 'Name']},
+                                   result=fileinfo,
                                    id=dataset_exists['_id'])
 
         response = processor.execute(request, name)
         if not response.is_success():
-            flash(response.get_message(), category='error')
+            flash(response.get_message(), 'error')
+            #TODO: get components and list on search screen
 
-        return render_template('search.html', result=fileinfo, id=response.get_message())
+        return render_template('search.html',
+                               result=fileinfo,
+                               id=response.get_message())
     return redirect(url_for('base.home'))
 
 
 @base_blueprint.route('/manual/<id>', methods=['GET', 'POST'])
 @login_required
 def manual(id):
-    input_form = DataInputForm()
-    return render_template('manual.html', form=input_form, id=id)
+    return render_template('manual.html', id=id)
 
 
 @base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
 @login_required
 def process(id):
-    print('process: ', id)
-    input_form = ExperimentInputForm()
     if request.method == 'POST':
         if id is None:
             flash('No dataset information was found', 'error')
@@ -79,25 +77,22 @@ def process(id):
 
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
-            return render_template('processinfo.html', form=input_form, id=id)
+            return render_template('processinfo.html', id=id)
 
-        flash('Processed successfully in %s seconds' % response.get_message(), 'msg')
-        return render_template('processinfo.html', form=input_form, id=id, graphed=True)
+        flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
+        return render_template('processinfo.html', id=id, graphed=True)
 
-    return render_template('processinfo.html', form=input_form, id=id)
+    return render_template('processinfo.html', id=id)
 
 
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
 def graphs(id):
-    print('graph: ', id)
     graph_urls = Grapher(dataset_id=id).execute()
-
-    input_form = ExperimentInputForm()
     # TODO: include manually changed header here
     if len(graph_urls) == 0:
         flash('Something went wrong with graphing', 'error')
-        return render_template('processinfo.html', form=input_form, id=id)
+        return render_template('processinfo.html', id=id)
 
     if request.method == 'POST':
         memory_file = BytesIO()
@@ -115,7 +110,7 @@ def graphs(id):
             writer = Writer(excelwriter=excelwriter, dataset_id=id)
             response = writer.writebook()
             if not response.is_success():
-                return render_template('processinfo.html', form=input_form, id=id)
+                return render_template('processinfo.html', id=id)
             excelwriter.save()
             io.seek(0)
 
@@ -129,4 +124,5 @@ def graphs(id):
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graph_urls.values())
+
 

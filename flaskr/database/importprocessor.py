@@ -1,9 +1,15 @@
 import datetime
+import re
+from bson import ObjectId
 
 from flask import flash, current_app
 
 from flaskr.database.dataset_models.factory import Factory
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.components.component_models.repository import Repository as ComponentRepository
+from flaskr.components.component_models.factory import Factory as ComponentFactory
+from flaskr.database.protocol_models.factory import Factory as ProtocolFactory
+from flaskr.database.protocol_models.manager import Manager as ProtocolManager
 from flaskr.database.measurement_models.factory import Factory as MeasurementFactory
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
 from flaskr.framework.abstract.abstract_importer import AbstractImporter
@@ -19,7 +25,7 @@ def buildname(excelfilename):
     info['Id'] = filename[0][-1]
     info['Initials'] = filename[1]
     if len(excelfilename) > 4:
-        info['Other Info'] = filename[2:-1]
+        info['Other Info'] = filename[2:-1][0]
     return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
 
 
@@ -34,7 +40,7 @@ def getTime(t):
 
 class ImportProcessor(AbstractImporter):
     def __init__(self):
-        self.identifers = dict(group=0, sample=-1, triplicate=-1, previous='')
+        self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
         self.protocoldict = {}
@@ -56,6 +62,9 @@ class ImportProcessor(AbstractImporter):
         model = factory.create({'name': buildid(name)})
         dataset_repository.save(model)
         self.dataset = model
+        self.component_repository = ComponentRepository()
+        self.protocol_factory = ProtocolFactory()
+        self.protocol_manager = ProtocolManager()
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()
 
@@ -68,7 +77,7 @@ class ImportProcessor(AbstractImporter):
                 xlsx_file = XLSXFile(file)
             except InvalidArgument:
                 dataset_repository.delete(self.dataset)
-                return Response(False, 'An invalid file was provided, please make sure you are uploading a .txt file')
+                return Response(False, 'An invalid file was provided, please make sure you are uploading a .xlsx file')
 
             if file.filename.endswith('INFO.xlsx'):
                 infofile = xlsx_file
@@ -83,12 +92,11 @@ class ImportProcessor(AbstractImporter):
 
             self.measurement_manager.save()
 
-        # TODO: remove files after reading
         xlsx_file.delete()
-        # infofile.delete()
         rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
+        model['version'] = float(current_app.config['VERSION'])
         model['metadata'] = dict(Protocols=self.protocoldict,
                                  Cut=0,
                                  Groupings={},
@@ -98,7 +106,7 @@ class ImportProcessor(AbstractImporter):
                                  Cycle_Length=self.cyclelength)
         dataset_repository.save(model)
 
-        flash('File imported successfully', 'msg')
+        flash('File imported successfully', 'success')
         return Response(
             True,
             self.dataset.get_id()
@@ -128,6 +136,12 @@ class ImportProcessor(AbstractImporter):
         if self.identifers['previous'] != label:
             self.identifers['sample'] += 1
             self.identifers['triplicate'] += 1
+            self.identifers['triplicate_id'] = ObjectId()
+            search_components = self.validate_target(label)
+            if search_components.is_success():
+                self.add_target(label=label,
+                                component_id=search_components.get_message(),
+                                triplicate_id=self.identifers['triplicate_id'])
 
             # TODO: check if control is labeled with '_0'
             if label[:12] == self.identifers['control']:
@@ -135,13 +149,46 @@ class ImportProcessor(AbstractImporter):
                 self.identifers['sample'] = 0
 
         self.identifers['previous'] = label
-        print(self.identifers)
+
+    def validate_target(self, target):
+        if re.match(r'^\d+\s*[a-z]+\/*[a-zA-Z]+?\s+\w?', target) is not None:
+            quantityRe = re.match(r'^\d+', target)
+            unitRe = re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', target)
+            if quantityRe is None or unitRe is None:
+                Response(False, 'Target units and name could not be identified')
+            name = target[unitRe.end():]
+            unit = target[quantityRe.end():unitRe.end()]
+
+            component = self.component_repository.search_by_name_and_unit(name, unit)
+            if component is not None:
+                return Response(True, component['_id'])
+            # TODO: edit case if component is not found in library
+            # return Response(False, 'Target does not exist in the component library')
+            self.add_component(name=name, unit=unit)
+        return Response(False, 'Target units and name could not be identified')
+
+    def add_component(self, name, unit):
+        # TODO: delete when component library is filled
+        factory = ComponentFactory()
+        model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
+        self.component_repository.save(model)
+
+    def add_target(self, label, component_id, triplicate_id):
+        quantity = re.match(r'^\d+', label).group(0)
+        data = {'triplicate_id': triplicate_id,
+                'dataset_id': self.dataset.get_id(),
+                'component_id': component_id,
+                'quantity': quantity}
+        #TODO: convert all to pM units?
+        protocol = self.protocol_factory.create(data)
+        self.protocol_manager.add(protocol)
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         data = {'dataset_id': self.dataset.get_id(),
+                'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
                 'protocol': self.protocoldict,
@@ -156,3 +203,4 @@ class ImportProcessor(AbstractImporter):
         measurement_model.add_values(rfuvalues)
 
         self.measurement_manager.add(measurement_model)
+

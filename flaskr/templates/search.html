@@ -6,17 +6,9 @@
 {% block body %}
 
  {% for key, value in result.items() %}
-    {% if key == 'metadata' and value|length > 1 %}
-        {%for metakey, metavalue in value.items() %}
-            <tr>
-               {{ metakey }}: {{ metavalue }} <br>
-            </tr>
-        {% endfor %}
-    {% else %}
     <tr>
        <b>{{ key }}:</b> {{ value }} <br><br>
     </tr>
-    {% endif %}
  {% endfor %}
 {% endblock %}
 
