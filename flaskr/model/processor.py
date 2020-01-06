@@ -20,7 +20,7 @@ class Processor(AbstractProcessor):
         self.dataset_id = dataset_id
         self.swaps = {}
         self.groupings = None
-        self.statistics = pd.DataFrame()
+        self.statistics = pd.DataFrame(columns=['group', 'sample', '1', '2', '3', '4'])
         self.time = []
         self.control = None
 
@@ -103,8 +103,8 @@ class Processor(AbstractProcessor):
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
                                                                       well.get_excelheader()), 'error')
 
-            well['inflections'] = list(inflectiondict.keys())
-            well['inflectionRFUs'] = [item['rfu'] for item in inflectiondict.values()]
+            well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
+            well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
 
@@ -115,25 +115,29 @@ class Processor(AbstractProcessor):
             well['percentdiffs'] = percentdiffs
 
             if well['is_valid']:
-                stats = [well.get_group(), well.get_sample()]
-                stats.extend(list(inflectiondict.keys()))
-                self.statistics = self.statistics.append([stats])
+                if len(inflectiondict.keys()) == 4:
+                    self.statistics = self.statistics.append([{'group': well.get_group(),
+                                                               'sample': well.get_sample(),
+                                                               '1': inflectiondict.get('1')['inflection'],
+                                                               '2': inflectiondict.get('2')['inflection'],
+                                                               '3': inflectiondict.get('3')['inflection'],
+                                                               '4': inflectiondict.get('4')['inflection']}],
+                                                             ignore_index=True)
 
         self.measurement_manager.update(well)
         return Response(True, '')
 
     def getStatistics(self):
+        print(self.statistics)
         if not self.statistics.empty:
 
             dataset_repository = Repository()
             dataset = dataset_repository.get_by_id(self.dataset_id)
 
-            self.statistics.columns = ['group', 'sample', '0', '1', '2', '3']
-
             dataset['statistics'] = {'sample variation': self.statistics.groupby('sample').std()
-                                                                  [['0', '1', '2', '3']].mean(1).tolist(),
+                                                                  [['1', '2', '3', '4']].mean(1).tolist(),
                                      'group variation': self.statistics.groupby('group').std()
-                                                                 [['0', '1', '2', '3']].mean(1).tolist()}
+                                                                 [['1', '2', '3', '4']].mean(1).tolist()}
             flash('Average variation for each concentration is: %s' %
                   ', '.join([str(round(item, 3)) for item in dataset['statistics']['sample variation']]), 'msg')
             flash('Average variation for each group is: %s' %

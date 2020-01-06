@@ -1,3 +1,5 @@
+import re
+
 from flaskr.database.dataset_models.repository import Repository
 
 
@@ -19,3 +21,14 @@ def get_collection(self):
     dataset_repository = Repository()
     dataset = dataset_repository.get_by_id(self.dataset_id)
     return dataset.get_well_collection()
+
+
+def get_concentrations(string):
+    if string.endswith('fM'):
+        return float(re.match(r'^\d+', string).group(0)) / 1000
+    elif string.endswith('pM'):
+        return float(re.match(r'^\d+', string).group(0))
+    elif string.endswith('nM'):
+        return float(re.match(r'^\d+', string).group(0)) * 1000
+    else:
+        return 0
