@@ -99,10 +99,10 @@ def graphs(id):
         memory_file = BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
 
-            for itemtitle in graphs:
+            for itemtitle in graphs.keys():
                 data = zipfile.ZipInfo()
                 data.filename = itemtitle
-                zf.writestr(data, base64.decodebytes(itemtitle.encode('ascii')))
+                zf.writestr(data, base64.decodebytes(graphs[itemtitle].encode('ascii')))
 
             io = BytesIO()
             analysistitle = name + '_output.xlsx'
@@ -123,6 +123,6 @@ def graphs(id):
         zipfilename = 'output' + '_' + name + '.zip'
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
-    return render_template('graphs.html', id=id, graphs=graphs, name=name)
+    return render_template('graphs.html', id=id, graphs=graphs.values(), name=name)
 
 
