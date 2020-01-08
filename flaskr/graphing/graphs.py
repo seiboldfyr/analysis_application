@@ -47,6 +47,7 @@ class Grapher:
         # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self):
+        print(self.powerpoint)
         self.setGraphSettings()
         startpd = time.time()
         dataset_repository = Repository()
@@ -229,7 +230,8 @@ class Grapher:
                   'legend.markerscale': .4,
                   'legend.labelspacing': .4,
                   'font.size': 8}
-        if self.powerpoint:
+
+        if self.powerpoint == True:
             params.update({
                   'scatter.edgecolors': 'white',
                   'axes.edgecolor': 'white',
