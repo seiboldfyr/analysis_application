@@ -10,6 +10,7 @@ def build_swap_inputs(self):
         if item.startswith('Bidirectional Swap') == True:
             self.swaps[self.request.form['Swap To ' + str(item[-1])]] = self.request.form['Swap From ' + str(item[-1])]
 
+
 def build_group_inputs(self):
     for item in self.request.form.keys():
         if item.startswith('Group'):
@@ -33,3 +34,11 @@ def get_concentrations(string):
         return float(re.match(r'^\d+', string).group(0)) * 1000
     else:
         return 0
+
+def add_custom_group_label(self, well):
+    originallabel = well.get_label().split('_')
+    well['label'] = '_'.join([item for item in originallabel[:2]])
+    if self.groupings.get(str(well.get_group())):
+        well['label'] = well.get_label() + '_' + self.groupings[str(well.get_group())]['Group Label']
+    well['label'] += '_' + str(well.get_group())
+    return well

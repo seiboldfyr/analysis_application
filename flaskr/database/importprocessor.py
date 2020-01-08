@@ -39,17 +39,16 @@ class ImportProcessor(AbstractImporter):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
-        self.protocoldict = {}
 
     def search(self, name) -> {}:
-        info = {}
         dataset_repository = Repository()
-        #TODO: filter datasets by date
-        found_dataset = dataset_repository.get_connection().find_one({'name': name})
+        found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
-            for key in found_dataset.keys():
-                info[key] = found_dataset[key]
-            return info
+            if found_dataset['version'] < float(current_app.config['VERSION']):
+                flash('This data was uploaded with version %s and is being replaced with version %s.'
+                      % (found_dataset['version'], current_app.config['VERSION']), 'msg')
+            else:
+                return found_dataset
         return None
 
     def execute(self, request, name) -> Response:
@@ -82,7 +81,6 @@ class ImportProcessor(AbstractImporter):
                 name = buildname(file.filename)
 
         self.getexperimentlength(infofile)
-        self.getprotocols(request)
         for info, rfu in zip(infofile.read(sheet='0', userows=True), rfufile.read(sheet='SYBR', usecolumns=True)):
             self.add_measurement(info, rfu)
 
@@ -93,8 +91,7 @@ class ImportProcessor(AbstractImporter):
 
         model['measure_count'] = model.get_well_collection().get_size()
         model['version'] = float(current_app.config['VERSION'])
-        model['metadata'] = dict(Protocols=self.protocoldict,
-                                 Cut=0,
+        model['metadata'] = dict(Cut=0,
                                  Groupings={},
                                  Swaps={},
                                  CustomLabel='',
@@ -107,11 +104,6 @@ class ImportProcessor(AbstractImporter):
             True,
             self.dataset.get_id()
         )
-
-    def getprotocols(self, request):
-        for item in request.form.keys():
-            if item.startswith('pr'):
-                self.protocoldict[request.form[item]] = request.form['pr' + str(item[-1])]
 
     def getexperimentlength(self, info):
         start = 0
@@ -187,8 +179,8 @@ class ImportProcessor(AbstractImporter):
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
-                'protocol': self.protocoldict,
                 'label': inforow[5] + '_' + inforow[6],
+                'concentration': re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', inforow[5]).group(0),
                 'group': self.identifers['group'],
                 'sample': self.identifers['sample'],
                 'triplicate': self.identifers['triplicate'],
