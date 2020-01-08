@@ -51,7 +51,6 @@ class Grapher:
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
         self.name = dataset.get_name()
-        self.label = self.name[:-4]
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
@@ -112,7 +111,7 @@ class Grapher:
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
-        df.insert(0, 'labelwithoutgroup', [x[:-2] for x in df['label']])
+        df.insert(0, 'labelwithoutgroup', [re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0) for item in df['label']])
         for inf in range(4):
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
                                        data=df[df['variable'] == "Inflection " + str(inf)],
@@ -213,7 +212,7 @@ class Grapher:
             self.saveimage(plt, 'CurveFit_' + str(group))
 
     def saveimage(self, plt, title):
-        plt.title(self.label + title, fontsize=14)
+        plt.title(self.name + '_' + title, fontsize=14)
         sio = io.BytesIO()
         plt.savefig(sio, format='png', transparent=True)
         plt.close()

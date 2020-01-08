@@ -23,7 +23,7 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
                                       derivative[leftside:rightside])
 
         allpeaks[str(inflectionnumber+i)] = dict(inflection=-polycoefs[1] / (2 * polycoefs[0]),
-                                                 rfu=get_expected_values(self, well, maxpeak, [leftside, rightside])[0])
+                                                 rfu=get_expected_values(self, well, -polycoefs[1] / (2 * polycoefs[0]), [leftside, rightside])[0])
 
         if derivativenumber == 2 and i == 0:
             derivative = remove_peak(derivative, maxpeak[0], getnegativedata=True)
