@@ -14,13 +14,11 @@ See `requirements.txt` for a complete list of requirements that needs to be avai
 ## Execute on development environment
 
 Execute from the project root folder.
-In cmd, you will need to ctrl+c when changes are made. Use this to start:
+
 ```
-python application.py
+In bash, such as Ubuntu, you can use:
 ```
-With a bash, you can use:
-```
-bash ./execute.sh
+./scripts/execute.sh
 ```
 
 This will launch a server running on http://127.0.0.1:5000

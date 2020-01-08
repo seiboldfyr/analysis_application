@@ -6,11 +6,18 @@ from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_v
 def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
     timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
     derivative = derivative[5:]
-    inflectionnumber = 1
     for i in range(2):
         if derivativenumber == 2 and i == 0:
             timediff = [(timediff[t] + timediff[t + 1]) / 2 for t in range(len(timediff) - 1)]
-            inflectionnumber += 2
+            inflectionnumber = 2
+        elif derivativenumber == 1 and i == 0:
+            inflectionnumber = 3
+        elif derivativenumber == 1 and i == 1:
+            inflectionnumber = 1
+        else:
+            inflectionnumber = 4
+            #TODO: correct how the ordering occurs on these inflection points
+
         maxpeak = list(np.where(derivative == max(derivative)))[0]
         widths = peak_widths(derivative, maxpeak)
         if widths[0] == 0:
@@ -22,15 +29,15 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
         polycoefs = fit_poly_equation(timediff[leftside:rightside],
                                       derivative[leftside:rightside])
 
-        allpeaks[str(inflectionnumber+i)] = dict(inflection=-polycoefs[1] / (2 * polycoefs[0]),
-                                                 rfu=get_expected_values(self, well, -polycoefs[1] / (2 * polycoefs[0]), [leftside, rightside])[0])
+        allpeaks[str(inflectionnumber)] = dict(inflection=-polycoefs[1] / (2 * polycoefs[0]),
+                                               rfu=get_expected_values(self, well, -polycoefs[1] / (2 * polycoefs[0]), [leftside, rightside])[0])
 
         if derivativenumber == 2 and i == 0:
+            inflectionnumber += 1
             derivative = remove_peak(derivative, maxpeak[0], getnegativedata=True)
         else:
             derivative = remove_peak(derivative, maxpeak[0])
     return allpeaks
-
 
 def remove_peak(data, peakindex, getnegativedata=False):
     # Finds the lowest trough that occurs immediately before or after the peak
