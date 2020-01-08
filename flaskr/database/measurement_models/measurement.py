@@ -1,10 +1,15 @@
 from flaskr.framework.exception import MissingMeasures
 from flaskr.framework.abstract.abstract_model import AbstractModel
+from flaskr.database.protocol_models.collection import Collection as ProtocolCollection
+from flaskr.components.component_models.collection import Collection as ComponentCollection
+
 
 
 class Measurement(AbstractModel):
-    def __init__(self, dataset_id=None, excelheader='', label='', group=float, sample=float, triplicate=float,
-                 RFUs=None):
+    component_collection = None
+
+    def __init__(self, dataset_id=None, excelheader='', label='', group=float, sample=float,
+                 triplicate=float, triplicate_id=None, RFUs=None):
         super().__init__()
         if RFUs is None:
             RFUs = []
@@ -15,6 +20,7 @@ class Measurement(AbstractModel):
         self['group'] = group
         self['sample'] = sample
         self['triplicate'] = triplicate
+        self['triplicate_id'] = triplicate_id
         self['RFUs'] = RFUs
         self['inflections'] = []
         self['inflectionRFUs'] = []
@@ -43,6 +49,9 @@ class Measurement(AbstractModel):
     def get_excelheader(self) -> '':
         return self['excelheader']
 
+    def get_cycle(self) -> float:
+        return self['cycle']
+
     def get_label(self) -> '':
         return self['label']
 
@@ -67,6 +76,10 @@ class Measurement(AbstractModel):
     def get_rfus(self) -> list:
         return self['RFUs']
 
-    def get_cycle(self) -> float:
-        return self['cycle']
-
+    def get_component_collection(self) -> ProtocolCollection:
+            if self.component_collection is None:
+                self.component_collection = ProtocolCollection()
+                self.component_collection.add_filter('triplicate_id', self['triplicate_id'])
+                # for item in self.component_collection:
+                    # TODO: get component name/unit from componentcollection
+            return self.component_collection

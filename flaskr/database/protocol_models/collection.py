@@ -1,15 +1,14 @@
-import pandas as pd
 
-from flaskr.database.measurement_models.factory import Factory as MeasurementFactory
+from flaskr.database.protocol_models.factory import Factory as ProtocolFactory
 from flaskr.framework.abstract.abstract_collection import AbstractCollection
 
 
 class Collection(AbstractCollection):
-    name = 'measurement'
+    name = 'protocol'
     buffer = []
 
     def __init__(self):
-        super().__init__(MeasurementFactory())
+        super().__init__(ProtocolFactory())
 
     def __next__(self):
         if self.cursor is None:
@@ -17,6 +16,7 @@ class Collection(AbstractCollection):
         data = self.cursor.next()
         model = self.factory.create(data)
         return model
+
 
 
 

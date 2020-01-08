@@ -3,6 +3,8 @@ from logging.config import dictConfig
 
 from flask import Flask
 from flaskr.blueprint import base_blueprint
+from flaskr.auth.blueprint import auth_blueprint
+from flaskr.components.blueprint import comp_blueprint
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from . import (db, framework)
 
@@ -29,10 +31,12 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         UPLOAD_FOLDER=os.path.join(app.instance_path, 'upload'),
         IMAGE_FOLDER=os.path.join(app.static_folder, 'images'),
-        VERSION='2.3',
+        VERSION='2.14',
         DB_HOST='localhost',
         DB_NAME='fyr_dev',
-        DB_PORT=27017
+        DB_PORT=27017,
+        APP_USERNAME='test',
+        APP_PASSWORD='test'
     )
 
     if test_config is None:
@@ -68,6 +72,8 @@ def create_app(test_config=None):
     db.init_app(app)
     framework.init_framework(app)
 
+    app.register_blueprint(auth_blueprint)
+    app.register_blueprint(comp_blueprint)
     app.register_blueprint(base_blueprint)
 
     return app

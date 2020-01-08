@@ -1,0 +1,149 @@
+{% extends "master.html" %}
+
+{% block title %} Data Analysis {% endblock %}
+
+{% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+p.huge {
+line-height: 16px;
+}
+
+</style>
+<br>
+<div class="formwrapper">
+    <form method=post>
+        Fluorescence Error Cut Time
+        <input type="text" name="cutlength" placeholder="default=0"><br>
+        <p class="big">
+
+        Custom Label Addition
+        <input type="text" name="customlabel"><br>
+        <p class="big">
+
+        <div class="groupidentification">
+        Group Number
+            <select id="groupidentification" name="number of groups" onchange="otherSelect()">
+                <option value="0">Autoselect</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+            </select>
+        </div>
+        <p class="big">
+
+        <p id="groupresult"></p>
+
+<script type="text/javascript">
+
+function otherSelect() {
+    let pick = document.getElementById("groupidentification").selectedIndex;
+    makeVisible(parseInt(pick));
+    }
+
+function makeVisible(grouptotal) {
+    document.getElementById("groupresult").innerHTML = '';
+    for(let group = 1; group <= grouptotal; group ++){
+        let formGroupHtml = buildGroupHtml(group);
+        document.getElementById("groupresult").innerHTML += formGroupHtml;
+        }
+    }
+
+function buildGroupHtml(group) {
+    let html ='<div class="wellidentification"><div id="grouptitle"><b>Group Number ';
+    html += group + '</b></div>';
+    html += '<div id="grouplabel">Custom label <input name="Group Label ' + group + '" type="text"/></div>';
+    html += '<div id="groupwells">Number of wells <input name="Group Wells ' + group + '" type="text"/></div>';
+    html += '<div id="groupsamples">Number of samples <input name="Group Samples ' + group + '" type="text"/></div>';
+    html += '<p class="big">';
+    return html;
+    }
+
+</script>
+
+<p class="huge"><br>
+<b> Optional parameters:</b><br>
+        <p class="big">
+        Any wells with known errors
+        <input type="text" name="errorwells" placeholder="A01, A02, ..."><br>
+        <p class="big">
+
+        <div class="labelswaps">
+        Swapping well positions - how many swaps do you want to make?
+            <select id="labelswaps" name="labels that were swapped" onchange="swapnumber()">
+                <option value="0">None</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select>
+        </div>
+        <p class="big">
+
+        <p id="swapinput"></p>
+
+<script type="text/javascript">
+function swapnumber() {
+    let pick = document.getElementById("labelswaps").selectedIndex;
+    makeSwapsVisible(parseInt(pick));
+    }
+
+function makeSwapsVisible(swapnumber) {
+    document.getElementById("swapinput").innerHTML = '';
+
+    for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
+        var formSwapHtml = buildSwapHtml(wellswap);
+        document.getElementById("swapinput").innerHTML += formSwapHtml;
+        }
+    }
+
+function buildSwapHtml(swapnumber) {
+    var html ='<div class="labelidentification"></div>';
+    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/><input type="checkbox" name="Bidirectional Swap '+ swapnumber +'">Bidirectional Swap</div>';
+    html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
+    html += '<p class="big">';
+    return html;
+    }
+</script>
+
+<p><input type="submit" name='Run' value="Run it!"/></p>
+        </form>
+    </div>
+
+
+
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block buttons %}
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>View Graphs</button></a>
+<script>
+    var visibility = 'visible';
+    if ("{{ graphed }}" == false) {
+        visibility = "hidden"
+    }
+    document.getElementById("graphbutton").style.visibility = visibility;
+    document.getElementById("downloadbutton").style.visibility = visibility;
+</script>
+{% endblock %}
+

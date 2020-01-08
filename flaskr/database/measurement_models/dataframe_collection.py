@@ -1,4 +1,4 @@
-import numpy as np
+import pandas as pd
 
 from flaskr.database.measurement_models.factory import Factory as MeasurementFactory
 from flaskr.framework.abstract.abstract_collection import AbstractCollection
@@ -6,9 +6,7 @@ from flaskr.framework.abstract.abstract_collection import AbstractCollection
 
 class Collection(AbstractCollection):
     name = 'measurement'
-    idxgroup = 0
-    idxsample = 0
-    idxtriplicate = 0
+    buffer = []
 
     def __init__(self):
         super().__init__(MeasurementFactory())
@@ -17,11 +15,8 @@ class Collection(AbstractCollection):
         if self.cursor is None:
             self.cursor = self.find()
         data = self.cursor.next()
-        model = self.factory.create(data) #first item in triplicate
-        self.idxgroup = model.get_data()
-        return model
+        return data
 
-    def average(self, item):
-        return np.nanmean(item)
+    def to_df(self):
+        return pd.DataFrame([model for model in self])
 
-#TODO: this doesn't work... yet

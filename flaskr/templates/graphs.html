@@ -1,33 +1,23 @@
 {% extends "master.html" %}
 
-{% block title %}Graphs{% endblock %}
-
+{% block title %}
+Graphs for dataset {{name}}
+{% endblock %}
 
 {% block body %}
+
+<div class="formwrapper">
+  <form method = "POST">
+      <p><input type="submit" name='download' value="Download a ZIP file of the graphs and the analysis"/></p>
+  </form>
+</div>
 {% endblock %}
 
 {% block content %}
-  {%for graph in graphs %}
-    <img src="{{ graph }}" width="800" height="600"/>
-  {% endfor %}
-{% endblock %}
 
-
-{% block warnings %}{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {%for graph in graphs %}
+        <img src="data:image/png;base64,{{graph}}" alt='' width="300" height="200">
     {% endfor %}
-  {% endif %}
-{% endwith %}
-
-{% if error %}
-  <div class="alert alert-danger">{{error}}</div>
-{% endif %}
-
-{% if msg %}
-  <div class="alert alert-success">{{msg}}</div>
-{% endif %}
 {% endblock %}
 
 
