@@ -34,8 +34,10 @@ class Grapher:
     def __init__(
             self,
             dataset_id: str,
-            customtitle: str = ''
+            customtitle: str = '',
+            presentation: bool = False
     ):
+        self.powerpoint = presentation
         self.dataset_id = dataset_id
         self.customtitle = customtitle
         self.time = []
@@ -94,7 +96,7 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             subinf = df[(df['group'] == group)].sort_values(['triplicate', 'value'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
-                                       s=2.6, edgecolor='black', linewidth=.6)
+                                       s=2.6, linewidth=.6)
             indplt.set(xticklabels=['Inflection 1', 'Inflection 2', 'Inflection 3', 'Inflection 4'])
             indplt = removeLegendTitle(indplt)
             box = plt.gca().get_position()
@@ -115,7 +117,7 @@ class Grapher:
         for inf in range(4):
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
                                        data=df[df['variable'] == "Inflection " + str(inf)],
-                                       marker='o', s=2.6, edgecolor='black', linewidth=.6)
+                                       marker='o', s=2.6, linewidth=.6)
             indplt.set(xticklabels=[str(num % 4 + 1) for num in np.arange(32)])
             indplt = removeLegendTitle(indplt)
             plt.ylabel('Time (Min)')
@@ -174,7 +176,7 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             subpc = df[df['group'] == group]
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
-                                       s=2.6, edgecolor='black', linewidth=.6)
+                                       s=2.6, linewidth=.6)
             indplt.set(xticklabels=[str(num+1) for num in np.arange(4)])
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
@@ -192,7 +194,7 @@ class Grapher:
             for inf in range(4):
                 curveplt = seaborn.swarmplot(x="pMconcentration", y="value",
                                              data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
-                                             edgecolor='black', palette=["black"], linewidth=.6)
+                                             palette=["black"], linewidth=.6)
 
                 [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
 
@@ -227,6 +229,20 @@ class Grapher:
                   'legend.markerscale': .4,
                   'legend.labelspacing': .4,
                   'font.size': 8}
+        if self.powerpoint:
+            params.update({
+                  'scatter.edgecolors': 'white',
+                  'axes.edgecolor': 'white',
+                  'axes.facecolor': 'white',
+                  'axes.labelcolor': 'white',
+                  'xtick.color': 'white',
+                  'ytick.color': 'white',
+                  'figure.facecolor': 'white',
+                  'text.color': 'white',
+                  'legend.framealpha': .1})
+        else:
+            params.update({
+                'scatter.edgecolors': 'white'})
 
         plt.rcParams.update(params)
         seaborn.set_palette(self.colors)

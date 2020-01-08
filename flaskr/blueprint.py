@@ -81,7 +81,11 @@ def process(id):
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
 def graphs(id):
-    graphs, name = Grapher(dataset_id=id).execute()
+    presentation = False
+    if request.form.get('presentation'):
+        presentation = request.form['presentation']
+    graphs, name = Grapher(dataset_id=id,
+                           presentation=presentation).execute()
 
     # TODO: include manually changed header here
     if len(graphs) == 0:

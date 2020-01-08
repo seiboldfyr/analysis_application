@@ -8,7 +8,9 @@ Graphs for dataset {{name}}
 
 <div class="formwrapper">
   <form method = "POST">
-      <p><input type="submit" name='download' value="Download a ZIP file of the graphs and the analysis"/></p>
+      <p><input type="checkbox" name='presentation' value="False"/> Use presentation style graphs</p>
+      <p><input type="submit" name='download' value="Download ZIP file"/></p>
+     Please only click the download button ONCE.
   </form>
 </div>
 {% endblock %}
