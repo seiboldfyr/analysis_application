@@ -8,7 +8,7 @@ from flaskr.components.component_models.collection import Collection as Componen
 class Measurement(AbstractModel):
     component_collection = None
 
-    def __init__(self, dataset_id=None, excelheader='', label='', group=float, sample=float,
+    def __init__(self, dataset_id=None, excelheader='', label='', concentration=str, group=float, sample=float,
                  triplicate=float, triplicate_id=None, RFUs=None):
         super().__init__()
         if RFUs is None:
@@ -16,6 +16,7 @@ class Measurement(AbstractModel):
         self['dataset_id'] = dataset_id
         self['excelheader'] = excelheader
         self['is_valid'] = True
+        self['concentration'] = concentration
         self['label'] = label
         self['group'] = group
         self['sample'] = sample
@@ -54,6 +55,9 @@ class Measurement(AbstractModel):
 
     def get_label(self) -> '':
         return self['label']
+
+    def get_concentration(self) -> str:
+        return self['concentration']
 
     def get_group(self) -> int:
         return self['group']

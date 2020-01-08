@@ -10,6 +10,6 @@ class Repository(AbstractRepository):
     def get_by_name(self, name: str):
         data = self.get_connection().find_one({'name': name})
         if data is None:
-            raise NoSuchEntityError
+            return None
         model = self.factory.create(data)
         return model

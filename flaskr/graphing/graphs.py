@@ -23,9 +23,9 @@ def removeLegendTitle(plot):
 def getRegression(df):
     df = df.groupby('triplicate').mean()
     linear_regressor = LinearRegression()
-    linear_regressor.fit(np.asarray(np.log(df['concentration'])).reshape(-1, 1),
+    linear_regressor.fit(np.asarray(np.log(df['pMconcentration'])).reshape(-1, 1),
                          np.asarray(df['value']).reshape(-1, 1))
-    rvalue = linear_regressor.score(np.asarray(np.log(df['concentration'])).reshape(-1, 1),
+    rvalue = linear_regressor.score(np.asarray(np.log(df['pMconcentration'])).reshape(-1, 1),
                                     np.asarray(df['value']).reshape(-1, 1))
     return [rvalue, linear_regressor]
 
@@ -138,7 +138,7 @@ class Grapher:
                                         index=row[0], label=row[1]['label']))
                 rdf = pd.concat([rdf, tdf], sort=False)
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
-                                       data=rdf, palette=self.colors, linewidth=.7)
+                                       data=rdf, linewidth=.7)
             snsplot = removeLegendTitle(snsplot)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
@@ -187,18 +187,18 @@ class Grapher:
     def CurveFitByGroup(self, df):
         for group in range(1, int(df['group'].max()) + 1):
             cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
-            cdf.insert(0, 'concentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
-                                            for item in cdf['label']])
-            cdf = cdf[cdf['concentration'] >= .1]
+            cdf.insert(0, 'pMconcentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
+                                              for item in cdf['label']])
+            cdf = cdf[cdf['pMconcentration'] >= .1]
             for inf in range(4):
-                curveplt = seaborn.swarmplot(x="concentration", y="value",
+                curveplt = seaborn.swarmplot(x="pMconcentration", y="value",
                                              data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
                                              edgecolor='black', palette=["black"], linewidth=.6)
 
                 [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
 
                 #get rvalue not including the .1pM concentration
-                [lessrvalue, _] = getRegression(cdf[cdf['concentration'] >= 1])
+                [lessrvalue, _] = getRegression(cdf[cdf['pMconcentration'] >= 1])
 
                 concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
                 Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
@@ -215,7 +215,7 @@ class Grapher:
     def saveimage(self, plt, title):
         plt.title(self.label + title, fontsize=14)
         sio = io.BytesIO()
-        plt.savefig(sio, format='png')
+        plt.savefig(sio, format='png', transparent=True)
         plt.close()
         self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
@@ -228,6 +228,7 @@ class Grapher:
                   'legend.markerscale': .4,
                   'legend.labelspacing': .4,
                   'font.size': 8}
+
         plt.rcParams.update(params)
         seaborn.set_palette(self.colors)
 

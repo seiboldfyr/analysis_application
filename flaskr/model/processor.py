@@ -6,7 +6,7 @@ from flaskr.database.measurement_models.manager import Manager as MeasurementMan
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
-from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection
+from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, add_custom_group_label
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference
 from flaskr.model.helpers.peakfunctions import get_peaks
 
@@ -19,7 +19,7 @@ class Processor(AbstractProcessor):
         self.request = request
         self.dataset_id = dataset_id
         self.swaps = {}
-        self.groupings = None
+        self.groupings = {}
         self.statistics = pd.DataFrame(columns=['group', 'sample', '1', '2', '3', '4'])
         self.time = []
         self.control = None
@@ -49,15 +49,14 @@ class Processor(AbstractProcessor):
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
                 well['is_valid'] = False
-                self.measurement_manager.update(well)
 
             # build time list from first well
             if wellindex < 2:
                 self.time = [n * well.get_cycle() / 60 for n in range(cut, len(well.get_rfus()))]
 
-            if well.get_label()[-2] != "_":
-                well['label'] = well.get_label() + '_' + str(well.get_group())
+            well = add_custom_group_label(self, well)
 
+            self.measurement_manager.update(well)
             response = self.processData(well)
 
             if not response.is_success():

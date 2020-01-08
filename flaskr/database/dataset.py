@@ -14,12 +14,8 @@ class Dataset(AbstractModel):
         super().__init__()
         self['_id'] = None
         self['version'] = 2.0
-        self['protocol'] = ''
         self['metadata'] = []
         self['statistics'] = dict()
-
-    def get_protocol(self) -> str:
-        return self['protocol']
 
     def get_metadata(self) -> []:
         return self['metadata']
