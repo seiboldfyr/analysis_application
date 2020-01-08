@@ -58,12 +58,6 @@ def search():
     return redirect(url_for('base.home'))
 
 
-@base_blueprint.route('/manual/<id>', methods=['GET', 'POST'])
-@login_required
-def manual(id):
-    return render_template('manual.html', id=id)
-
-
 @base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
 @login_required
 def process(id):
@@ -74,7 +68,6 @@ def process(id):
 
         response = Processor(request,
                              dataset_id=id).execute()
-
         if not response.is_success():
             flash('%s' % response.get_message(), 'error')
             return render_template('processinfo.html', id=id)
