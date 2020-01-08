@@ -23,7 +23,7 @@ class Writer:
 
         variablesofinterest = 12
         variablecolumns = [15 + n for n in range(variablesofinterest)]
-        variablecolumns.insert(0, 4)
+        variablecolumns.insert(0, 5)
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
             self.rowshift += df[(df['group'] == group)].shape[0] + 4
@@ -51,7 +51,7 @@ class Writer:
                 columns = []
                 inf_label = 'Inflection ' + str(inf + 1)
                 pcnt_label = 'Percent Diff ' + str(inf + 1)
-                columns.append(6)
+                columns.append(7)
                 for triplicateA in gdf['triplicate'].unique():
                     columns.append(len(gdf.columns))
                     rowA = gdf[gdf['triplicate'] == triplicateA]
@@ -71,9 +71,10 @@ class Writer:
         for i in range(len(df['RFUs'][0])):
             self.time.append(df['cycle'][0] * i/60)
         for inf in range(4):
-            df['Inflection ' + str(inf + 1)] = [x[inf] if len(x) == 4 else 0 for x in df['inflections']]
+            df['Inflection ' + str(inf + 1)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf + 1)) else 0 for x in
+                                        df['inflections']]
         for inf in range(4):
-            df['Inflection RFU ' + str(inf + 1)] = [x[inf] if len(x) == 4 else 0 for x in df['inflectionRFUs']]
+            df['Inflection RFU ' + str(inf + 1)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf + 1)) else 0 for x in df['inflectionRFUs']]
         for inf in range(4):
             df['Percent Diff ' + str(inf + 1)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
         return df
