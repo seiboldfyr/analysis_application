@@ -78,12 +78,9 @@ def process(id):
     return render_template('processinfo.html', id=id)
 
 
-@base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
+@base_blueprint.route('/graphs/<id>/<presentation>', methods=['GET', 'POST'])
 @login_required
-def graphs(id):
-    presentation = False
-    if request.form.get('presentation'):
-        presentation = request.form['presentation']
+def graphs(id, presentation=False):
     graphs, name = Grapher(dataset_id=id,
                            presentation=presentation).execute()
 

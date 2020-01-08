@@ -136,14 +136,18 @@ function buildSwapHtml(swapnumber) {
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed) }}" id="graphbutton"><button>View Graphs</button></a>
-<script>
+<div class="graphbuttons">
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed, presentation=False ) }}"><button>View Regular Graphs</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed, presentation=True ) }}"><button>View Presentation Style Graphs</button></a>
+</div>
+
+    <script>
     var visibility = 'visible';
     if ("{{ graphed }}" == false) {
         visibility = "hidden"
     }
-    document.getElementById("graphbutton").style.visibility = visibility;
-    document.getElementById("downloadbutton").style.visibility = visibility;
-</script>
+    document.getElementsByClassName("graphbuttons").style.visibility = visibility;
+
+    </script>
 {% endblock %}
 
