@@ -175,12 +175,16 @@ class ImportProcessor(AbstractImporter):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
+        concentration = 'unknown'
+        if re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', inforow[5]).group(0):
+            concentration = re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', inforow[5]).group(0)
+
         data = {'dataset_id': self.dataset.get_id(),
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
                 'label': inforow[5] + '_' + inforow[6],
-                'concentration': re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', inforow[5]).group(0),
+                'concentration': concentration,
                 'group': self.identifers['group'],
                 'sample': self.identifers['sample'],
                 'triplicate': self.identifers['triplicate'],

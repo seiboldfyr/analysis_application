@@ -88,7 +88,6 @@ class Grapher:
         print('6', time.time() - startgraphing)
 
         return [self.graph_urls, self.name]
-      
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
