@@ -114,7 +114,7 @@ def graphs(id):
             zf.writestr(data, io.getvalue())
 
         memory_file.seek(0)
-        zipfilename = 'output' + '_' + name + '_v.' + current_app['VERSION'] + '.zip'
+        zipfilename = 'output' + '_' + name + '_v.' + current_app.config['VERSION'] + '.zip'
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graphs.values(), name=name)
