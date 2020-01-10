@@ -64,9 +64,9 @@ class Grapher:
         print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
-        self.RFUIndividualGraphsByGroup(rfudf)
-        print('1', time.time() - startgraphing)
-        startgraphing = time.time()
+        # self.RFUIndividualGraphsByGroup(rfudf)
+        # print('1', time.time() - startgraphing)
+        # startgraphing = time.time()
 
         self.RFUGraphs(rfudf)
         print('2', time.time() - startgraphing)
@@ -129,31 +129,48 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             self.saveimage(plt, 'Inflection' + str(inf + 1))
 
-    def RFUIndividualGraphsByGroup(self, df): # TODO: Time axes are not scaled correctly
-        for group in range(1, int(df['group'].max())+1):
-            rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
-            for idx, row in enumerate(df[df['group'] == group].iterrows()):
-                tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
-                                        index=row[0], label=row[1]['label']))
-                rdf = pd.concat([rdf, tdf], sort=False)
-            snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
-                                       data=rdf, linewidth=.7)
-            snsplot = removeLegendTitle(snsplot)
-            plt.ylabel('RFU')
-            plt.xlabel('Time (Min)')
-            self.saveimage(plt, 'Individuals_' + str(group))
+    # def RFUIndividualGraphsByGroup(self, df):
+    #     for group in range(1, int(df['group'].max())+1):
+    #         rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
+    #         for idx, row in enumerate(df[df['group'] == group].iterrows()):
+    #             tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
+    #                                     index=row[0], label=row[1]['label']))
+    #             rdf = pd.concat([rdf, tdf], sort=False)
+    #         snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
+    #                                    data=rdf, linewidth=.7)
+    #         snsplot = removeLegendTitle(snsplot)
+    #         plt.ylabel('RFU')
+    #         plt.xlabel('Time (Min)')
+    #         self.saveimage(plt, 'Individuals_' + str(group))
+
+    # def RFUIndividualGraphsByGroup(self, df, group):
+    #     plt.figure(0)
+    #     rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
+    #     # for idx, row in enumerate(df.iterrows()):
+    #     #     tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
+    #     #                             index=row[0], label=row[1]['label']))
+    #     #     rdf = pd.concat([rdf, tdf], sort=False)
+    #     # snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
+    #     #                            data=rdf, linewidth=.7)
+    #     print(df.iloc[0])
+    #     snsplot = seaborn.lineplot(x=[[self.time] for x in df.shape[0]], y='RFUs', data=df, linewidth=.7)
+    #     snsplot = removeLegendTitle(snsplot)
+    #     plt.ylabel('RFU')
+    #     plt.xlabel('Time (Min)')
+    #     self.saveimage(plt, 'Individuals_' + str(group))
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             groupdf = df[df['group'] == group]
+            # self.RFUIndividualGraphsByGroup(df=groupdf, group=group)
+            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
                                              triplicate=triplicate, index=idx, group=group))
                 adf = pd.concat([adf, tdf], sort=False)
-            plt.figure(0)
+            plt.figure(1)
             grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
                                             data=adf, linewidth=.7)
             grouprfuplot = removeLegendTitle(grouprfuplot)
@@ -161,9 +178,9 @@ class Grapher:
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
-            plt.figure(1)
+            plt.figure(2)
             allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
-                                          linewidth=.7, legend="full", label=int(group))
+                                          palette=self.colors, linewidth=.7, legend="full", label=int(group))
             allrfuplot = removeLegendTitle(allrfuplot)
             allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
