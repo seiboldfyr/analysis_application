@@ -38,6 +38,7 @@ class Writer:
             for inf in range(4):
                 columns.append(variablesofinterest+14+inf)
                 inf_label = 'Inflection ' + str(inf + 1)
+                # Error for 20121107a_AA seems to originate in the insert of the following column
                 gdf.insert(variablesofinterest+14+inf, 'Difference from control ' + str(inf + 1), adf[inf_label] - float(control[inf_label]))
             gdf = gdf.iloc[:, columns]
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=(group-1)*(gdf.shape[0]+3))
