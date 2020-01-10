@@ -53,6 +53,7 @@ class AbstractRepository:
 
         documents = []
         for model in models:
+
             documents.append({**model.get_data(), '_id': ObjectId()})
 
         self.get_connection().insert_many(documents)
