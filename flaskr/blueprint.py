@@ -36,6 +36,7 @@ def search():
         fileinfo = {}
         for f in request.files:
             [name, fileinfo] = buildname(request.files.get(f).filename)
+            print(name)
 
         processor = ImportProcessor()
         dataset_exists = processor.search(name)

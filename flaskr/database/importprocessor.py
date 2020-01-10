@@ -86,8 +86,9 @@ class ImportProcessor(AbstractImporter):
 
             self.measurement_manager.save()
 
+        infofile.delete()
         xlsx_file.delete()
-        rfufile.delete()
+
 
         model['measure_count'] = model.get_well_collection().get_size()
         model['version'] = float(current_app.config['VERSION'])
