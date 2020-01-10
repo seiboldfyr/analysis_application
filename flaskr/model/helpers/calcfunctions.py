@@ -1,4 +1,5 @@
 import numpy as np
+import re
 
 
 def square(data):
@@ -50,3 +51,6 @@ def smooth(a):
     start = np.cumsum(a[:windowsize - 1])[::2] / r
     stop = (np.cumsum(a[:-windowsize:-1])[::2] / r)[::-1]
     return np.concatenate((start, out0, stop))
+
+def reg_conc(item):
+    return re.match(r'(\d+(|\s|[a-z]+\/)+([a-z]+[A-Z]))', item)
