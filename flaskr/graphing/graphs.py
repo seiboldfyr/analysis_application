@@ -51,12 +51,18 @@ class Grapher:
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
         self.name = dataset.get_name()
+        #TODO: drop dataset id columns with df = df.drop(columns=[])
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
         for inf in range(4):
             df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
+            df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
+
+        testdf = df.copy()
+        df = df.drop(columns=['RFU of Inflection ' + str(inf) for inf in range(4)])
+
         df = pd.melt(df, id_vars=list(df.columns)[:-8],
                      value_vars=list(df.columns)[-8:],
                      var_name='variable',
@@ -64,9 +70,9 @@ class Grapher:
         print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
-        # self.RFUIndividualGraphsByGroup(rfudf)
-        # print('1', time.time() - startgraphing)
-        # startgraphing = time.time()
+        self.RFUIndividualGraphsByGroup(rfudf, testdf)
+        print('1', time.time() - startgraphing)
+        startgraphing = time.time()
 
         self.RFUGraphs(rfudf)
         print('2', time.time() - startgraphing)
@@ -129,35 +135,26 @@ class Grapher:
                        bbox_to_anchor=(1, .1), loc='lower left')
             self.saveimage(plt, 'Inflection' + str(inf + 1))
 
-    # def RFUIndividualGraphsByGroup(self, df):
-    #     for group in range(1, int(df['group'].max())+1):
-    #         rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
-    #         for idx, row in enumerate(df[df['group'] == group].iterrows()):
-    #             tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
-    #                                     index=row[0], label=row[1]['label']))
-    #             rdf = pd.concat([rdf, tdf], sort=False)
-    #         snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
-    #                                    data=rdf, linewidth=.7)
-    #         snsplot = removeLegendTitle(snsplot)
-    #         plt.ylabel('RFU')
-    #         plt.xlabel('Time (Min)')
-    #         self.saveimage(plt, 'Individuals_' + str(group))
+    def RFUIndividualGraphsByGroup(self, df, idf):
+        for group in range(1, int(df['group'].max())+1):
+            rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
+            for idx, row in enumerate(df[df['group'] == group].iterrows()):
+                tdf = pd.DataFrame(dict(time=self.time[:50], rfus=row[1]['RFUs'][:50], triplicate=row[1]['triplicate'],
+                                        index=row[0], label=row[1]['label']))
+                rdf = pd.concat([rdf, tdf], sort=False)
 
-    # def RFUIndividualGraphsByGroup(self, df, group):
-    #     plt.figure(0)
-    #     rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
-    #     # for idx, row in enumerate(df.iterrows()):
-    #     #     tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
-    #     #                             index=row[0], label=row[1]['label']))
-    #     #     rdf = pd.concat([rdf, tdf], sort=False)
-    #     # snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
-    #     #                            data=rdf, linewidth=.7)
-    #     print(df.iloc[0])
-    #     snsplot = seaborn.lineplot(x=[[self.time] for x in df.shape[0]], y='RFUs', data=df, linewidth=.7)
-    #     snsplot = removeLegendTitle(snsplot)
-    #     plt.ylabel('RFU')
-    #     plt.xlabel('Time (Min)')
-    #     self.saveimage(plt, 'Individuals_' + str(group))
+            for i in range(4):
+                iidf = idf[(idf['group'] == group)]
+                plt.scatter(x="Inflection "+str(i), y="RFU of Inflection "+str(i), label="Inflection " + str(i),
+                            data=iidf, s=10, edgecolor='black', linewidth=.2)
+
+            snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
+                                       data=rdf, linewidth=.7)
+            snsplot = removeLegendTitle(snsplot)
+            plt.ylabel('RFU')
+            plt.xlabel('Time (Min)')
+            self.saveimage(plt, 'Individuals_' + str(group))
+
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):

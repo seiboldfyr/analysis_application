@@ -26,7 +26,8 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
         rightside = int(np.min([widths[3][0], len(derivative)-1]))
         if rightside - leftside < 2:
             break
-        polycoefs = fit_poly_equation(timediff[leftside:rightside],
+
+        polycoefs = fit_poly_equation(self.time[leftside:rightside],
                                       derivative[leftside:rightside])
 
         allpeaks[str(inflectionnumber)] = dict(inflection=-polycoefs[1] / (2 * polycoefs[0]),
