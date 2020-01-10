@@ -98,6 +98,8 @@ class Processor(AbstractProcessor):
                                            derivative=derivatives[dIndex],
                                            allpeaks=inflectiondict)
             inflectiondict = dict(sorted(inflectiondict.items()))
+
+            #TODO: are the RFUs getting sorted?
             if len(inflectiondict.keys()) < 4:
                 well['is_valid'] = False
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
@@ -108,21 +110,19 @@ class Processor(AbstractProcessor):
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
 
-            #TODO: the percent differences for the control individuals aren't getting calculated, just zeroed out
-
             if self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
             well['percentdiffs'] = percentdiffs
 
-            if well['is_valid']:
-                if len(inflectiondict.keys()) == 4:
-                    self.statistics = self.statistics.append([{'group': well.get_group(),
-                                                               'sample': well.get_sample(),
-                                                               '1': inflectiondict.get('1')['inflection'],
-                                                               '2': inflectiondict.get('2')['inflection'],
-                                                               '3': inflectiondict.get('3')['inflection'],
-                                                               '4': inflectiondict.get('4')['inflection']}],
-                                                             ignore_index=True)
+            #TODO: check validity? These should be able to be corrected on another run
+            if len(inflectiondict.keys()) == 4:
+                self.statistics = self.statistics.append([{'group': well.get_group(),
+                                                           'sample': well.get_sample(),
+                                                           '1': inflectiondict.get('1')['inflection'],
+                                                           '2': inflectiondict.get('2')['inflection'],
+                                                           '3': inflectiondict.get('3')['inflection'],
+                                                           '4': inflectiondict.get('4')['inflection']}],
+                                                         ignore_index=True)
 
         self.measurement_manager.update(well)
         return Response(True, '')
