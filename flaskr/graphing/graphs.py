@@ -139,13 +139,13 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
-                tdf = pd.DataFrame(dict(time=self.time[:50], rfus=row[1]['RFUs'][:50], triplicate=row[1]['triplicate'],
+                tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
                                         index=row[0], label=row[1]['label']))
                 rdf = pd.concat([rdf, tdf], sort=False)
 
             for i in range(4):
                 iidf = idf[(idf['group'] == group)]
-                plt.scatter(x="Inflection "+str(i), y="RFU of Inflection "+str(i), label="Inflection " + str(i),
+                plt.scatter(x="Inflection "+str(i), y="RFU of Inflection "+str(i), label="Inflection " + str(i+1),
                             data=iidf, s=10, edgecolor='black', linewidth=.2)
 
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
@@ -222,7 +222,7 @@ class Grapher:
 
                 curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
                 plt.ylabel('Time (Min)')
-                plt.xlabel('Concentration (pM)')
+                plt.xlabel('Log of Concentration (pM)')
             self.saveimage(plt, 'CurveFit_' + str(group))
 
     def saveimage(self, plt, title):
