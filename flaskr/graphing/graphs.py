@@ -183,18 +183,20 @@ class Grapher:
             plt.ylabel('Percent Difference from Control')
             self.saveimage(plt, 'PercentDiff_' + str(group))
 
-    def CurveFitByGroup(self, df):
+    def CurveFitByGroup(self, df):              # TODO: Figure out vertical shift in curve-fitting, see 20200110b_AA output
         for group in range(1, int(df['group'].max()) + 1):
             cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
             cdf.insert(0, 'pMconcentration', [get_concentrations(reg_conc(item).group(0))
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]
             for inf in range(4):
+                tdf = cdf[cdf['variable'] == "Inflection " + str(inf)]
+                if len(tdf) == 0:
+                    continue
                 curveplt = seaborn.swarmplot(x="pMconcentration", y="value",
-                                             data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
+                                             data=tdf, marker='o', s=2.6,
                                              edgecolor='black', palette=["black"], linewidth=.6)
-
-                [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
+                [rvalue, linear_regressor] = getRegression(tdf)
 
                 #get rvalue not including the .1pM concentration
                 [lessrvalue, _] = getRegression(cdf[cdf['pMconcentration'] >= 1])
