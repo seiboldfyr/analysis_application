@@ -218,7 +218,7 @@ class Grapher:
         sio = io.BytesIO()
         plt.savefig(sio, format='png', transparent=True)
         plt.close()
-        self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
+        self.graph_urls[self.name +'_' + title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
     def setGraphSettings(self):
         params = {'legend.fontsize': 5,
