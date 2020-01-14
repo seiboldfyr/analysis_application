@@ -1,4 +1,5 @@
 import re
+from flask import flash
 
 from flaskr.database.dataset_models.repository import Repository
 
@@ -35,6 +36,7 @@ def get_concentrations(string):
     else:
         return 0
 
+
 def add_custom_group_label(self, well):
     originallabel = well.get_label().split('_')
     well['label'] = '_'.join([item for item in originallabel[:2]])
@@ -42,3 +44,38 @@ def add_custom_group_label(self, well):
         well['label'] = well.get_label() + '_' + self.groupings[str(well.get_group())]['Group Label']
     well['label'] += '_' + str(well.get_group())
     return well
+
+
+def edit_RFUs(self, originwell, cut):
+    originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
+    self.measurement_manager.update(originwell)
+
+
+def swap_wells(self, originwell):
+    for destwell in get_collection(self):
+        if destwell.get_excelheader() == self.swaps[originwell.get_excelheader()]:
+            originwell.edit_labels(dict(group=destwell.get_group(),
+                                        sample=destwell.get_sample(),
+                                        triplicate=destwell.get_triplicate(),
+                                        label=destwell.get_label(),
+                                        RFUs=destwell.get_rfus()))
+            self.measurement_manager.update(originwell)
+
+
+def validate_errors(self):
+    for well in self.request.form['errorwells'].split(', '):
+        if len(well) == 3:
+            add_errorwell(self, well)
+        else:
+            for item in well.split(','):
+                if not item:
+                    continue
+                elif len(item) == 3:
+                    add_errorwell(self, item)
+                else:
+                    flash('Formatting error for  %s' % str(item), 'error')
+    return self.errorwells
+
+
+def add_errorwell(self, iter):
+    self.errorwells.append(re.match(r'([A-Z])+\d\d', str(iter)).group(0))
