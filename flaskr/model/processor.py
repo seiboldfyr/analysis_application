@@ -1,5 +1,7 @@
 from flask import flash
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 import time
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
@@ -7,7 +9,7 @@ from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, add_custom_group_label
-from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference
+from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_expected_values
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -107,6 +109,7 @@ class Processor(AbstractProcessor):
 
             well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
             well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
+            well['plateau'] = self.getPlateau(well, derivatives, inflectiondict)
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
 
@@ -126,6 +129,38 @@ class Processor(AbstractProcessor):
 
         self.measurement_manager.update(well)
         return Response(True, '')
+
+    def getPlateau(self, well, derivative, inflectiondict):
+        # plateautime = inflectiondict['inflection']
+        # i = int(inflectiondict['location'])
+        startPlateau = int(inflectiondict['1']['location'])
+        endPlateau = int(inflectiondict['2']['location'])
+        i = startPlateau
+        print(startPlateau, endPlateau)
+        # flattest = min(well.get_rfus()[startPlateau: endPlateau])
+        plateau = derivative[1][startPlateau: endPlateau]
+        # print(derivative[1])
+        flattest = list(np.where(derivative[1] == min(plateau)))
+        print(inflectiondict['1']['inflection'], inflectiondict['2']['inflection'], flattest)
+        #Want 18
+        #TODO: try if derivative <= 0 when WSZ <= 5
+        #TODO: try if derivative[2][i] < 0 and derivative[2][i+1] >=0
+        # and derivative[1][i] < derivative[1][i+1]
+        #Minimize derivative[1] between inflection 2 and 3
+        while derivative[1][i] > 0 and i < len(self.time)-2:
+            print(i, self.time[i], well.get_rfus()[i], derivative[1][i], derivative[2][i])
+            plateautime = self.time[i]
+            i += 1
+        # print(inflectiondict['inflection'], plateautime, well.get_rfus()[i])
+        # plt.plot([x/50 for x in well.get_rfus()])
+        plt.plot(self.time, well.get_rfus())
+        plt.axvline(x=inflectiondict['1']['inflection'])
+        plt.axvline(x=inflectiondict['2']['inflection'])
+        # plt.plot(derivative[1][:100])
+        # plt.plot(derivative[2][:100])
+        plt.savefig('derivative.png')
+        sys.exit()
+        return [plateautime, well.get_rfus()[i]]
 
     def getStatistics(self):
         if not self.statistics.empty:

@@ -26,6 +26,7 @@ class Measurement(AbstractModel):
         self['inflections'] = []
         self['inflectionRFUs'] = []
         self['percentdiffs'] = []
+        self['plateau'] = []
 
     def edit_labels(self, labels: dict = None):
         for key in labels.keys():
@@ -73,6 +74,9 @@ class Measurement(AbstractModel):
 
     def get_inflectionrfus(self) -> list:
         return self['inflectionRFUs']
+
+    def get_first_plateau(self) -> list:
+        return self['plateau']
 
     def get_percentdiffs(self) -> list:
         return self['percentdiffs']

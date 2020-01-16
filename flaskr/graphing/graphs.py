@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import time
 import re
+from plotnine import *
 import matplotlib
 matplotlib.use('Agg')
 
@@ -51,6 +52,9 @@ class Grapher:
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
         self.name = dataset.get_name()
+
+        df = df.drop(columns=['_id', 'dataset_id'])
+
         #TODO: drop dataset id columns with df = df.drop(columns=[])
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
@@ -59,6 +63,10 @@ class Grapher:
             df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
             df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
+        df['PlateauX'] = [x[0] for x in df['plateau']]
+        df['PlateauY'] = [x[1] for x in df['plateau']]
+
+        df = df.drop(columns=['concentration', 'triplicate_id', 'cycle'])
 
         testdf = df.copy()
         df = df.drop(columns=['RFU of Inflection ' + str(inf) for inf in range(4)])
@@ -74,27 +82,26 @@ class Grapher:
         print('1', time.time() - startgraphing)
         startgraphing = time.time()
 
-        self.RFUGraphs(rfudf)
-        print('2', time.time() - startgraphing)
-        startgraphing = time.time()
-
-        self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-        print('3', time.time() - startgraphing)
-        startgraphing = time.time()
-
-        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-        print('4', time.time() - startgraphing)
-        startgraphing = time.time()
-
-        self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-        print('5', time.time() - startgraphing)
-        startgraphing = time.time()
-
-        self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-        print('6', time.time() - startgraphing)
+        # self.RFUGraphs(rfudf)
+        # print('2', time.time() - startgraphing)
+        # startgraphing = time.time()
+        #
+        # self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
+        # print('3', time.time() - startgraphing)
+        # startgraphing = time.time()
+        #
+        # self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
+        # print('4', time.time() - startgraphing)
+        # startgraphing = time.time()
+        #
+        # self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+        # print('5', time.time() - startgraphing)
+        # startgraphing = time.time()
+        #
+        # self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
+        # print('6', time.time() - startgraphing)
 
         return [self.graph_urls, self.name]
-      
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
@@ -139,9 +146,10 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
-                tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
+                tdf = pd.DataFrame(dict(time=self.time[:100], rfus=row[1]['RFUs'][:100], triplicate=row[1]['triplicate'],
                                         index=row[0], label=row[1]['label']))
                 rdf = pd.concat([rdf, tdf], sort=False)
+            plt.scatter(x='PlateauX', y='PlateauY', data=idf, s=10, edgecolor='black', linewidth=.3)
 
             for i in range(4):
                 iidf = idf[(idf['group'] == group)]
@@ -151,6 +159,7 @@ class Grapher:
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
                                        data=rdf, linewidth=.7)
             snsplot = removeLegendTitle(snsplot)
+            plt.ylim(3000, 7000)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Individuals_' + str(group))
@@ -178,6 +187,7 @@ class Grapher:
             plt.figure(2)
             allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
                                           palette=self.colors, linewidth=.7, legend="full", label=int(group))
+
             allrfuplot = removeLegendTitle(allrfuplot)
             allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
@@ -220,10 +230,15 @@ class Grapher:
                         ' Rvalue: ' + str(round(rvalue, 5)) + \
                         ' (' + str(round(lessrvalue, 5)) + ')'
 
-                curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
+                curveplt = plt.plot([-1, 0, 1, 2, 3, 4, 5], Y, label=label)
                 plt.ylabel('Time (Min)')
                 plt.xlabel('Log of Concentration (pM)')
             self.saveimage(plt, 'CurveFit_' + str(group))
+
+    def ctThresholds(self, df):
+        for group in range(1, int(df['group'].max()) + 1):
+            plt.plot()
+            self.saveimage(plt, 'ct_' + str(group))
 
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)
