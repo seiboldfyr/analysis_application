@@ -6,7 +6,6 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import time
 import re
-from plotnine import *
 import matplotlib
 matplotlib.use('Agg')
 
@@ -55,7 +54,6 @@ class Grapher:
 
         df = df.drop(columns=['_id', 'dataset_id'])
 
-        #TODO: drop dataset id columns with df = df.drop(columns=[])
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
@@ -63,10 +61,13 @@ class Grapher:
             df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
             df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
             df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
-        df['PlateauX'] = [x[0] for x in df['plateau']]
-        df['PlateauY'] = [x[1] for x in df['plateau']]
 
-        df = df.drop(columns=['concentration', 'triplicate_id', 'cycle'])
+        df['DeltaCt'] = [x[0] for x in df['deltaCt']]
+        df['CtThreshold'] = [x[1] for x in df['deltaCt']]
+        df['CtRFU'] = [x[2] for x in df['deltaCt']]
+
+
+        df = df.drop(columns=['triplicate_id', 'cycle'])
 
         testdf = df.copy()
         df = df.drop(columns=['RFU of Inflection ' + str(inf) for inf in range(4)])
@@ -82,24 +83,28 @@ class Grapher:
         print('1', time.time() - startgraphing)
         startgraphing = time.time()
 
-        # self.RFUGraphs(rfudf)
-        # print('2', time.time() - startgraphing)
-        # startgraphing = time.time()
-        #
-        # self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-        # print('3', time.time() - startgraphing)
-        # startgraphing = time.time()
-        #
-        # self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-        # print('4', time.time() - startgraphing)
-        # startgraphing = time.time()
-        #
-        # self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-        # print('5', time.time() - startgraphing)
-        # startgraphing = time.time()
-        #
-        # self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-        # print('6', time.time() - startgraphing)
+        self.RFUGraphs(rfudf)
+        print('2', time.time() - startgraphing)
+        startgraphing = time.time()
+
+        self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
+        print('3', time.time() - startgraphing)
+        startgraphing = time.time()
+
+        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
+        print('4', time.time() - startgraphing)
+        startgraphing = time.time()
+
+        self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+        print('5', time.time() - startgraphing)
+        startgraphing = time.time()
+
+        self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
+        print('6', time.time() - startgraphing)
+        startgraphing = time.time()
+
+        self.CtThresholds(testdf)
+        print('7', time.time() - startgraphing)
 
         return [self.graph_urls, self.name]
 
@@ -146,29 +151,25 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             rdf = pd.DataFrame(columns=['time', 'rfus', 'triplicate', 'index'])
             for idx, row in enumerate(df[df['group'] == group].iterrows()):
-                tdf = pd.DataFrame(dict(time=self.time[:100], rfus=row[1]['RFUs'][:100], triplicate=row[1]['triplicate'],
+                tdf = pd.DataFrame(dict(time=self.time, rfus=row[1]['RFUs'], triplicate=row[1]['triplicate'],
                                         index=row[0], label=row[1]['label']))
                 rdf = pd.concat([rdf, tdf], sort=False)
-            plt.scatter(x='PlateauX', y='PlateauY', data=idf, s=10, edgecolor='black', linewidth=.3)
 
+            iidf = idf[(idf['group'] == group)]
             for i in range(4):
-                iidf = idf[(idf['group'] == group)]
                 plt.scatter(x="Inflection "+str(i), y="RFU of Inflection "+str(i), label="Inflection " + str(i+1),
                             data=iidf, s=10, edgecolor='black', linewidth=.2)
 
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
                                        data=rdf, linewidth=.7)
             snsplot = removeLegendTitle(snsplot)
-            plt.ylim(3000, 7000)
             plt.ylabel('RFU')
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Individuals_' + str(group))
 
-
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
             groupdf = df[df['group'] == group]
-            # self.RFUIndividualGraphsByGroup(df=groupdf, group=group)
             adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
             for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
@@ -235,10 +236,21 @@ class Grapher:
                 plt.xlabel('Log of Concentration (pM)')
             self.saveimage(plt, 'CurveFit_' + str(group))
 
-    def ctThresholds(self, df):
-        for group in range(1, int(df['group'].max()) + 1):
-            plt.plot()
-            self.saveimage(plt, 'ct_' + str(group))
+    def CtThresholds(self, df):
+        for group in range(1, int(df['group'].max())+1):
+            idf = df[(df['group'] == group)]
+            plt.scatter(x='concentration', y='DeltaCt', label='concentration',
+                        data=idf, s=10, edgecolor='black', linewidth=.2)
+            plt.ylabel('Delta Ct (difference in minutes)')
+            plt.xlabel('triplicate')
+            self.saveimage(plt, 'DeltaCt_' + str(group))
+
+            ctRFU = idf[idf['CtRFU'] > 0]['CtRFU']
+            plt.scatter(x='CtThreshold', y='concentration',  label='concentration',
+                        data=idf, s=10, edgecolor='black', linewidth=.2)
+            plt.xlabel('Ct value (Minutes until ' + str(round(ctRFU.iloc[0], 2)) + ' RFUs are surpassed)')
+            plt.ylabel('Delta Ct (difference in minutes)')
+            self.saveimage(plt, 'Ct_' + str(group))
 
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)

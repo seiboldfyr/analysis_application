@@ -1,15 +1,15 @@
-from flask import flash
+from flask import flash, current_app
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import time
+import sys
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, add_custom_group_label
-from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_expected_values
+from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -25,6 +25,9 @@ class Processor(AbstractProcessor):
         self.statistics = pd.DataFrame(columns=['group', 'sample', '1', '2', '3', '4'])
         self.time = []
         self.control = None
+        self.controllist = []
+        self.ctlist = []
+        self.ctthreshold = {'Ct RFU': [], 'Ct Cycle': []}
 
     def execute(self) -> Response:
         timestart = time.time()
@@ -91,7 +94,8 @@ class Processor(AbstractProcessor):
             well['is_valid'] = False
 
         else:
-            percentdiffs = [0, 0, 0, 0]
+            percentdiffs = [0 for x in range(4)]
+            deltact = [0 for x in range(3)]
             inflectiondict = {}
             derivatives = get_derivatives(well)
             for dIndex in derivatives.keys():
@@ -106,15 +110,37 @@ class Processor(AbstractProcessor):
                 well['is_valid'] = False
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
                                                                       well.get_excelheader()), 'error')
-
             well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
             well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
-            well['plateau'] = self.getPlateau(well, derivatives, inflectiondict)
+
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
+                self.controllist = []
+                self.ctthreshold = {'Ct RFU': [], 'Ct Cycle': []}
 
-            if self.control.get_sample() != well.get_sample():
+            #for all samples that match the control sample, collect controls
+            if self.control.get_sample() == well.get_sample():
+                self.controllist.append([x for x in well.get_inflections()])
+                self.ctlist.append(self.getCtThreshold(well, derivatives, inflectiondict))
+
+                #average the control inflections
+                #TODO: what if the first control has only 2 inflections and the others have 4? or vice versa?
+                for idx, x in enumerate(self.control.get_inflections()):
+                    i = int(x[0])
+                    self.control['inflections'][idx] = (str(i), np.mean([controlinflection[idx][1]
+                                                                         for controlinflection in self.controllist]))
+
+                #average the ct threshold
+                self.ctthreshold['Ct Cycle'] = np.mean([x['Ct Cycle'] for x in self.ctlist])
+                self.ctthreshold['Ct RFU'] = np.mean([x['Ct RFU'] for x in self.ctlist])
+
+            # get percent differences and delta ct values
+            elif self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
+                deltact = self.getDeltaCt(well)
+
+            # calculate delta ct and percent diffs
+            well['deltaCt'] = deltact
             well['percentdiffs'] = percentdiffs
 
             #TODO: check validity? These should be able to be corrected on another run
@@ -130,37 +156,37 @@ class Processor(AbstractProcessor):
         self.measurement_manager.update(well)
         return Response(True, '')
 
-    def getPlateau(self, well, derivative, inflectiondict):
-        # plateautime = inflectiondict['inflection']
-        # i = int(inflectiondict['location'])
-        startPlateau = int(inflectiondict['1']['location'])
-        endPlateau = int(inflectiondict['2']['location'])
-        i = startPlateau
-        print(startPlateau, endPlateau)
-        # flattest = min(well.get_rfus()[startPlateau: endPlateau])
-        plateau = derivative[1][startPlateau: endPlateau]
-        # print(derivative[1])
-        flattest = list(np.where(derivative[1] == min(plateau)))
-        print(inflectiondict['1']['inflection'], inflectiondict['2']['inflection'], flattest)
-        #Want 18
-        #TODO: try if derivative <= 0 when WSZ <= 5
-        #TODO: try if derivative[2][i] < 0 and derivative[2][i+1] >=0
-        # and derivative[1][i] < derivative[1][i+1]
-        #Minimize derivative[1] between inflection 2 and 3
-        while derivative[1][i] > 0 and i < len(self.time)-2:
-            print(i, self.time[i], well.get_rfus()[i], derivative[1][i], derivative[2][i])
-            plateautime = self.time[i]
-            i += 1
-        # print(inflectiondict['inflection'], plateautime, well.get_rfus()[i])
-        # plt.plot([x/50 for x in well.get_rfus()])
-        plt.plot(self.time, well.get_rfus())
-        plt.axvline(x=inflectiondict['1']['inflection'])
-        plt.axvline(x=inflectiondict['2']['inflection'])
-        # plt.plot(derivative[1][:100])
-        # plt.plot(derivative[2][:100])
-        plt.savefig('derivative.png')
-        sys.exit()
-        return [plateautime, well.get_rfus()[i]]
+    def getCtThreshold(self, well, derivative, inflectiondict):
+        startplateau = int(inflectiondict['1']['location'])
+        endplateau = int(inflectiondict['2']['location'])
+        plateauslope = derivative[1][startplateau: endplateau]
+        plateaumin = (np.where(plateauslope == min(plateauslope))[0])
+        if len(plateaumin) > 1:
+            plateaumin = plateaumin[0]
+        plateaucenter = int(plateaumin) + startplateau
+        return {'Ct RFU': well.get_rfus()[plateaucenter],
+                'Ct Cycle': self.time[plateaucenter]}
+
+    def getDeltaCt(self, well):
+        for idx, wellRFU in enumerate(well.get_rfus()):
+            if wellRFU > self.ctthreshold['Ct RFU']:
+                lineareqn = get_linear_approx(x1=self.time[idx-1],
+                                              x2=self.time[idx],
+                                              y1=well.get_rfus()[idx-1],
+                                              y2=wellRFU)
+                ctthreshold = self.getxValueFromLinearApprox(lineareqn)
+
+                deltact = self.ctthreshold['Ct Cycle'] - ctthreshold
+                return [deltact, ctthreshold, self.ctthreshold['Ct RFU']]
+
+        flash('Error finding Ct Threshold', 'error')
+        current_app.logger.error('Ct Threshold could not be calculated for Well %s ' % well.get_label(), 'error')
+        return [0, 0]
+
+    def getxValueFromLinearApprox(self, equation):
+        slope = equation[0]
+        yintercept = equation[1]
+        return (self.ctthreshold['Ct RFU'] - yintercept) / slope
 
     def getStatistics(self):
         if not self.statistics.empty:

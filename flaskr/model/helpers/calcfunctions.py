@@ -33,6 +33,12 @@ def get_expected_values(self, well, x, borders) -> []:
     return prediction
 
 
+def get_linear_approx(x1, x2, y1, y2):
+    slope = (y2 - y1) / (x2 - x1)
+    yintercept = y2 - slope * x2
+    return [slope, yintercept]
+
+
 def get_percent_difference(self, inflections):
     relativeDifference = [abs(a[1] - b[1]) / ((a[1] + b[1]) / 2)
                           for a, b in zip(inflections, self.control.get_inflections())
