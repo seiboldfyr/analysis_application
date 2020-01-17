@@ -83,7 +83,6 @@ def process(id):
 def graphs(id):
     graphs, name = Grapher(dataset_id=id).execute()
 
-    # TODO: include manually changed header here
     if len(graphs) == 0:
         flash('Something went wrong with graphing', 'error')
         return render_template('processinfo.html', id=id)

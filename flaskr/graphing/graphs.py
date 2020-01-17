@@ -57,15 +57,14 @@ class Grapher:
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
-        for inf in range(4):
-            df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
-            df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
-            df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
 
         df['DeltaCt'] = [x[0] for x in df['deltaCt']]
         df['CtThreshold'] = [x[1] for x in df['deltaCt']]
         df['CtRFU'] = [x[2] for x in df['deltaCt']]
-
+        for inf in range(4):
+            df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
+            df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
+            df['Percent Diff ' + str(inf)] = [x[inf] if len(x) == 4 else 0 for x in df['percentdiffs']]
 
         df = df.drop(columns=['triplicate_id', 'cycle'])
 
@@ -188,7 +187,6 @@ class Grapher:
             plt.figure(2)
             allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
                                           palette=self.colors, linewidth=.7, legend="full", label=int(group))
-
             allrfuplot = removeLegendTitle(allrfuplot)
             allrfuplot.legend(labels=get_unique_group(df['label']))
         plt.ylabel('RFU')
@@ -231,7 +229,7 @@ class Grapher:
                         ' Rvalue: ' + str(round(rvalue, 5)) + \
                         ' (' + str(round(lessrvalue, 5)) + ')'
 
-                curveplt = plt.plot([-1, 0, 1, 2, 3, 4, 5], Y, label=label)
+                curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
                 plt.ylabel('Time (Min)')
                 plt.xlabel('Log of Concentration (pM)')
             self.saveimage(plt, 'CurveFit_' + str(group))

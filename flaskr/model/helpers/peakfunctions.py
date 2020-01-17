@@ -4,19 +4,26 @@ from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_v
 
 def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
     timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
-    #TODO why was this necessary??
-    # derivative = derivative[5:]
     for i in range(2):
-        if derivativenumber == 2 and i == 0:
-            timediff = [(timediff[t] + timediff[t + 1]) / 2 for t in range(len(timediff) - 1)]
-            inflectionnumber = 2
-        elif derivativenumber == 1 and i == 0:
-            inflectionnumber = 3
-        elif derivativenumber == 1 and i == 1:
-            inflectionnumber = 1
+        if derivativenumber == 1:
+            if i == 0:
+                #first derivative largest peak
+                #second phase
+                inflectionnumber = 3
+            else:
+                #first derivative second largest derivative
+                #first phase
+                inflectionnumber = 1
         else:
-            inflectionnumber = 4
-            #TODO: correct how the ordering occurs on these inflection points
+            if i == 0:
+                #second derivative largest peak
+                #start of second phase
+                timediff = [(timediff[t] + timediff[t + 1]) / 2 for t in range(len(timediff) - 1)]
+                inflectionnumber = 2
+            else:
+                # second derivative largest trough
+                # end of second phase
+                inflectionnumber = 4
 
         maxpeak = list(np.where(derivative == max(derivative)))[0]
         widths = peak_widths(derivative, maxpeak)

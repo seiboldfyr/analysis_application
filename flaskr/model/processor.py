@@ -57,7 +57,6 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                #TODO: undo
                 self.time = [n * well.get_cycle() / 60 for n in range(cut, len(well.get_rfus()))]
 
             well = add_custom_group_label(self, well)
@@ -105,7 +104,6 @@ class Processor(AbstractProcessor):
                                            allpeaks=inflectiondict)
             inflectiondict = dict(sorted(inflectiondict.items()))
 
-            #TODO: are the RFUs getting sorted?
             if len(inflectiondict.keys()) < 4:
                 well['is_valid'] = False
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
