@@ -1,5 +1,6 @@
 import datetime
 import re
+import os
 from bson import ObjectId
 
 from flask import flash, current_app
@@ -88,8 +89,7 @@ class ImportProcessor(AbstractImporter):
             self.measurement_manager.save()
 
         infofile.delete()
-        xlsx_file.delete()
-
+        rfufile.delete()
 
         model['measure_count'] = model.get_well_collection().get_size()
         model['version'] = float(current_app.config['VERSION'])
