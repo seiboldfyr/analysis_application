@@ -78,15 +78,16 @@ def process(id):
     return render_template('processinfo.html', id=id)
 
 
-@base_blueprint.route('/graphs/<id>/<experimental>', methods=['GET', 'POST'])
+@base_blueprint.route('/graphs/<id>/<experimental>/<presentation>', methods=['GET', 'POST'])
 @login_required
-def graphs(id, experimental=False):
+def graphs(id, presentation=False, experimental=False):
     if str(experimental) == '1':
         experimental = True
     else:
         experimental = False
 
-    graphs, name = Grapher(dataset_id=id).execute(experimental=experimental)
+    graphs, name = Grapher(dataset_id=id).execute(experimental=experimental,
+                                                  presentation=presentation)
 
     if len(graphs) == 0:
         flash('Something went wrong with graphing', 'error')
