@@ -137,9 +137,12 @@ function buildSwapHtml(swapnumber) {
 
 {% block buttons %}
 <div class="graphbuttons">
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, experimental=0) }}" id="graphbutton"><button>View Regular Graphs</button></a>
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, presentation=True ) }}" id="graphbuttonpres"><button>View Presentation Style Graphs</button></a>
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, experimental=1 ) }}" id="graphbuttonexp"><button>View Experimental Graphs</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='regular') }}"
+   id="graphbutton"><button>View Regular Graphs</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='presentation' ) }}"
+   id="graphbuttonpres"><button>View Presentation Style Graphs</button></a>
+<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='experimental' ) }}"
+   id="graphbuttonexp"><button>View Experimental Graphs</button></a>
 
 </div>
 

@@ -23,10 +23,9 @@ class Writer:
         df = self.build_dataframe(df)
 
         #write individual variables of interest
-        print(df.columns)
-        print(df.columns[16])
-        variablesofinterest = 12
-        variablecolumns = [15 + n for n in range(variablesofinterest)]
+        startindex = int(np.where(df.columns == 'Inflection 1')[0])
+        variablesofinterest = 4 * 3
+        variablecolumns = [startindex + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 5)
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
@@ -74,10 +73,13 @@ class Writer:
                 self.write_to_sheet('Percent Differences', pdf, columns, spacedifferencematrices)
             self.rowshift += gdf.shape[0] + 4
 
-        # write individual variables of interest
-        print(df.columns)
-        variablecolumns = np.where(df.columns == ['label', 'group', 'sample', 'triplicate', 'deltaCt'])
-        print(df.columns[variablecolumns])
+        # write individual ct values
+        self.rowshift = 0
+        df.insert(0, 'Ct threshold', [x[1] for x in df['deltaCt']])
+        df.insert(0, 'delta Ct', [x[0] for x in df['deltaCt']])
+        variablecolumns = []
+        for item in ['label', 'group', 'sample', 'Ct threshold', 'delta Ct']:
+            variablecolumns.append(int(np.where(df.columns == item)[0]))
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Ct Thresholds', df[(df['group'] == group)], variablecolumns)
             self.rowshift += df[(df['group'] == group)].shape[0] + 4
@@ -109,7 +111,10 @@ class Writer:
             lengths.append(len(column))
             maxlength = max(lengths)
             worksheet.set_column(startcolumn+idx, startcolumn+idx+1, maxlength)
-        if sheetname != 'Inflections':
+        if sheetname == 'Ct Thresholds':
+            worksheet.set_column(0, 0, 10)
+            worksheet.set_column(1, 1, 30)
+        elif sheetname != 'Inflections':
             worksheet.set_column(0, 0, 30)
         else:
             worksheet.set_column(0, 0, 10)

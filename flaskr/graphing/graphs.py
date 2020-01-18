@@ -5,7 +5,6 @@ import base64
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import time
-import re
 import matplotlib
 matplotlib.use('Agg')
 
@@ -37,7 +36,7 @@ class Grapher:
             dataset_id: str,
             customtitle: str = '',
     ):
-        self.powerpoint = False
+        self.presentation = False
         self.dataset_id = dataset_id
         self.customtitle = customtitle
         self.time = []
@@ -46,9 +45,9 @@ class Grapher:
         self.colors = ["gray",  "dodgerblue", "red", "lightgreen", "magenta", "gold", "cyan", "darkgreen"]
         # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
-    def execute(self, experimental=False,
-                powerpoint=False):
-        self.powerpoint = powerpoint
+    def execute(self, type):
+        if type == 'presentation':
+            self.presentation = True
         self.setGraphSettings()
         startpd = time.time()
         dataset_repository = Repository()
@@ -82,9 +81,11 @@ class Grapher:
         print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
-        if experimental:
+        if type == 'experimental':
             self.CtThresholds(testdf)
             print('7', time.time() - startgraphing)
+            startgraphing = time.time()
+
         else:
 
             self.RFUIndividualGraphsByGroup(rfudf, testdf)
@@ -109,7 +110,6 @@ class Grapher:
 
             self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
             print('6', time.time() - startgraphing)
-            startgraphing = time.time()
 
         return [self.graph_urls, self.name]
 
@@ -287,7 +287,7 @@ class Grapher:
                   'legend.labelspacing': .4,
                   'font.size': 8}
 
-        if self.powerpoint == True:
+        if self.presentation == True:
             params.update({
                   'scatter.edgecolors': 'white',
                   'axes.edgecolor': 'white',
@@ -300,7 +300,7 @@ class Grapher:
                   'legend.framealpha': .1})
         else:
             params.update({
-                'scatter.edgecolors': 'white'})
+                'scatter.edgecolors': 'black'})
 
         plt.rcParams.update(params)
         seaborn.set_palette(self.colors)
