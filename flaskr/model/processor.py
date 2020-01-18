@@ -8,11 +8,9 @@ from flaskr.database.measurement_models.manager import Manager as MeasurementMan
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
-from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, add_custom_group_label
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, \
     add_custom_group_label, edit_RFUs, swap_wells, validate_errors
-from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
