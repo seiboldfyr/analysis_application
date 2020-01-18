@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from flaskr.framework.model.request.response import Response
 
 from flaskr.database.dataset_models.repository import Repository
@@ -21,30 +22,34 @@ class Writer:
         df = dataset.get_pd_well_collection()
         df = self.build_dataframe(df)
 
-        variablesofinterest = 12
-        variablecolumns = [15 + n for n in range(variablesofinterest)]
+        # write individual variables of interest
+        startindex = int(np.where(df.columns.str.startswith('Inflection '))[0][0])
+        variablesofinterest = 4 * 3
+        variablecolumns = [startindex + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 5)
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
             self.rowshift += df[(df['group'] == group)].shape[0] + 4
 
+        # write averages of variables of interest
         adf = self.build_averages(df)
         variablecolumns.pop(0)
+        startindex = variablesofinterest + list(np.where(df.columns.str.startswith('Inflection ')))[0][0]
         for group in range(1, int(adf['group'].max()) + 1):
             columns = [n for n in variablecolumns]
             gdf = adf[(adf['group'] == group)]
             #TODO: control = df['label'].str.endswith('_0')
             control = gdf[gdf['triplicate'] == gdf['triplicate'].min()]
             for inf in range(4):
-                columns.append(variablesofinterest+15+inf)
+                columns.append(startindex+inf)
                 inf_label = 'Inflection ' + str(inf + 1)
-                # Error for 20191107a_AA seems to originate in the insert of the following column
-                gdf.insert(variablesofinterest+15+inf, 'Difference from control ' + str(inf + 1), adf[inf_label] - float(control[inf_label]))
+                gdf.insert(int(startindex+inf), 'Difference from control ' + str(inf + 1), gdf[inf_label] - float(control[inf_label]))
             gdf = gdf.iloc[:, columns]
 
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=(group-1)*(gdf.shape[0]+3))
             self.excel_formatting('Averages', gdf, 0)
 
+        # write inflection and percent differences in matrices
         self.rowshift = 0
         for group in range(1, int(adf['group'].max()) + 1):
             gdf = adf[(adf['group'] == group)]
@@ -67,6 +72,18 @@ class Writer:
                 self.write_to_sheet('Inf Differences', gdf, columns, spacedifferencematrices)
                 self.write_to_sheet('Percent Differences', pdf, columns, spacedifferencematrices)
             self.rowshift += gdf.shape[0] + 4
+
+        # write individual ct values
+        self.rowshift = 0
+        df.insert(0, 'Ct threshold', [x[1] for x in df['deltaCt']])
+        df.insert(0, 'delta Ct', [x[0] for x in df['deltaCt']])
+        variablecolumns = []
+        for item in ['label', 'group', 'sample', 'Ct threshold', 'delta Ct']:
+            variablecolumns.append(int(np.where(df.columns == item)[0]))
+        for group in range(1, int(df['group'].max()) + 1):
+            self.write_to_sheet('Ct Thresholds', df[(df['group'] == group)], variablecolumns)
+            self.rowshift += df[(df['group'] == group)].shape[0] + 4
+
         return Response(True, '')
 
     def build_dataframe(self, df):
@@ -94,7 +111,10 @@ class Writer:
             lengths.append(len(column))
             maxlength = max(lengths)
             worksheet.set_column(startcolumn+idx, startcolumn+idx+1, maxlength)
-        if sheetname != 'Inflections':
+        if sheetname == 'Ct Thresholds':
+            worksheet.set_column(0, 0, 10)
+            worksheet.set_column(1, 1, 30)
+        elif sheetname != 'Inflections':
             worksheet.set_column(0, 0, 30)
         else:
             worksheet.set_column(0, 0, 10)

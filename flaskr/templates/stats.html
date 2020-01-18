@@ -4,9 +4,9 @@
 
 {% block body %}
 <style>
-p.big {
-line-height: 8px;
-}
+    p.big {
+        line-height: 8px;
+    }
 </style>
 <br>
 
@@ -14,9 +14,11 @@ line-height: 8px;
 <br>
 
 <div class="formwrapper">
-  <form action = "{{ url_for('search') }}" method = "POST">
-     <p>Folder <input type = "text" name = "folder" /></p>
-     <p><input type = "submit" value = "Get Files " /></p>
+    <form action="{{ url_for('search') }}" method="POST">
+        <p>Folder <input name="folder" type="text"/></p>
+        <p><input type="submit" value="Get Files "/></p>
+    </form>
+</div>
 
 {% endblock %}
 
