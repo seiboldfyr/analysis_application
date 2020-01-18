@@ -8,6 +8,8 @@ def square(data):
 
 def fit_poly_equation(timelist, observed):
     polynomial = 2
+    if len(timelist) <= 2:
+        polynomial = 1
     coefs = np.polyfit(timelist, observed, polynomial)
     return coefs
 
@@ -21,10 +23,21 @@ def get_expected_values(self, well, x, borders) -> []:
     if isinstance(x, float):
         x = [x]
     x2 = square(x)
-    ax2 = [polynomialcoefs[0] * x for x in x2]
-    bx = [polynomialcoefs[1] * x for x in x]
-    prediction = [(a + b + polynomialcoefs[2]) for (a, b) in zip(ax2, bx)]
+    i = 0
+    if len(polynomialcoefs) > 2:
+        ax2 = [polynomialcoefs[i] * x for x in x2]
+        i += 1
+    else:
+        ax2 = [0 for x in range(len(x))]
+    bx = [polynomialcoefs[i] * x for x in x]
+    prediction = [(a + b + polynomialcoefs[i+1]) for (a, b) in zip(ax2, bx)]
     return prediction
+
+
+def get_linear_approx(x1, x2, y1, y2):
+    slope = (y2 - y1) / (x2 - x1)
+    yintercept = y2 - slope * x2
+    return [slope, yintercept]
 
 
 def get_percent_difference(self, inflections):
@@ -45,7 +58,7 @@ def smooth(a):
     # a: NumPy 1-D array containing the data to be smoothed
     # WSZ: smoothing window size needs, which must be odd number,
     # as in the original MATLAB implementation
-    windowsize = 11
+    windowsize = 5
     out0 = np.convolve(a, np.ones(windowsize, dtype=int), 'valid') / windowsize
     r = np.arange(1, windowsize - 1, 2)
     start = np.cumsum(a[:windowsize - 1])[::2] / r

@@ -78,15 +78,14 @@ def process(id):
     return render_template('processinfo.html', id=id)
 
 
-@base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
+@base_blueprint.route('/graphs/<id>/<type>', methods=['GET', 'POST'])
 @login_required
-def graphs(id):
-    graphs, name = Grapher(dataset_id=id).execute()
+def graphs(id, type):
+    graphs, name = Grapher(dataset_id=id).execute(type=type)
 
-    # TODO: include manually changed header here
     if len(graphs) == 0:
         flash('Something went wrong with graphing', 'error')
-        return render_template('processinfo.html', id=id)
+        return redirect(url_for('base.process'))
 
     if request.method == 'POST':
         memory_file = BytesIO()
