@@ -36,10 +36,12 @@ class Writer:
             #TODO: control = df['label'].str.endswith('_0')
             control = gdf[gdf['triplicate'] == gdf['triplicate'].min()]
             for inf in range(4):
-                columns.append(variablesofinterest+14+inf)
+                columns.append(variablesofinterest+15+inf)
                 inf_label = 'Inflection ' + str(inf + 1)
-                gdf.insert(variablesofinterest+14+inf, 'Difference from control ' + str(inf + 1), adf[inf_label] - float(control[inf_label]))
+                # Error for 20191107a_AA seems to originate in the insert of the following column
+                gdf.insert(variablesofinterest+15+inf, 'Difference from control ' + str(inf + 1), adf[inf_label] - float(control[inf_label]))
             gdf = gdf.iloc[:, columns]
+
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=(group-1)*(gdf.shape[0]+3))
             self.excel_formatting('Averages', gdf, 0)
 

@@ -8,8 +8,9 @@ from flaskr.database.measurement_models.manager import Manager as MeasurementMan
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
-from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, add_custom_group_label
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
+from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, \
+    add_custom_group_label, edit_RFUs, swap_wells, validate_errors
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -19,6 +20,7 @@ class Processor(AbstractProcessor):
             dataset_id: str
     ):
         self.request = request
+        self.errorwells = []
         self.dataset_id = dataset_id
         self.swaps = {}
         self.groupings = {}
@@ -41,15 +43,16 @@ class Processor(AbstractProcessor):
 
         build_swap_inputs(self)
         build_group_inputs(self)
-        self.errorwells = [well for well in self.request.form['errorwells'].split(',')]
+
+        validate_errors(self)
 
         for wellindex, well in enumerate(get_collection(self)):
 
             # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
-                self.swapWells(well)
+                swap_wells(well)
             if cut > 0:
-                self.editRFUs(well, cut)
+                edit_RFUs(well, cut)
 
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
@@ -74,23 +77,10 @@ class Processor(AbstractProcessor):
 
         return Response(True, str(round(time.time() - timestart, 2)))
 
-    def swapWells(self, originwell):
-        for destwell in get_collection(self):
-            if destwell.get_excelheader() == self.swaps[originwell.get_excelheader()]:
-                originwell.edit_labels(dict(group=destwell.get_group(),
-                                            sample=destwell.get_sample(),
-                                            triplicate=destwell.get_triplicate(),
-                                            label=destwell.get_label(),
-                                            RFUs=destwell.get_rfus()))
-                self.measurement_manager.update(originwell)
-
-    def editRFUs(self, originwell, cut):
-        originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
-        self.measurement_manager.update(originwell)
-
     def processData(self, well):
         if well['excelheader'] in self.errorwells:
             well['is_valid'] = False
+
 
         else:
             percentdiffs = [0 for x in range(4)]
