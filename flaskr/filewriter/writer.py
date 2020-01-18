@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from flaskr.framework.model.request.response import Response
 
 from flaskr.database.dataset_models.repository import Repository
@@ -21,6 +22,9 @@ class Writer:
         df = dataset.get_pd_well_collection()
         df = self.build_dataframe(df)
 
+        #write individual variables of interest
+        print(df.columns)
+        print(df.columns[16])
         variablesofinterest = 12
         variablecolumns = [15 + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 5)
@@ -28,6 +32,7 @@ class Writer:
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
             self.rowshift += df[(df['group'] == group)].shape[0] + 4
 
+        #write averages of variables of interest
         adf = self.build_averages(df)
         variablecolumns.pop(0)
         for group in range(1, int(adf['group'].max()) + 1):
@@ -43,6 +48,7 @@ class Writer:
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=(group-1)*(gdf.shape[0]+3))
             self.excel_formatting('Averages', gdf, 0)
 
+        #write inflection and percent differences in matrices
         self.rowshift = 0
         for group in range(1, int(adf['group'].max()) + 1):
             gdf = adf[(adf['group'] == group)]
@@ -65,6 +71,15 @@ class Writer:
                 self.write_to_sheet('Inf Differences', gdf, columns, spacedifferencematrices)
                 self.write_to_sheet('Percent Differences', pdf, columns, spacedifferencematrices)
             self.rowshift += gdf.shape[0] + 4
+
+        # write individual variables of interest
+        print(df.columns)
+        variablecolumns = np.where(df.columns == ['label', 'group', 'sample', 'triplicate', 'deltaCt'])
+        print(df.columns[variablecolumns])
+        for group in range(1, int(df['group'].max()) + 1):
+            self.write_to_sheet('Ct Thresholds', df[(df['group'] == group)], variablecolumns)
+            self.rowshift += df[(df['group'] == group)].shape[0] + 4
+
         return Response(True, '')
 
     def build_dataframe(self, df):
