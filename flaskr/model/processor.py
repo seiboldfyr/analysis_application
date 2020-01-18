@@ -119,14 +119,16 @@ class Processor(AbstractProcessor):
             #for all samples that match the control sample, collect controls
             if self.control.get_sample() == well.get_sample():
                 self.controllist.append([x for x in well.get_inflections()])
-                self.ctlist.append(self.getCtThreshold(well, derivatives, inflectiondict))
+                self.ctlist.append(self.getCtThreshold(well, derivatives[1], inflectiondict))
 
                 #average the control inflections
                 #TODO: what if the first control has only 2 inflections and the others have 4? or vice versa?
+
                 for idx, x in enumerate(self.control.get_inflections()):
                     i = int(x[0])
                     self.control['inflections'][idx] = (str(i), np.mean([controlinflection[idx][1]
-                                                                         for controlinflection in self.controllist]))
+                                                                         for controlinflection in self.controllist
+                                                                         if len(controlinflection) > idx]))
 
                 #average the ct threshold
                 self.ctthreshold['Ct Cycle'] = np.mean([x['Ct Cycle'] for x in self.ctlist])
@@ -155,13 +157,18 @@ class Processor(AbstractProcessor):
         return Response(True, '')
 
     def getCtThreshold(self, well, derivative, inflectiondict):
-        startplateau = int(inflectiondict['1']['location'])
-        endplateau = int(inflectiondict['2']['location'])
-        plateauslope = derivative[1][startplateau: endplateau]
+        plateauborders = [0, len(derivative)]
+        for idx, key in enumerate(inflectiondict.keys()):
+            if idx == 0:
+                plateauborders[0] = int(inflectiondict[key]['location'])
+            else:
+                plateauborders[1] = int(inflectiondict[key]['location'])
+                break
+        plateauslope = derivative[plateauborders[0]: plateauborders[1]]
         plateaumin = (np.where(plateauslope == min(plateauslope))[0])
         if len(plateaumin) > 1:
             plateaumin = plateaumin[0]
-        plateaucenter = int(plateaumin) + startplateau
+        plateaucenter = int(plateaumin) + plateauborders[0]
         return {'Ct RFU': well.get_rfus()[plateaucenter],
                 'Ct Cycle': self.time[plateaucenter]}
 
@@ -177,8 +184,6 @@ class Processor(AbstractProcessor):
                 deltact = self.ctthreshold['Ct Cycle'] - ctthreshold
                 return [deltact, ctthreshold, self.ctthreshold['Ct RFU']]
 
-        flash('Error finding Ct Threshold', 'error')
-        current_app.logger.error('Ct Threshold could not be calculated for Well %s ' % well.get_label(), 'error')
         return [0, 0]
 
     def getxValueFromLinearApprox(self, equation):

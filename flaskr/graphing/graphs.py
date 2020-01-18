@@ -44,7 +44,7 @@ class Grapher:
         self.colors = ["gray",  "dodgerblue", "red", "lightgreen", "magenta", "gold", "cyan", "darkgreen"]
         # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
-    def execute(self):
+    def execute(self, experimental=False):
         self.setGraphSettings()
         startpd = time.time()
         dataset_repository = Repository()
@@ -58,9 +58,9 @@ class Grapher:
         for i in range(len(rfudf['RFUs'][0])):
             self.time.append(df['cycle'][0]*i/60)
 
-        df['DeltaCt'] = [x[0] for x in df['deltaCt']]
-        df['CtThreshold'] = [x[1] for x in df['deltaCt']]
-        df['CtRFU'] = [x[2] for x in df['deltaCt']]
+        df['DeltaCt'] = [x[0] if len(x) > 0 else 0 for x in df['deltaCt']]
+        df['CtThreshold'] = [x[1] if len(x) > 1 else 0 for x in df['deltaCt']]
+        df['CtRFU'] = [x[2] if len(x) > 2 else 0 for x in df['deltaCt'] ]
         for inf in range(4):
             df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
             df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]
@@ -78,32 +78,34 @@ class Grapher:
         print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
-        self.RFUIndividualGraphsByGroup(rfudf, testdf)
-        print('1', time.time() - startgraphing)
-        startgraphing = time.time()
+        if experimental:
+            self.CtThresholds(testdf)
+            print('7', time.time() - startgraphing)
+        else:
 
-        self.RFUGraphs(rfudf)
-        print('2', time.time() - startgraphing)
-        startgraphing = time.time()
+            self.RFUIndividualGraphsByGroup(rfudf, testdf)
+            print('1', time.time() - startgraphing)
+            startgraphing = time.time()
 
-        self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-        print('3', time.time() - startgraphing)
-        startgraphing = time.time()
+            self.RFUGraphs(rfudf)
+            print('2', time.time() - startgraphing)
+            startgraphing = time.time()
 
-        self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-        print('4', time.time() - startgraphing)
-        startgraphing = time.time()
+            self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
+            print('3', time.time() - startgraphing)
+            startgraphing = time.time()
 
-        self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-        print('5', time.time() - startgraphing)
-        startgraphing = time.time()
+            self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
+            print('4', time.time() - startgraphing)
+            startgraphing = time.time()
 
-        self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-        print('6', time.time() - startgraphing)
-        startgraphing = time.time()
+            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+            print('5', time.time() - startgraphing)
+            startgraphing = time.time()
 
-        self.CtThresholds(testdf)
-        print('7', time.time() - startgraphing)
+            self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
+            print('6', time.time() - startgraphing)
+            startgraphing = time.time()
 
         return [self.graph_urls, self.name]
 
@@ -156,8 +158,10 @@ class Grapher:
 
             iidf = idf[(idf['group'] == group)]
             for i in range(4):
+                if not self.validateDF(iidf[iidf["RFU of Inflection " + str(i)] > 0]):
+                    continue
                 plt.scatter(x="Inflection "+str(i), y="RFU of Inflection "+str(i), label="Inflection " + str(i+1),
-                            data=iidf, s=10, edgecolor='black', linewidth=.2)
+                            data=iidf[iidf["RFU of Inflection " + str(i)] > 0], s=10, edgecolor='black', linewidth=.2)
 
             snsplot = seaborn.lineplot(x='time', y='rfus', hue='label', units='index', estimator=None,
                                        data=rdf, linewidth=.7)
@@ -196,6 +200,8 @@ class Grapher:
     def percentGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
             subpc = df[df['group'] == group]
+            if not self.validateDF(subpc[subpc['value'] > 0]):
+                continue
             indplt = seaborn.swarmplot(x='variable', y="value", hue="label", data=subpc, dodge=True, marker='o',
                                        s=2.6, edgecolor='black', linewidth=.6)
             indplt.set(xticklabels=[str(num+1) for num in np.arange(4)])
@@ -213,6 +219,8 @@ class Grapher:
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]
             for inf in range(4):
+                if not self.validateDF(cdf[cdf['variable'] == "Inflection " + str(inf)]):
+                    continue
                 curveplt = seaborn.swarmplot(x="pMconcentration", y="value",
                                              data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
                                              edgecolor='black', palette=["black"], linewidth=.6)
@@ -237,18 +245,26 @@ class Grapher:
     def CtThresholds(self, df):
         for group in range(1, int(df['group'].max())+1):
             idf = df[(df['group'] == group)]
+            ctRFU = idf[idf['CtRFU'] > 0]['CtRFU']
+            if not self.validateDF(ctRFU):
+                continue
+
             plt.scatter(x='concentration', y='DeltaCt', label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.ylabel('Delta Ct (difference in minutes)')
             plt.xlabel('triplicate')
             self.saveimage(plt, 'DeltaCt_' + str(group))
 
-            ctRFU = idf[idf['CtRFU'] > 0]['CtRFU']
             plt.scatter(x='CtThreshold', y='concentration',  label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.xlabel('Ct value (Minutes until ' + str(round(ctRFU.iloc[0], 2)) + ' RFUs are surpassed)')
             plt.ylabel('Delta Ct (difference in minutes)')
             self.saveimage(plt, 'Ct_' + str(group))
+
+    def validateDF(self, df):
+        if len(df) > 0:
+            return True
+        return False
 
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)
