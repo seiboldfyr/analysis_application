@@ -15,8 +15,8 @@ line-height: 8px;
 
 <div class="formwrapper">
   <form action = "{{ url_for('.search') }}" method = "POST" enctype="multipart/form-data">
-      <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
       <p>INFO File: <input name="file2" id="infofile" type="file"/></p>
+      <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
       <p>Select an existing dataset: </p>
 <!--      TODO: input date, id, and initials as separate select statements-->
           <select id="selectedDataset" name = "Coming Soon..." />

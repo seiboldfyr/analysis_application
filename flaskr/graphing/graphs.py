@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from flaskr.model.helpers.functions import get_unique_group, get_unique
 from flaskr.model.helpers.buildfunctions import get_concentrations
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.model.helpers.calcfunctions import reg_conc
 
 
 def removeLegendTitle(plot):
@@ -130,7 +131,7 @@ class Grapher:
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
-        df.insert(0, 'labelwithoutgroup', [re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0) for item in df['label']])
+        df.insert(0, 'labelwithoutgroup', [reg_conc(item).group(0) for item in df['label']])
         for inf in range(4):
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
                                        data=df[df['variable'] == "Inflection " + str(inf)],
@@ -172,15 +173,15 @@ class Grapher:
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            groupdf = df[df['group'] == group]
             adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
+            groupdf = df[df['group'] == group]
             for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
                 tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
                                              triplicate=triplicate, index=idx, group=group))
                 adf = pd.concat([adf, tdf], sort=False)
-            plt.figure(1)
+            plt.figure(0)
             grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
                                             data=adf, linewidth=.7)
             grouprfuplot = removeLegendTitle(grouprfuplot)
@@ -188,7 +189,7 @@ class Grapher:
             plt.xlabel('Time (Min)')
             self.saveimage(plt, 'Averages_' + str(group))
 
-            plt.figure(2)
+            plt.figure(1)
             allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
                                           palette=self.colors, linewidth=.7, legend="full", label=int(group))
             allrfuplot = removeLegendTitle(allrfuplot)
@@ -212,10 +213,10 @@ class Grapher:
             plt.ylabel('Percent Difference from Control')
             self.saveimage(plt, 'PercentDiff_' + str(group))
 
-    def CurveFitByGroup(self, df):
+    def CurveFitByGroup(self, df):              # TODO: Figure out vertical shift in curve-fitting, see 20200110b_AA output
         for group in range(1, int(df['group'].max()) + 1):
             cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
-            cdf.insert(0, 'pMconcentration', [get_concentrations(re.match(r'(\d+(\s|[a-z]+\/)+([a-z]+[A-Z]))', item).group(0))
+            cdf.insert(0, 'pMconcentration', [get_concentrations(reg_conc(item).group(0))
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]
             for inf in range(4):
@@ -271,7 +272,7 @@ class Grapher:
         sio = io.BytesIO()
         plt.savefig(sio, format='png', transparent=True)
         plt.close()
-        self.graph_urls[title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
+        self.graph_urls[self.name +'_' + title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
     def setGraphSettings(self):
         params = {'legend.fontsize': 5,
