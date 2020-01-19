@@ -256,13 +256,13 @@ class Grapher:
             plt.scatter(x='concentration', y='DeltaCt', label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.ylabel('Delta Ct (difference in minutes)')
-            plt.xlabel('triplicate')
+            plt.xlabel('Concentration')
             self.saveimage(plt, 'DeltaCt_' + str(group))
 
             plt.scatter(x='CtThreshold', y='concentration',  label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.xlabel('Ct value (Minutes until ' + str(round(ctRFU.iloc[0], 2)) + ' RFUs are surpassed)')
-            plt.ylabel('Delta Ct (difference in minutes)')
+            plt.ylabel('Concentration')
             self.saveimage(plt, 'Ct_' + str(group))
 
     def validateDF(self, df):

@@ -88,6 +88,7 @@ def graphs(id, type):
         return redirect(url_for('base.process'))
 
     if request.method == 'POST':
+
         memory_file = BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
 
