@@ -303,7 +303,14 @@ class Grapher:
                   'legend.framealpha': .1})
         else:
             params.update({
-                'scatter.edgecolors': 'black'})
+                'scatter.edgecolors': 'black',
+                'axes.edgecolor': 'black',
+                'axes.facecolor': 'white',
+                'axes.labelcolor': 'black',
+                'xtick.color': 'black',
+                'ytick.color': 'black',
+                'figure.facecolor': 'white',
+                'text.color': 'black',})
 
         plt.rcParams.update(params)
         seaborn.set_palette(self.colors)
