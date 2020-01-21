@@ -232,7 +232,7 @@ class Grapher:
                 [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
 
                 #get rvalue not including the .1pM concentration
-                [lessrvalue, _] = getRegression(cdf[cdf['pMconcentration'] >= 1])
+                [lessrvalue, _] = getRegression(cdf[(cdf['pMconcentration'] >= 1) & (cdf['variable'] == "Inflection " + str(inf))])
 
                 concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
                 Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
