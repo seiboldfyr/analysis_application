@@ -273,7 +273,10 @@ class Grapher:
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)
         sio = io.BytesIO()
-        plt.savefig(sio, format='png', transparent=True)
+        if self.presentation == True:
+            plt.savefig(sio, format='png', transparent=True)
+        else:
+            plt.savefig(sio, format='png', transparent=False)
         plt.close()
         self.graph_urls[self.name +'_' + title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
