@@ -232,7 +232,7 @@ class Grapher:
                 [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
 
                 #get rvalue not including the .1pM concentration
-                [lessrvalue, _] = getRegression(cdf[cdf['pMconcentration'] >= 1])
+                [lessrvalue, _] = getRegression(cdf[(cdf['pMconcentration'] >= 1) & (cdf['variable'] == "Inflection " + str(inf))])
 
                 concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
                 Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
@@ -256,13 +256,13 @@ class Grapher:
             plt.scatter(x='concentration', y='DeltaCt', label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.ylabel('Delta Ct (difference in minutes)')
-            plt.xlabel('triplicate')
+            plt.xlabel('Concentration')
             self.saveimage(plt, 'DeltaCt_' + str(group))
 
             plt.scatter(x='CtThreshold', y='concentration',  label='concentration',
                         data=idf, s=10, edgecolor='black', linewidth=.2)
             plt.xlabel('Ct value (Minutes until ' + str(round(ctRFU.iloc[0], 2)) + ' RFUs are surpassed)')
-            plt.ylabel('Delta Ct (difference in minutes)')
+            plt.ylabel('Concentration')
             self.saveimage(plt, 'Ct_' + str(group))
 
     def validateDF(self, df):
@@ -273,7 +273,10 @@ class Grapher:
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)
         sio = io.BytesIO()
-        plt.savefig(sio, format='png', transparent=True)
+        if self.presentation == True:
+            plt.savefig(sio, format='png', transparent=True)
+        else:
+            plt.savefig(sio, format='png', transparent=False)
         plt.close()
         self.graph_urls[self.name +'_' + title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 

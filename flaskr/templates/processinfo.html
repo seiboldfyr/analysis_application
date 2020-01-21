@@ -126,7 +126,13 @@ function buildSwapHtml(swapnumber) {
 </script>
 
 <p><input type="submit" name='Run' value="Run it!"/></p>
-        </form>
+<!--        <div class="features"  onchange="update()">-->
+<!--            <input type="checkbox" name='transparency' class="graphfeatures"/>Make graphs transparent-->
+<!--            <input type="checkbox" name='white' class="graphfeatures"/>Turn graphs white-->
+<!--            <input type="checkbox" name='experimental' class="graphfeatures"/>View experimental graphs-->
+<!--        </div>-->
+        <br>
+      </form>
     </div>
 
 
@@ -147,6 +153,7 @@ function buildSwapHtml(swapnumber) {
 </div>
 
     <script>
+
     var visibility = 'visible';
     if ("{{ graphed }}" == false) {
         visibility = "hidden"
@@ -154,7 +161,21 @@ function buildSwapHtml(swapnumber) {
     document.getElementById("graphbutton").style.visibility = visibility;
     document.getElementById("graphbuttonpres").style.visibility = visibility;
     document.getElementById("graphbuttonexp").style.visibility = visibility;
-<!--    document.getElementsByClassName("graphbuttons").style.visibility = visibility;-->
+    var graphfeatures = document.getElementsByClassName("features");
+    for (var i = 0; i < graphfeatures.length; i++) {
+        graphfeatures[i].style.visibility = visibility;
+    }
+
+    function update() {
+        var included = '';
+        var graphfeatures = document.getElementsByClassName("graphfeatures");
+        for (var i = 0; i < graphfeatures.length; i++) {
+            if (graphfeatures[i].checked){
+                included = included.concat(graphfeatures[i].name, ', ')
+            };
+        };
+    };
+
 
     </script>
 {% endblock %}
