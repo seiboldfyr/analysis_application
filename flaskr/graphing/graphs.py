@@ -310,7 +310,7 @@ class Grapher:
                 'xtick.color': 'black',
                 'ytick.color': 'black',
                 'figure.facecolor': 'white',
-                'text.color': 'black',})
+                'text.color': 'black'})
 
         plt.rcParams.update(params)
         seaborn.set_palette(self.colors)
