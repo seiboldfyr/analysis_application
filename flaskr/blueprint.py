@@ -57,65 +57,79 @@ def search():
                                id=response.get_message())
     return redirect(url_for('base.home'))
 
-
-@base_blueprint.route('/process/<id>', methods=['GET', 'POST'])
+@base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
-def process(id):
+def input(id):
     if request.method == 'POST':
-        if id is None:
-            flash('No dataset information was found', 'error')
-            return redirect(url_for('base.home'))
-
-        response = Processor(request,
-                             dataset_id=id).execute()
-        if not response.is_success():
-            flash('%s' % response.get_message(), 'error')
-            return render_template('processinfo.html', id=id)
-
-        flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
-        return render_template('processinfo.html', id=id, graphed=True)
-
-    return render_template('processinfo.html', id=id)
+        return redirect(url_for('base.analysis', id=id, inputform=request))
+    return render_template('inputs.html', id=id)
 
 
-@base_blueprint.route('/graphs/<id>/<type>', methods=['GET', 'POST'])
+@base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
 @login_required
-def graphs(id, type):
-    graphs, name = Grapher(dataset_id=id).execute(type=type)
+def analysis(id, request=None):
+    response = Processor(request,
+                         dataset_id=id).execute()
+    if not response.is_success():
+        flash('%s' % response.get_message(), 'error')
+        return render_template('analysis.html', id=id)
+
+    flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
+    return render_template('analysis.html', id=id)
+
+
+@base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
+@login_required
+def graphs(id, features=dict()):
+    print(request.method, request.form)
+
+    if request.method == 'POST':
+        features = request.form
+    graphs, name = Grapher(dataset_id=id)\
+        .execute(features=features)
 
     if len(graphs) == 0:
         flash('Something went wrong with graphing', 'error')
-        return redirect(url_for('base.process'))
+        return redirect(url_for('base.analysis', id=id))
 
-    if request.method == 'POST':
-
-        memory_file = BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-
-            for itemtitle in graphs.keys():
-                data = zipfile.ZipInfo()
-                data.filename = itemtitle
-                zf.writestr(data, base64.decodebytes(graphs[itemtitle].encode('ascii')))
-
-            io = BytesIO()
-            analysistitle = name + '_output.xlsx'
-            excelwriter = pd.ExcelWriter(analysistitle, engine='xlsxwriter')
-            excelwriter.book.filename = io
-            writer = Writer(excelwriter=excelwriter, dataset_id=id)
-            response = writer.writebook()
-            if not response.is_success():
-                return render_template('processinfo.html', id=id)
-            excelwriter.save()
-            io.seek(0)
-
-            data = zipfile.ZipInfo()
-            data.filename = analysistitle
-            zf.writestr(data, io.getvalue())
-
-        memory_file.seek(0)
-        zipfilename = 'output' + '_' + name + '_v.' + current_app.config['VERSION'] + '.zip'
+    if request.form.get('download'):
+        [memory_file, zipfilename] = download(id=id, graphs=graphs, name=name)
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
     return render_template('graphs.html', id=id, graphs=graphs.values(), name=name)
 
+
+def download(id, graphs, name):
+    if len(graphs) == 0:
+        flash('Something went wrong with graphing', 'error')
+        return redirect(url_for('base.analysis', id=id))
+
+    memory_file = BytesIO()
+
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+
+        for itemtitle in graphs.keys():
+            data = zipfile.ZipInfo()
+            data.filename = itemtitle
+            zf.writestr(data, base64.decodebytes(graphs[itemtitle].encode('ascii')))
+
+        io = BytesIO()
+        analysistitle = name + '_output.xlsx'
+        excelwriter = pd.ExcelWriter(analysistitle, engine='xlsxwriter')
+        excelwriter.book.filename = io
+        writer = Writer(excelwriter=excelwriter, dataset_id=id)
+        response = writer.writebook()
+        if not response.is_success():
+            return render_template('analysis.html', id=id)
+        excelwriter.save()
+        io.seek(0)
+
+        data = zipfile.ZipInfo()
+        data.filename = analysistitle
+        zf.writestr(data, io.getvalue())
+
+    memory_file.seek(0)
+    zipfilename = 'output' + '_' + name + '_v.' + current_app.config['VERSION'] + '.zip'
+    return [memory_file, zipfilename]
+    # return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 

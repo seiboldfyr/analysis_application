@@ -10,7 +10,7 @@ from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, \
-    add_custom_group_label, edit_RFUs, swap_wells, validate_errors
+    add_custom_group_label, edit_RFUs, swap_wells, validate_errors, get_existing_metadata, update_metadata
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -34,12 +34,15 @@ class Processor(AbstractProcessor):
     def execute(self) -> Response:
         timestart = time.time()
         self.measurement_manager = MeasurementManager()
+        
+        if self.request is None:
+            get_existing_metadata(self)
+        else:
+            update_metadata(self)
 
-        #TODO: if dataset has metadata, use that info instead of request.form
-
-        cut = self.request.form['cutlength']
-        if cut is None or isinstance(cut, str):
-            cut = 0
+        cut = 0
+        if self.request['form'].get('cutlength'):
+            cut = self.request['form']['cutlength']
 
         build_swap_inputs(self)
         build_group_inputs(self)

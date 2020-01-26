@@ -93,15 +93,11 @@ class ImportProcessor(AbstractImporter):
 
         model['measure_count'] = model.get_well_collection().get_size()
         model['version'] = float(current_app.config['VERSION'])
-        model['metadata'] = dict(Cut=0,
-                                 Groupings={},
-                                 Swaps={},
-                                 CustomLabel='',
-                                 Error_Wells={},
-                                 Cycle_Length=self.cyclelength)
+        model['metadata'] = dict()
         dataset_repository.save(model)
 
         flash('File imported successfully', 'success')
+        flash('Calculated cycle length was %s' % self.cyclelength, 'success')
         return Response(
             True,
             self.dataset.get_id()

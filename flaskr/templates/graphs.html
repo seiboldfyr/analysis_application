@@ -8,10 +8,38 @@ Graphs for dataset {{name}}
 
 <div class="formwrapper">
   <form method = "POST">
-      <p><input type="submit" name='download' value="Download ZIP file"/></p>
-     Please only click the download button ONCE.
+
+      <br><br>
+      <div id="graph-features">
+          <input type="checkbox" name='transparent' id="transparent">
+          <label for="transparent"> Transparent </label><br>
+
+          <input type="checkbox" name='white' id="white"/>
+          <label for="white"> White graphs </label><br>
+
+          <input type="checkbox" name='experimental' id="experimental"/>
+          <label for="experimental"> Experimental graphs </label>
+
+        <br>
+      </div>
+        <a name='update' value="update"><button>Update</button></a>
+      <br><br>
+
+      <input type="submit" name='download' value="Download ZIP File"/>
+      Please only click the download button ONCE.
   </form>
 </div>
+
+<script>
+    var transparent = document.getElementById('transparent')
+
+    $(document).ready(function () {
+    $("input[type=checkbox]").click(function () {
+        console.log('here')
+    })
+    })
+</script>
+
 {% endblock %}
 
 {% block content %}
@@ -24,6 +52,6 @@ Graphs for dataset {{name}}
 
 {% block buttons %}
 <br>
-<a href="{{ url_for('.process', id=id) }}"><button>Back</button></a>
+<a href="{{ url_for('.analysis', id=id) }}"><button>Back</button></a>
 <br>
 {% endblock %}

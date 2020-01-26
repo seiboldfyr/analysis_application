@@ -1,0 +1,38 @@
+{% extends "master.html" %}
+
+{% block title %} Data Analysis {% endblock %}
+
+{% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+p.huge {
+line-height: 16px;
+}
+</style>
+<br>
+
+<div class="formwrapper">
+  <form action = "{{ url_for('.analysis', id=id) }}" method = "POST">
+
+<!--    <div class="features"  onchange="update()">-->
+<!--        <input type="checkbox" name='transparent' value="True"/>Make graphs transparent<br>-->
+<!--        <input type="checkbox" name='white' value="True"/>Turn graphs white<br>-->
+<!--        <input type="checkbox" name='experimental' value="True"/>View experimental graphs<br>-->
+<!--    </div>-->
+<!--      <input type="submit" value="View Graphs"/>-->
+
+  </form>
+</div>
+<br>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block buttons %}
+<a href="{{ url_for('.graphs', id=id) }}"><button>View Graphs</button></a>
+<a href="{{ url_for('.input', id=id) }}"><button>Back</button></a>
+{% endblock %}
+
