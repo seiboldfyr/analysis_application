@@ -22,10 +22,9 @@ from flaskr.model.helpers.calcfunctions import reg_conc
 
 def buildname(excelfilename):
     filename = excelfilename.split('_')
-    info = {}
-    info['Date'] = filename[0][:-1]
-    info['Id'] = filename[0][-1]
-    info['Initials'] = filename[1]
+    info = dict(Date=filename[0][:-1],
+                Id=filename[0][-1],
+                Initials=filename[1])
     if len(excelfilename) > 4:
         info['Other Info'] = filename[2:-1][0]
     return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
@@ -41,30 +40,35 @@ class ImportProcessor(AbstractImporter):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
+        self.dataset = None
 
     def search(self, name) -> {}:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
-            #TODO: if input page is used, don't use a previously uploaded dataset
+            self.dataset = found_dataset
             if found_dataset['version'] < float(current_app.config['VERSION']):
                 flash('This data was uploaded with version %s and is being replaced with version %s.'
                       % (found_dataset['version'], current_app.config['VERSION']), 'msg')
+                return False
             else:
-                return found_dataset
-        return None
+                flash('An existing dataset was found.', 'success')
+                return True
+        return False
 
     def execute(self, request, name) -> Response:
-        dataset_repository = Repository()
-        factory = Factory()
-        model = factory.create({'name': name})
-        dataset_repository.save(model)
-        self.dataset = model
         self.component_repository = ComponentRepository()
         self.protocol_factory = ProtocolFactory()
         self.protocol_manager = ProtocolManager()
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()
+
+        dataset_repository = Repository()
+        if self.dataset is None:
+            factory = Factory()
+            model = factory.create({'name': name})
+            dataset_repository.save(model)
+            self.dataset = model
 
         infofile = None
         rfufile = None
@@ -92,17 +96,12 @@ class ImportProcessor(AbstractImporter):
         infofile.delete()
         rfufile.delete()
 
-        model['measure_count'] = model.get_well_collection().get_size()
-        model['version'] = float(current_app.config['VERSION'])
-        model['metadata'] = dict(Cut=0,
-                                 Groupings={},
-                                 Swaps={},
-                                 CustomLabel='',
-                                 Error_Wells={},
-                                 Cycle_Length=self.cyclelength)
-        dataset_repository.save(model)
+        self.dataset['measure_count'] = self.dataset.get_well_collection().get_size()
+        self.dataset['version'] = float(current_app.config['VERSION'])
+        dataset_repository.save(self.dataset)
 
         flash('File imported successfully', 'success')
+        flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
         return Response(
             True,
             self.dataset.get_id()
