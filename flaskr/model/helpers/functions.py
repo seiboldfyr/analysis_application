@@ -14,9 +14,14 @@ def get_unique_name(keylist):
     return indexes
 
 
-def get_unique_group(keylist):
+def get_unique_group(keylist, fullname=False):
     temp = [item[-1] for item in keylist]
-    return np.unique(temp)
+    if fullname:
+        index = np.unique(temp, return_index=True)[1]
+        result = [keylist[k] for k in index]
+    else:
+        result = np.unique(temp)
+    return result
 
 
 def saveImage(self, plt, figuretitle):
