@@ -97,7 +97,7 @@ class ImportProcessor(AbstractImporter):
         dataset_repository.save(model)
 
         flash('File imported successfully', 'success')
-        flash('Calculated cycle length was %s' % self.cyclelength, 'success')
+        flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
         return Response(
             True,
             self.dataset.get_id()

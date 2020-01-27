@@ -30,15 +30,23 @@ Graphs for dataset {{name}}
 </div>
 
 <script>
-    console.log("{{ prevWhite}}")
-    if ("{{ prevTransparent }}") {
+    if ("{{ prevTransparent }}".toString() == 'on') {
         document.getElementById('transparent').checked = true
     }
-    if ("{{ prevWhite }}") {
+    if ("{{ prevTransparent }}".toString() != 'on') {
+        document.getElementById('transparent').checked = false
+    }
+    if ("{{ prevWhite }}".toString() == 'on') {
         document.getElementById('white').checked = true
     }
-    if ("{{ prevExperimental }}") {
-        document.getElementById('experimetal').checked = true
+    if ("{{ prevWhite }}".toString() != 'on') {
+        document.getElementById('white').checked = false
+    }
+    if ("{{ prevExperimental }}".toString() == 'on') {
+        document.getElementById('experimental').checked = true
+    }
+    if ("{{ prevExperimental }}".toString() != 'on') {
+        document.getElementById('experimental').checked = false
     }
 
 

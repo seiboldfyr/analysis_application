@@ -37,17 +37,17 @@ def search():
         for f in request.files:
             [name, fileinfo] = buildname(request.files.get(f).filename)
 
-        processor = ImportProcessor()
-        dataset_exists = processor.search(name)
+        importer = ImportProcessor()
+        dataset_exists = importer.search(name)
         if dataset_exists is not None:
-            flash('A dataset was found.', 'success')
+            flash('An existing dataset was found.', 'success')
             fileinfo['Version'] = dataset_exists['version']
             #TODO: get components and list on search screen
             return render_template('search.html',
                                    result=fileinfo,
                                    id=dataset_exists['_id'])
 
-        response = processor.execute(request, name)
+        response = importer.execute(request, name)
         if not response.is_success():
             flash(response.get_message(), 'error')
             #TODO: get components and list on search screen
@@ -61,14 +61,16 @@ def search():
 @login_required
 def input(id):
     if request.method == 'POST':
-        return redirect(url_for('base.analysis', id=id, inputform=request))
+        print('input: ', request.form)
+        return analysis(id=id, form=request.form)
+        # return redirect(url_for('base.analysis', id=id, request=request.form))
     return render_template('inputs.html', id=id)
 
 
 @base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
 @login_required
-def analysis(id, request=None):
-    response = Processor(request,
+def analysis(id, form=None):
+    response = Processor(form=form,
                          dataset_id=id).execute()
     if not response.is_success():
         flash('%s' % response.get_message(), 'error')
@@ -80,9 +82,7 @@ def analysis(id, request=None):
 
 @base_blueprint.route('/graphs/<id>', methods=['GET', 'POST'])
 @login_required
-def graphs(id, features=dict()):
-    print(request.method, request.form)
-
+def graphs(id, features=None):
     if request.method == 'POST':
         features = request.form
     graphs, name = Grapher(dataset_id=id)\
@@ -96,7 +96,8 @@ def graphs(id, features=dict()):
         [memory_file, zipfilename] = download(id=id, graphs=graphs, name=name)
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
-    return render_template('graphs.html', id=id,
+    return render_template('graphs.html',
+                           id=id,
                            graphs=graphs.values(),
                            name=name,
                            prevTransparent=request.form.get('transparent'),
@@ -107,10 +108,6 @@ def graphs(id, features=dict()):
 
 
 def download(id, graphs, name):
-    if len(graphs) == 0:
-        flash('Something went wrong with graphing', 'error')
-        return redirect(url_for('base.analysis', id=id))
-
     memory_file = BytesIO()
 
     with zipfile.ZipFile(memory_file, 'w') as zf:

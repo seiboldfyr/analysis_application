@@ -16,10 +16,10 @@ from flaskr.model.helpers.peakfunctions import get_peaks
 
 class Processor(AbstractProcessor):
     def __init__(
-            self, request,
+            self, form,
             dataset_id: str
     ):
-        self.request = request
+        self.form = form
         self.errorwells = []
         self.dataset_id = dataset_id
         self.swaps = {}
@@ -34,15 +34,15 @@ class Processor(AbstractProcessor):
     def execute(self) -> Response:
         timestart = time.time()
         self.measurement_manager = MeasurementManager()
-        
-        if self.request is None:
+
+        if self.form is None:
             get_existing_metadata(self)
         else:
             update_metadata(self)
 
         cut = 0
-        if self.request['form'].get('cutlength'):
-            cut = self.request['form']['cutlength']
+        if self.form.get('cutlength'):
+            cut = self.form['cutlength']
 
         build_swap_inputs(self)
         build_group_inputs(self)
