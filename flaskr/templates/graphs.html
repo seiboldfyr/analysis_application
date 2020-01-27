@@ -8,11 +8,10 @@ Graphs for dataset {{name}}
 
 <div class="formwrapper">
   <form method = "POST">
-
       <br><br>
       <div id="graph-features">
           <input type="checkbox" name='transparent' id="transparent">
-          <label for="transparent"> Transparent </label><br>
+          <label for="transparent"> Transparent graphs </label><br>
 
           <input type="checkbox" name='white' id="white"/>
           <label for="white"> White graphs </label><br>
@@ -31,13 +30,18 @@ Graphs for dataset {{name}}
 </div>
 
 <script>
-    var transparent = document.getElementById('transparent')
+    console.log("{{ prevWhite}}")
+    if ("{{ prevTransparent }}") {
+        document.getElementById('transparent').checked = true
+    }
+    if ("{{ prevWhite }}") {
+        document.getElementById('white').checked = true
+    }
+    if ("{{ prevExperimental }}") {
+        document.getElementById('experimetal').checked = true
+    }
 
-    $(document).ready(function () {
-    $("input[type=checkbox]").click(function () {
-        console.log('here')
-    })
-    })
+
 </script>
 
 {% endblock %}

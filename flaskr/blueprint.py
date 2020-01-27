@@ -96,7 +96,14 @@ def graphs(id, features=dict()):
         [memory_file, zipfilename] = download(id=id, graphs=graphs, name=name)
         return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
-    return render_template('graphs.html', id=id, graphs=graphs.values(), name=name)
+    return render_template('graphs.html', id=id,
+                           graphs=graphs.values(),
+                           name=name,
+                           prevTransparent=request.form.get('transparent'),
+                           prevWhite=request.form.get('white'),
+                           prevExperimental=request.form.get('experimental'))
+# TODO: passing these features as parameters is messy way to mark checkboxes on the post form
+# find a better way!
 
 
 def download(id, graphs, name):
