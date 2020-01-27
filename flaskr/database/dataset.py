@@ -14,7 +14,7 @@ class Dataset(AbstractModel):
         super().__init__()
         self['_id'] = None
         self['version'] = 2.0
-        self['metadata'] = []
+        self['metadata'] = dict()
         self['statistics'] = dict()
 
     def get_metadata(self) -> []:

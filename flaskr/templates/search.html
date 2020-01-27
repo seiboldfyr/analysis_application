@@ -17,7 +17,9 @@
 {% block buttons %}
 <br>
 
-<a href="{{ url_for('base.process', id=id) }}"><button>Process Data</button></a>
+<a href="{{ url_for('.input', id=id) }}"><button>Customize Run Info</button></a>
+<br>
+<a href="{{ url_for('.analysis', id=id) }}"><button>Run processing with previously used customization</button></a>
 
 <br>
 {% endblock %}

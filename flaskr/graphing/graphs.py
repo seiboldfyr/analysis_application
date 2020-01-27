@@ -36,7 +36,7 @@ class Grapher:
             dataset_id: str,
             customtitle: str = '',
     ):
-        self.presentation = False
+        self.transparent = False
         self.dataset_id = dataset_id
         self.customtitle = customtitle
         self.time = []
@@ -45,10 +45,10 @@ class Grapher:
         self.colors = ["gray",  "dodgerblue", "red", "lightgreen", "magenta", "gold", "cyan", "darkgreen"]
         # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
-    def execute(self, type):
-        if type == 'presentation':
-            self.presentation = True
-        self.setGraphSettings()
+    def execute(self, features):
+        if features is None:
+            features = dict()
+        self.setGraphSettings(features)
         startpd = time.time()
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
@@ -81,7 +81,7 @@ class Grapher:
         print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
-        if type == 'experimental':
+        if features.get('experimental'):
             self.CtThresholds(testdf)
             print('7', time.time() - startgraphing)
             startgraphing = time.time()
@@ -281,14 +281,14 @@ class Grapher:
     def saveimage(self, plt, title):
         plt.title(self.name + '_' + title, fontsize=14)
         sio = io.BytesIO()
-        if self.presentation == True:
-            plt.savefig(sio, format='png', transparent=True)
-        else:
-            plt.savefig(sio, format='png', transparent=False)
+        plt.savefig(sio, format='png', transparent=self.transparent)
         plt.close()
         self.graph_urls[self.name +'_' + title + '.png'] = base64.b64encode(sio.getvalue()).decode('utf-8').replace('\n', '')
 
-    def setGraphSettings(self):
+    def setGraphSettings(self, features):
+        if features.get('transparent'):
+            self.transparent = True
+
         params = {'legend.fontsize': 5,
                   'legend.loc': 'best',
                   'legend.framealpha': 0.5,
@@ -298,7 +298,7 @@ class Grapher:
                   'legend.labelspacing': .4,
                   'font.size': 8}
 
-        if self.presentation == True:
+        if features.get('white'):
             params.update({
                   'scatter.edgecolors': 'white',
                   'axes.edgecolor': 'white',

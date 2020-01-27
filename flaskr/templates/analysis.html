@@ -1,0 +1,32 @@
+{% extends "master.html" %}
+
+{% block title %} Data Analysis {% endblock %}
+
+{% block body %}
+<style>
+p.big {
+line-height: 8px;
+}
+p.huge {
+line-height: 16px;
+}
+</style>
+<br>
+
+<div class="formwrapper">
+  <form action = "{{ url_for('.analysis', id=id) }}" method = "POST">
+
+  </form>
+</div>
+<br>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block buttons %}
+<a href="{{ url_for('.graphs', id=id) }}"><button>View Graphs</button></a>
+<a href="{{ url_for('.input', id=id) }}"><button>Edit Inputs</button></a>
+<a href="{{ url_for('.analysis', id=id) }}"><button>Repeat Analysis (for testing purposes)</button></a>
+{% endblock %}
+

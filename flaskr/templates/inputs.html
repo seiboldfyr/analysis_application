@@ -125,12 +125,7 @@ function buildSwapHtml(swapnumber) {
     }
 </script>
 
-<p><input type="submit" name='Run' value="Run it!"/></p>
-<!--        <div class="features"  onchange="update()">-->
-<!--            <input type="checkbox" name='transparency' class="graphfeatures"/>Make graphs transparent-->
-<!--            <input type="checkbox" name='white' class="graphfeatures"/>Turn graphs white-->
-<!--            <input type="checkbox" name='experimental' class="graphfeatures"/>View experimental graphs-->
-<!--        </div>-->
+<p><input type="submit" name='Run' value="Run analysis"/></p>
         <br>
       </form>
     </div>
@@ -142,41 +137,6 @@ function buildSwapHtml(swapnumber) {
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<div class="graphbuttons">
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='regular') }}"
-   id="graphbutton"><button>View Regular Graphs</button></a>
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='presentation' ) }}"
-   id="graphbuttonpres"><button>View Presentation Style Graphs</button></a>
-<a href="{{ url_for('base.graphs', id=id, graphed=graphed, type='experimental' ) }}"
-   id="graphbuttonexp"><button>View Experimental Graphs</button></a>
-
-</div>
-
-    <script>
-
-    var visibility = 'visible';
-    if ("{{ graphed }}" == false) {
-        visibility = "hidden"
-    }
-    document.getElementById("graphbutton").style.visibility = visibility;
-    document.getElementById("graphbuttonpres").style.visibility = visibility;
-    document.getElementById("graphbuttonexp").style.visibility = visibility;
-    var graphfeatures = document.getElementsByClassName("features");
-    for (var i = 0; i < graphfeatures.length; i++) {
-        graphfeatures[i].style.visibility = visibility;
-    }
-
-    function update() {
-        var included = '';
-        var graphfeatures = document.getElementsByClassName("graphfeatures");
-        for (var i = 0; i < graphfeatures.length; i++) {
-            if (graphfeatures[i].checked){
-                included = included.concat(graphfeatures[i].name, ', ')
-            };
-        };
-    };
-
-
-    </script>
+<a href="{{ url_for('.search', id=id) }}"><button>Back</button></a>
 {% endblock %}
 
