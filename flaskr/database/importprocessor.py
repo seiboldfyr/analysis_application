@@ -46,6 +46,7 @@ class ImportProcessor(AbstractImporter):
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
+            #TODO: if input page is used, don't use a previously uploaded dataset
             if found_dataset['version'] < float(current_app.config['VERSION']):
                 flash('This data was uploaded with version %s and is being replaced with version %s.'
                       % (found_dataset['version'], current_app.config['VERSION']), 'msg')

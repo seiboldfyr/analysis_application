@@ -1,5 +1,5 @@
 import re
-from flask import flash
+from flask import flash, current_app
 
 from flaskr.database.dataset_models.repository import Repository
 
@@ -51,7 +51,31 @@ def edit_RFUs(self, originwell, cut):
     self.measurement_manager.update(originwell)
 
 
-def swap_wells(self, originwell):
+def save_temporary_swap(self, originwell):
+    self.tempswaps[originwell.get_excelheader()] = dict(group=originwell.get_group(),
+                                                        sample=originwell.get_sample(),
+                                                        triplicate=originwell.get_triplicate(),
+                                                        label=originwell.get_label(),
+                                                        RFUs=originwell.get_rfus())
+
+
+def swap_wells(self, originwell): # replaces origin well info with destination well info
+    # Save well info if it shows up as a destination well elsewhere
+    if originwell.get_excelheader() in self.swaps.values():
+        save_temporary_swap(self, originwell)
+
+    # Check the temporary wells first
+    if self.tempswaps is not None:
+        for tempwell in self.tempswaps.keys():
+            if self.swaps[originwell.get_excelheader()] == tempwell:
+                originwell.edit_labels(dict(group=self.tempswaps[tempwell]['group'],
+                                            sample=self.tempswaps[tempwell]['sample'],
+                                            triplicate=self.tempswaps[tempwell]['triplicate'],
+                                            label=self.tempswaps[tempwell]['label'],
+                                            RFUs=self.tempswaps[tempwell]['RFUs']))
+                return originwell
+
+    # search all wells until the destination well is found
     for destwell in get_collection(self):
         if destwell.get_excelheader() == self.swaps[originwell.get_excelheader()]:
             originwell.edit_labels(dict(group=destwell.get_group(),
@@ -59,7 +83,11 @@ def swap_wells(self, originwell):
                                         triplicate=destwell.get_triplicate(),
                                         label=destwell.get_label(),
                                         RFUs=destwell.get_rfus()))
-            self.measurement_manager.update(originwell)
+            return originwell
+
+    flash('Swap could not be completed for well: %s' % originwell.get_excelheader(), 'error')
+    current_app.logger('A swap could not be completed, dataset: %s' % self.dataset_id)
+    return originwell
 
 
 def validate_errors(self):

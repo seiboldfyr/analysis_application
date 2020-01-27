@@ -176,16 +176,20 @@ class Grapher:
 
     def RFUGraphs(self, df):
         for group in range(1, int(df['group'].max())+1):
-            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'sample', 'index', 'group'])  # changed here
+            adf = pd.DataFrame(columns=['time', 'averagerfu', 'triplicate', 'label', 'group'])  # changed here
             groupdf = df[df['group'] == group]
+            grouplabel = groupdf.iloc[0]['label']
             for idx, triplicate in enumerate(get_unique(groupdf['label'])):
                 tdf = groupdf[groupdf['label'] == triplicate]
                 tdf = pd.DataFrame([x[1]['RFUs'] for x in tdf.iterrows()])
-                tdf = pd.DataFrame(data=dict(time=self.time, averagerfu=tdf.mean(0),
-                                             triplicate=triplicate, index=idx, group=group))
+                tdf = pd.DataFrame(data=dict(time=self.time,
+                                             averagerfu=tdf.mean(0),
+                                             label=triplicate,
+                                             triplicate=idx,
+                                             group=group))
                 adf = pd.concat([adf, tdf], sort=False)
             plt.figure(0)
-            grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='triplicate', units='index', estimator=None,
+            grouprfuplot = seaborn.lineplot(x='time', y='averagerfu', hue='label', units='triplicate', estimator=None,
                                             data=adf, linewidth=.7)
             grouprfuplot = removeLegendTitle(grouprfuplot)
             plt.ylabel('RFU')
@@ -193,10 +197,14 @@ class Grapher:
             self.saveimage(plt, 'Averages_' + str(group))
 
             plt.figure(1)
-            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='index', estimator=None,
-                                          palette=self.colors, linewidth=.7, legend="full", label=int(group))
+            allrfuplot = seaborn.lineplot(x='time', y='averagerfu', data=adf, units='triplicate', estimator=None,
+                                          linewidth=.7, legend="full", label=grouplabel)
             allrfuplot = removeLegendTitle(allrfuplot)
-            allrfuplot.legend(labels=get_unique_group(df['label']))
+        [h, l] = allrfuplot.get_legend_handles_labels()
+        unique_label_index = np.unique([x.split('_')[-1] for x in l], return_index=True)[1]
+        h = [x for idx, x in enumerate(h) if idx in unique_label_index]
+        allrfuplot.legend(handles=h)
+
         plt.ylabel('RFU')
         plt.xlabel('Time (Min)')
         self.saveimage(plt, 'Averages_All')

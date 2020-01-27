@@ -23,6 +23,7 @@ class Processor(AbstractProcessor):
         self.errorwells = []
         self.dataset_id = dataset_id
         self.swaps = {}
+        self.tempswaps = {}
         self.groupings = {}
         self.statistics = pd.DataFrame(columns=['group', 'sample', '1', '2', '3', '4'])
         self.time = []
@@ -42,17 +43,23 @@ class Processor(AbstractProcessor):
             cut = 0
 
         build_swap_inputs(self)
+        print(self.swaps)
         build_group_inputs(self)
-
         validate_errors(self)
 
         for wellindex, well in enumerate(get_collection(self)):
 
             # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
-                swap_wells(well)
+                well = swap_wells(self, well)
+                self.measurement_manager.update(well)
+                try:
+                    self.swaps.pop(well.get_excelheader())
+                except KeyError:
+                    current_app.logger('Error deleting swap from swap dictionary')
+
             if cut > 0:
-                edit_RFUs(well, cut)
+                edit_RFUs(self, well, cut)
 
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
@@ -70,6 +77,9 @@ class Processor(AbstractProcessor):
             if not response.is_success():
                 return Response(False, response.get_message())
 
+        if len(self.swaps) > 0:
+            missing_swaps = ", ".join([item for item in self.swaps.keys()])
+            flash('Swap(s) from the following well(s) %s could not occur. Please verify the entered values.' % missing_swaps, 'error')
         if len(self.errorwells) > 0 and self.errorwells[0] != '':
             flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
 
@@ -88,7 +98,8 @@ class Processor(AbstractProcessor):
             inflectiondict = {}
             derivatives = get_derivatives(well)
             for dIndex in derivatives.keys():
-                inflectiondict = get_peaks(self, well=well,
+                inflectiondict = get_peaks(self,
+                                           well=well,
                                            derivativenumber=dIndex,
                                            derivative=derivatives[dIndex],
                                            allpeaks=inflectiondict)
