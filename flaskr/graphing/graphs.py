@@ -46,6 +46,8 @@ class Grapher:
         # TODO: make these colors adaptable when the total number of concentrations =/= 8
 
     def execute(self, features):
+        if features is None:
+            features = dict()
         self.setGraphSettings(features)
         startpd = time.time()
         dataset_repository = Repository()
@@ -90,24 +92,24 @@ class Grapher:
             print('1', time.time() - startgraphing)
             startgraphing = time.time()
 
-            # self.RFUGraphs(rfudf)
-            # print('2', time.time() - startgraphing)
-            # startgraphing = time.time()
-            #
-            # self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-            # print('3', time.time() - startgraphing)
-            # startgraphing = time.time()
-            #
-            # self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-            # print('4', time.time() - startgraphing)
-            # startgraphing = time.time()
-            #
-            # self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-            # print('5', time.time() - startgraphing)
-            # startgraphing = time.time()
-            #
-            # self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-            # print('6', time.time() - startgraphing)
+            self.RFUGraphs(rfudf)
+            print('2', time.time() - startgraphing)
+            startgraphing = time.time()
+
+            self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
+            print('3', time.time() - startgraphing)
+            startgraphing = time.time()
+
+            self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
+            print('4', time.time() - startgraphing)
+            startgraphing = time.time()
+
+            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+            print('5', time.time() - startgraphing)
+            startgraphing = time.time()
+
+            self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
+            print('6', time.time() - startgraphing)
 
         return [self.graph_urls, self.name]
 

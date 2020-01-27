@@ -53,9 +53,9 @@ class Processor(AbstractProcessor):
 
             # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
-                swap_wells(well)
+                swap_wells(self, well)
             if cut > 0:
-                edit_RFUs(well, cut)
+                edit_RFUs(self, well, cut)
 
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:

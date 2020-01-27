@@ -58,6 +58,5 @@ class AbstractRepository:
 
         self.get_connection().insert_many(documents)
 
-    # todo should be moved to an adapter
     def delete_by_filter(self, filter: dict):
         self.get_connection().delete_many(filter)

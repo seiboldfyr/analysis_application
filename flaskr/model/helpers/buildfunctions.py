@@ -30,16 +30,12 @@ def get_existing_metadata(self):
     dataset_repository = Repository()
     model = dataset_repository.get_by_id(self.dataset_id)
     self.form = dict(form=dict())
-    #TODO: preexisting data is not found
-    print(self.form)
     self.form = model.get_metadata()
-    print('3', self.form)
 
 
 def update_metadata(self):
     dataset_repository = Repository()
     model = dataset_repository.get_by_id(self.dataset_id)
-    print('1', self.form)
     model['metadata'] = self.form
     dataset_repository.save(model)
 

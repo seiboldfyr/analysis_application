@@ -38,32 +38,23 @@ def search():
             [name, fileinfo] = buildname(request.files.get(f).filename)
 
         importer = ImportProcessor()
-        dataset_exists = importer.search(name)
-        if dataset_exists is not None:
-            flash('An existing dataset was found.', 'success')
-            fileinfo['Version'] = dataset_exists['version']
-            #TODO: get components and list on search screen
-            return render_template('search.html',
-                                   result=fileinfo,
-                                   id=dataset_exists['_id'])
+        valid_datset = importer.search(name)
+        if not valid_datset:
+            response = importer.execute(request, name)
+            if not response.is_success():
+                flash(response.get_message(), 'error')
 
-        response = importer.execute(request, name)
-        if not response.is_success():
-            flash(response.get_message(), 'error')
-            #TODO: get components and list on search screen
-
+        #TODO: get components and list on search screen
         return render_template('search.html',
                                result=fileinfo,
-                               id=response.get_message())
+                               id=importer.dataset['_id'])
     return redirect(url_for('base.home'))
 
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
     if request.method == 'POST':
-        print('input: ', request.form)
         return analysis(id=id, form=request.form)
-        # return redirect(url_for('base.analysis', id=id, request=request.form))
     return render_template('inputs.html', id=id)
 
 

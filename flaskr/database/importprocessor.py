@@ -41,24 +41,30 @@ class ImportProcessor(AbstractImporter):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
+        self.dataset = None
 
     def search(self, name) -> {}:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
+            self.dataset = found_dataset
             if found_dataset['version'] < float(current_app.config['VERSION']):
                 flash('This data was uploaded with version %s and is being replaced with version %s.'
                       % (found_dataset['version'], current_app.config['VERSION']), 'msg')
+                return False
             else:
-                return found_dataset
-        return None
+                flash('An existing dataset was found.', 'success')
+                return True
+        return False
 
     def execute(self, request, name) -> Response:
         dataset_repository = Repository()
-        factory = Factory()
-        model = factory.create({'name': name})
-        dataset_repository.save(model)
-        self.dataset = model
+        if self.dataset is None:
+            factory = Factory()
+            model = factory.create({'name': name})
+            dataset_repository.save(model)
+            self.dataset = model
+
         self.component_repository = ComponentRepository()
         self.protocol_factory = ProtocolFactory()
         self.protocol_manager = ProtocolManager()
@@ -91,10 +97,9 @@ class ImportProcessor(AbstractImporter):
         infofile.delete()
         rfufile.delete()
 
-        model['measure_count'] = model.get_well_collection().get_size()
-        model['version'] = float(current_app.config['VERSION'])
-        model['metadata'] = dict()
-        dataset_repository.save(model)
+        self.dataset['measure_count'] = self.dataset.get_well_collection().get_size()
+        self.dataset['version'] = float(current_app.config['VERSION'])
+        dataset_repository.save(self.dataset)
 
         flash('File imported successfully', 'success')
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
