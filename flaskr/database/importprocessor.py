@@ -22,10 +22,9 @@ from flaskr.model.helpers.calcfunctions import reg_conc
 
 def buildname(excelfilename):
     filename = excelfilename.split('_')
-    info = {}
-    info['Date'] = filename[0][:-1]
-    info['Id'] = filename[0][-1]
-    info['Initials'] = filename[1]
+    info = dict(Date=filename[0][:-1],
+                Id=filename[0][-1],
+                Initials=filename[1])
     if len(excelfilename) > 4:
         info['Other Info'] = filename[2:-1][0]
     return [info['Date'] + info['Id'] + '_' + info['Initials'], info]
@@ -58,18 +57,18 @@ class ImportProcessor(AbstractImporter):
         return False
 
     def execute(self, request, name) -> Response:
+        self.component_repository = ComponentRepository()
+        self.protocol_factory = ProtocolFactory()
+        self.protocol_manager = ProtocolManager()
+        self.measurement_factory = MeasurementFactory()
+        self.measurement_manager = MeasurementManager()
+
         dataset_repository = Repository()
         if self.dataset is None:
             factory = Factory()
             model = factory.create({'name': name})
             dataset_repository.save(model)
             self.dataset = model
-
-        self.component_repository = ComponentRepository()
-        self.protocol_factory = ProtocolFactory()
-        self.protocol_manager = ProtocolManager()
-        self.measurement_factory = MeasurementFactory()
-        self.measurement_manager = MeasurementManager()
 
         infofile = None
         rfufile = None
