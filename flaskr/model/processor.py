@@ -46,7 +46,6 @@ class Processor(AbstractProcessor):
             cut = self.form['cutlength']
 
         build_swap_inputs(self)
-        print(self.swaps)
         build_group_inputs(self)
         validate_errors(self)
 
@@ -94,8 +93,8 @@ class Processor(AbstractProcessor):
         if well['excelheader'] in self.errorwells:
             well['is_valid'] = False
 
-
         else:
+            well['is_valid'] = True
             percentdiffs = [0 for x in range(4)]
             deltact = [0 for x in range(3)]
             inflectiondict = {}
@@ -108,12 +107,12 @@ class Processor(AbstractProcessor):
                                            allpeaks=inflectiondict)
             inflectiondict = dict(sorted(inflectiondict.items()))
 
-            if len(inflectiondict.keys()) < 4:
-                well['is_valid'] = False
-                flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
-                                                                      well.get_excelheader()), 'error')
             well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
             well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
+
+            if len(inflectiondict.keys()) < 4:
+                flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
+                                                                      well.get_excelheader()), 'error')
 
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
