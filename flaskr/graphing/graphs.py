@@ -5,6 +5,7 @@ import base64
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import time
+from flask import current_app
 import matplotlib
 matplotlib.use('Agg')
 
@@ -49,17 +50,17 @@ class Grapher:
         if features is None:
             features = dict()
         self.setGraphSettings(features)
-        startpd = time.time()
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         df = dataset.get_pd_well_collection()
+        df = df[df['is_valid'] == True]
         self.name = dataset.get_name()
 
         df = df.drop(columns=['_id', 'dataset_id'])
 
         rfudf = df.copy()
-        for i in range(len(rfudf['RFUs'][0])):
-            self.time.append(df['cycle'][0]*i/60)
+        for i in range(len(rfudf['RFUs'].iloc[0])):
+            self.time.append(df['cycle'].iloc[0]*i/60)
 
         df['DeltaCt'] = [x[0] if len(x) > 0 else 0 for x in df['deltaCt']]
         df['CtThreshold'] = [x[1] if len(x) > 1 else 0 for x in df['deltaCt']]
@@ -78,38 +79,36 @@ class Grapher:
                      value_vars=list(df.columns)[-8:],
                      var_name='variable',
                      value_name='value')
-        print('build graph data: ', time.time() - startpd)
 
         startgraphing = time.time()
         if features.get('experimental'):
             self.CtThresholds(testdf)
-            print('7', time.time() - startgraphing)
-            startgraphing = time.time()
 
         else:
 
             self.RFUIndividualGraphsByGroup(rfudf, testdf)
-            print('1', time.time() - startgraphing)
+            graphtimes = [time.time() - startgraphing]
             startgraphing = time.time()
 
             self.RFUGraphs(rfudf)
-            print('2', time.time() - startgraphing)
+            graphtimes.append(time.time() - startgraphing)
             startgraphing = time.time()
 
             self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-            print('3', time.time() - startgraphing)
+            graphtimes.append(time.time() - startgraphing)
             startgraphing = time.time()
 
             self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-            print('4', time.time() - startgraphing)
+            graphtimes.append(time.time() - startgraphing)
             startgraphing = time.time()
 
             self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-            print('5', time.time() - startgraphing)
+            graphtimes.append(time.time() - startgraphing)
             startgraphing = time.time()
 
             self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-            print('6', time.time() - startgraphing)
+            graphtimes.append(time.time() - startgraphing)
+            print(graphtimes)
 
         return [self.graph_urls, self.name]
 
@@ -123,7 +122,11 @@ class Grapher:
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             legend1 = plt.legend(bbox_to_anchor=(1, 1), loc='upper left', borderaxespad=0.)
-            ax = plt.gca().add_artist(legend1)
+            try:
+                ax = plt.gca().add_artist(legend1)
+            except matplotlib.MatplotlibDeprecationWarning:
+                current_app.logger('Matplotlib depreciation warning with dataset: %s' % self.dataset_id, 'error')
+
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(get_unique_group(df['label']))],
                        bbox_to_anchor=(1, .1), loc='lower left')
@@ -146,7 +149,11 @@ class Grapher:
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
             legend1 = plt.legend(bbox_to_anchor=(1, 1), loc='upper left')
-            ax = plt.gca().add_artist(legend1)
+            try:
+                ax = plt.gca().add_artist(legend1)
+            except matplotlib.MatplotlibDeprecationWarning:
+                current_app.logger('Matplotlib depreciation with dataset: %s' % self.dataset_id, 'error')
+
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(grouplabels)],
                        bbox_to_anchor=(1, .1), loc='lower left')

@@ -46,12 +46,16 @@ class ImportProcessor(AbstractImporter):
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
-            self.dataset = found_dataset
-            if found_dataset['version'] < float(current_app.config['VERSION']):
-                flash('This data was uploaded with version %s and is being replaced with version %s.'
+            # self.dataset = found_dataset
+            if found_dataset['version'] != float(current_app.config['VERSION']):
+                flash('The data was uploaded with version %s, '
+                      'inflections will be replaced with those found using version %s.'
                       % (found_dataset['version'], current_app.config['VERSION']), 'msg')
+                #TODO: any reason to keep the previous dataset? Maybe just the RFUs?
+                dataset_repository.delete(found_dataset)
                 return False
             else:
+                self.dataset = found_dataset
                 flash('An existing dataset was found.', 'success')
                 return True
         return False
