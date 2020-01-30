@@ -41,6 +41,8 @@ def search():
         valid_datset = importer.search(name)
         if not valid_datset:
             response = importer.execute(request, name)
+            print(response)
+            print(importer.dataset)
             if not response.is_success():
                 flash(response.get_message(), 'error')
 
