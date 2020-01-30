@@ -52,7 +52,7 @@ class ImportProcessor(AbstractImporter):
                       'inflections will be replaced with those found using version %s.'
                       % (found_dataset['version'], current_app.config['VERSION']), 'msg')
                 #TODO: any reason to keep the previous dataset? Maybe just the RFUs?
-                dataset_repository.delete(found_dataset)
+                dataset_repository.delete_by_filter({'name': name})
                 return False
             else:
                 self.dataset = found_dataset

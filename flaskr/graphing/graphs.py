@@ -21,6 +21,7 @@ def removeLegendTitle(plot):
     plot.legend(handles=handles[1:], labels=labels[1:])
     return plot
 
+
 def getRegression(df):
     df = df.groupby('triplicate').mean()
     linear_regressor = LinearRegression()
@@ -238,23 +239,27 @@ class Grapher:
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]
             for inf in range(4):
-                if not self.validateDF(cdf[cdf['variable'] == "Inflection " + str(inf)]):
+                infcdf = cdf[cdf['variable'] == "Inflection " + str(inf)]
+                if not self.validateDF(infcdf):
                     continue
                 curveplt = seaborn.swarmplot(x="pMconcentration", y="value",
-                                             data=cdf[cdf['variable'] == "Inflection " + str(inf)], marker='o', s=2.6,
+                                             data=infcdf, marker='o', s=2.6,
                                              palette=["black"], linewidth=.6)
 
-                [rvalue, linear_regressor] = getRegression(cdf[cdf['variable'] == "Inflection " + str(inf)])
+                [rvalue, linear_regressor] = getRegression(infcdf)
 
                 #get rvalue not including the .1pM concentration
-                [lessrvalue, _] = getRegression(cdf[(cdf['pMconcentration'] >= 1) & (cdf['variable'] == "Inflection " + str(inf))])
+                lessrvalue = 'nan'
+                if self.validateDF(infcdf[(infcdf['pMconcentration'] >= 1)]):
+                    [lessrvalue, _] = getRegression(infcdf[(infcdf['pMconcentration'] >= 1)])
+                    lessrvalue = round(lessrvalue, 5)
 
                 concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
                 Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
                 label = 'Inflection ' + str(inf + 1) + ' ' + \
                         str(float(linear_regressor.coef_[0])) + 'x + ' + str(float(linear_regressor.intercept_)) + \
                         ' Rvalue: ' + str(round(rvalue, 5)) + \
-                        ' (' + str(round(lessrvalue, 5)) + ')'
+                        ' (' + str(lessrvalue) + ')'
 
                 curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
                 plt.ylabel('Time (Min)')
