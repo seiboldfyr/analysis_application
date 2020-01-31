@@ -16,7 +16,12 @@ class ImportValidator(AbstractValidator):
             if not file.filename.endswith('.xlsx'):
                 return Response(False, 'The file has an incorrect filetype')
 
-        return Response(True)
+        return Response(True, '')
 
+    def units(self, request) -> Response:
+        return Response(True, '')
+        # check if units are legitimate for the found component
+        # and check if quantity is non-zero
+        # and check that a target, linear template, reporter template, and reagents are uploaded
 
 

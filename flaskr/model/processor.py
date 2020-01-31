@@ -2,15 +2,15 @@ from flask import flash, current_app
 import pandas as pd
 import numpy as np
 import time
-import sys
 
 from flaskr.database.measurement_models.manager import Manager as MeasurementManager
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.framework.model.request.response import Response
 from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
-from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, get_collection, \
-    add_custom_group_label, edit_RFUs, swap_wells, validate_errors, get_existing_metadata, update_metadata
+from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, swap_wells, validate_errors,\
+    add_custom_group_label
+from flaskr.model.helpers.importfunctions import edit_RFUs, get_existing_metadata, update_metadata, get_collection
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 

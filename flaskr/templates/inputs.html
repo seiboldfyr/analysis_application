@@ -160,7 +160,9 @@ line-height: 16px;
 
     function addOne() {
         componentcount += 1;
+        // innertext = document.getElementById("typefield").innerText;
         document.getElementById("typefield").innerHTML += buildTypeHtml(componentcount);
+        // document.getElementById("typefield").innerText = innertext;
         document.getElementById("namefield").innerHTML += buildNameHtml(componentcount);
         document.getElementById("quantityfield").innerHTML += buildQuantityHtml(componentcount);
         document.getElementById("unitfield").innerHTML += buildUnitHtml(componentcount);
