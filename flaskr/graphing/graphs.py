@@ -115,7 +115,7 @@ class Grapher:
 
     def InflectionGraphByGroup(self, df):
         for group in range(1, int(df['group'].max())+1):
-            subinf = df[(df['group'] == group)].sort_values(['triplicate', 'value'])
+            subinf = df[(df['group'] == group)].sort_values(['variable', 'triplicate', 'value'])
             indplt = seaborn.swarmplot(x="variable", y="value", hue="label", data=subinf, dodge=True, marker='o',
                                        s=2.6, linewidth=.6)
             indplt.set(xticklabels=['Inflection 1', 'Inflection 2', 'Inflection 3', 'Inflection 4'])
