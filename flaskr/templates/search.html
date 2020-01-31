@@ -17,9 +17,12 @@
 {% block buttons %}
 <br>
 
-<a href="{{ url_for('.input', id=id) }}"><button>Customize Run Info</button></a>
+<a href="{{ url_for('.input', id=id) }}"><button>Enter Run Info</button></a>
 <br>
-<a href="{{ url_for('.analysis', id=id) }}"><button>Run processing with previously used customization</button></a>
+<a href="{{ url_for('.analysis', id=id) }}"><button>Skip to run processing</button></a>
+<br> Note: if data was previously uploaded with customized run information,
+those inputs will be used when skipping straight to the processing.
+If this is a new upload, the default inputs will be used.
 
 <br>
 {% endblock %}

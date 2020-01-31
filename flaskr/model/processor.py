@@ -16,7 +16,8 @@ from flaskr.model.helpers.peakfunctions import get_peaks
 
 class Processor(AbstractProcessor):
     def __init__(
-            self, form,
+            self,
+            form: dict,
             dataset_id: str
     ):
         self.form = form

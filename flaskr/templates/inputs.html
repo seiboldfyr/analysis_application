@@ -15,6 +15,37 @@ line-height: 16px;
 <br>
 <div class="formwrapper">
     <form method=post>
+
+                <table>
+            <thead>
+            <tr>
+                <th> Type</th>
+                <th> Component</th>
+                <th> Quantity</th>
+                <th> Unit</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <th><p id="typefield"></p></th>
+            <th><p id="namefield"></p></th>
+            <th><p id="quantityfield"></p></th>
+            <th><p id="unitfield"></p></th>
+            </tbody>
+
+            <tfooter>
+                <tr>
+                    <td><br>
+                        <input onclick="addOne()" type="button" value="Add One"/>
+                    </td>
+                </tr>
+            </tfooter>
+        </table>
+
+        <p class="huge"><br>
+        <b> Upload and Analysis Parameters:</b><br>
+        <p class="big">
+
         Fluorescence Error Cut Time
         <input type="text" name="cutlength" placeholder="default=0"><br>
         <p class="big">
@@ -49,33 +80,6 @@ line-height: 16px;
 
         <p id="groupresult"></p>
 
-<script type="text/javascript">
-
-function otherSelect() {
-    let pick = document.getElementById("groupidentification").selectedIndex;
-    makeVisible(parseInt(pick));
-    }
-
-function makeVisible(grouptotal) {
-    document.getElementById("groupresult").innerHTML = '';
-    for(let group = 1; group <= grouptotal; group ++){
-        let formGroupHtml = buildGroupHtml(group);
-        document.getElementById("groupresult").innerHTML += formGroupHtml;
-        }
-    }
-
-function buildGroupHtml(group) {
-    let html ='<div class="wellidentification"><div id="grouptitle"><b>Group Number ';
-    html += group + '</b></div>';
-    html += '<div id="grouplabel">Custom label <input name="Group Label ' + group + '" type="text"/></div>';
-    html += '<div id="groupwells">Number of wells <input name="Group Wells ' + group + '" type="text"/></div>';
-    html += '<div id="groupsamples">Number of samples <input name="Group Samples ' + group + '" type="text"/></div>';
-    html += '<p class="big">';
-    return html;
-    }
-
-</script>
-
 <p class="huge"><br>
 <b> Optional parameters:</b><br>
         <p class="big">
@@ -101,34 +105,101 @@ function buildGroupHtml(group) {
 
         <p id="swapinput"></p>
 
-<script type="text/javascript">
-function swapnumber() {
-    let pick = document.getElementById("labelswaps").selectedIndex;
-    makeSwapsVisible(parseInt(pick));
-    }
+        <p><input type="submit" name='Run' value="Run analysis"/></p>
 
-function makeSwapsVisible(swapnumber) {
-    document.getElementById("swapinput").innerHTML = '';
-
-    for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
-        var formSwapHtml = buildSwapHtml(wellswap);
-        document.getElementById("swapinput").innerHTML += formSwapHtml;
-        }
-    }
-
-function buildSwapHtml(swapnumber) {
-    var html ='<div class="labelidentification"></div>';
-    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/><input type="checkbox" name="Bidirectional Swap '+ swapnumber +'">Bidirectional Swap</div>';
-    html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
-    html += '<p class="big">';
-    return html;
-    }
-</script>
-
-<p><input type="submit" name='Run' value="Run analysis"/></p>
         <br>
       </form>
     </div>
+
+<script type="text/javascript">
+    function otherSelect() {
+        let pick = document.getElementById("groupidentification").selectedIndex;
+        makeVisible(parseInt(pick));
+        }
+
+    function makeVisible(grouptotal) {
+        document.getElementById("groupresult").innerHTML = '';
+        for(let group = 1; group <= grouptotal; group ++){
+            let formGroupHtml = buildGroupHtml(group);
+            document.getElementById("groupresult").innerHTML += formGroupHtml;
+            }
+        }
+
+    function buildGroupHtml(group) {
+        let html ='<div class="wellidentification"><div id="grouptitle"><b>Group Number ';
+        html += group + '</b></div>';
+        html += '<div id="grouplabel">Custom label <input name="Group Label ' + group + '" type="text"/></div>';
+        html += '<div id="groupwells">Number of wells <input name="Group Wells ' + group + '" type="text"/></div>';
+        html += '<div id="groupsamples">Number of samples <input name="Group Samples ' + group + '" type="text"/></div>';
+        html += '<p class="big">';
+        return html;
+        }
+
+    function swapnumber() {
+        let pick = document.getElementById("labelswaps").selectedIndex;
+        makeSwapsVisible(parseInt(pick));
+        }
+
+    function makeSwapsVisible(swapnumber) {
+        document.getElementById("swapinput").innerHTML = '';
+        for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
+            var formSwapHtml = buildSwapHtml(wellswap);
+            document.getElementById("swapinput").innerHTML += formSwapHtml;
+            }
+        }
+
+    function buildSwapHtml(swapnumber) {
+        var html ='<div class="labelidentification"></div>';
+        html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/><input type="checkbox" name="Bidirectional Swap '+ swapnumber +'">Bidirectional Swap</div>';
+        html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
+        html += '<p class="big">';
+        return html;
+        }
+
+    var componentcount = 1;
+
+    function addOne() {
+        componentcount += 1;
+        document.getElementById("typefield").innerHTML += buildTypeHtml(componentcount);
+        document.getElementById("namefield").innerHTML += buildNameHtml(componentcount);
+        document.getElementById("quantityfield").innerHTML += buildQuantityHtml(componentcount);
+        document.getElementById("unitfield").innerHTML += buildUnitHtml(componentcount);
+    }
+    window.onload = addOne();
+
+
+    function buildTypeHtml(count){
+        var html = '{% for type, names in components.items() %}';
+        html += '<select id="type'+count+'" name="Type">';
+        html += '<option value="type">{{type}}</option></select> ';
+        html += '{% endfor %}<br> ';
+        return html;
+    }
+
+    function buildNameHtml(count) {
+        var selectedtype = '';
+        document.getElementById("type"+count).childNodes.forEach(function(node){
+            if (node.selected) {
+                selectedtype = node.label;
+            }});
+        var html = '<select id="component'+count+'" name="Component">';
+        html += '{% for type, names in components.items() %}{% for name in names%}';
+        if (selectedtype == '{{type}}'){
+            html += '<option value={{name}}>{{name}}</option>';
+        }
+        html += '{% endfor %}{% endfor %}</select> <br>';
+        return html;
+    }
+
+    function buildQuantityHtml(count){
+        return '<input type="number" id="quantity'+count+'" name="Quantity"> <br>';
+    }
+
+    function buildUnitHtml(count){
+        return '<input type="text" id="unit'+count+'" name="Unit"><br>';
+    }
+
+</script>
 
 
 

@@ -23,6 +23,9 @@ class Dataset(AbstractModel):
     def get_stats(self) -> []:
         return self['statistics']
 
+    def get_version(self) -> float:
+        return self['version']
+
     def get_name(self) -> str:
         return self['name']
 
