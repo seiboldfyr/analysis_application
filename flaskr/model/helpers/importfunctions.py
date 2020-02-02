@@ -31,7 +31,7 @@ def update_metadata(self):
 
 def save_dataset_component(self, quantity, component_id, triplicate_id):
     data = {'triplicate_id': triplicate_id,
-            'dataset_id': self.dataset.get_id(),
+            'dataset_id': self.dataset_id,
             'component_id': component_id,
             'quantity': quantity}
     #TODO: convert all to pM units?

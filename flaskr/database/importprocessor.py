@@ -34,17 +34,22 @@ def getTime(t):
 
 
 class ImportProcessor(AbstractImporter):
-    def __init__(self):
+    def __init__(self, id):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
         self.dataset = None
+        self.dataset_id = id
+        self.component_repository = ComponentRepository()
+        self.protocol_factory = ProtocolFactory()
+        self.protocol_manager = ProtocolManager()
 
     def search(self, name) -> {}:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
             self.dataset = found_dataset
+            self.dataset_id = self.dataset.get_id()
             if found_dataset['version'] != float(current_app.config['VERSION']):
                 dataset_repository.delete_by_filter({'name': name})
                 return False
@@ -55,9 +60,6 @@ class ImportProcessor(AbstractImporter):
         return False
 
     def execute(self, request, name) -> Response:
-        self.component_repository = ComponentRepository()
-        self.protocol_factory = ProtocolFactory()
-        self.protocol_manager = ProtocolManager()
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()
 
@@ -102,22 +104,31 @@ class ImportProcessor(AbstractImporter):
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
         return Response(
             True,
-            self.dataset.get_id()
+            self.dataset_id
         )
 
-    def addcomponents(self, request):
-        componentcount = 0
-        for item in request.form.keys():
-            if item.startswith('type'):
-                componentcount = item[-1]
-                print(request.form)
-                name = request.form['component'+componentcount]
-                unit = request.form['unit'+componentcount]
-                save_dataset_component(self,
-                                       quantity=request.form['quantity' + componentcount],
-                                       component_id=search_components(self, name, unit),
-                                       triplicate_id=0)
-                #TODO: add for each triplicate id
+    def add_components(self, request):
+        componentlist = []
+        componentdict = dict()
+        #TODO: duplicate input fields aren't being identified!
+        for key, value in request.form.items():
+            print(key, value)
+            if key.startswith('Component'):
+                componentdict[key] = value
+                componentlist.append(componentdict)
+            elif key.startswith('Unit'):
+                componentlist[-1][key] = value
+            elif key.startswith('Quantity'):
+                componentlist[-1][key] = value
+
+        for component in componentlist:
+            save_dataset_component(self,
+                                   quantity=component['Quantity'],
+                                   component_id=search_components(self,
+                                                                  name=component['Component'],
+                                                                  unit=component['Unit']),
+                                   triplicate_id=0)
+            #TODO: add for each triplicate id
 
     def getexperimentlength(self, info):
         start = 0
@@ -174,7 +185,7 @@ class ImportProcessor(AbstractImporter):
         if reg_conc(inforow[5]).group(0):
             concentration = reg_conc(inforow[5]).group(0)
 
-        data = {'dataset_id': self.dataset.get_id(),
+        data = {'dataset_id': self.dataset_id,
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
