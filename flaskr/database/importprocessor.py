@@ -108,26 +108,21 @@ class ImportProcessor(AbstractImporter):
         )
 
     def add_components(self, request):
-        componentlist = []
-        componentdict = dict()
-        #TODO: duplicate input fields aren't being identified!
         for key, value in request.form.items():
-            print(key, value)
             if key.startswith('Component'):
-                componentdict[key] = value
-                componentlist.append(componentdict)
-            elif key.startswith('Unit'):
-                componentlist[-1][key] = value
-            elif key.startswith('Quantity'):
-                componentlist[-1][key] = value
+                component = value
+                if not request.form.get('Unit' + str(key[-1])) or \
+                        not request.form.get('Quantity' + str(key[-1])):
+                    flash('missing values', 'error')
+                    continue
+                unit = request.form['Unit' + str(key[-1])]
+                quantity = request.form['Quantity' + str(key[-1])]
 
-        for component in componentlist:
-            save_dataset_component(self,
-                                   quantity=component['Quantity'],
-                                   component_id=search_components(self,
-                                                                  name=component['Component'],
-                                                                  unit=component['Unit']),
-                                   triplicate_id=0)
+                save_dataset_component(self,
+                                       quantity=quantity,
+                                       component_id=
+                                       search_components(self, name=component, unit=unit),
+                                       triplicate_id=0)
             #TODO: add for each triplicate id
 
     def getexperimentlength(self, info):

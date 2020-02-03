@@ -5,18 +5,11 @@ from flaskr.model.helpers.importfunctions import get_collection
 
 
 def build_swap_inputs(self):
-    swaporigin = []
-    swapdest = []
-    for key, item in self.form.items():
-        if key.startswith('Swap From'):
-            swaporigin.append(item)
-        elif key.startswith('Swap To'):
-            count = len(swapdest)
-            swapdest.append(item)
-            self.swaps[swaporigin[count]] = swapdest[count]
-        elif item.startswith('Bidirectional Swap'):
-            count = len(swapdest) - 1
-            self.swaps[swapdest[count]] = swaporigin[count]
+    for item in self.form.keys():
+        if item.startswith('Swap From'):
+            self.swaps[self.form[item]] = self.form['Swap To ' + str(item[-1])]
+        if item.startswith('Bidirectional Swap'):
+            self.swaps[self.form['Swap To ' + str(item[-1])]] = self.form['Swap From ' + str(item[-1])]
 
 
 def build_group_inputs(self):
