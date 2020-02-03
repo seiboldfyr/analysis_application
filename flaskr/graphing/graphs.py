@@ -81,35 +81,25 @@ class Grapher:
                      var_name='variable',
                      value_name='value')
 
-        startgraphing = time.time()
         if features.get('experimental'):
             self.CtThresholds(testdf)
 
-        else:
-
+        if features.get('rfus'):
             self.RFUIndividualGraphsByGroup(rfudf, testdf)
-            graphtimes = [time.time() - startgraphing]
-            startgraphing = time.time()
-
             self.RFUGraphs(rfudf)
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
 
+        if features.get('inflections'):
             self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
-
             self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
 
-            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
-
+        if features.get('curvefits'):
             self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            print(graphtimes)
+
+        if features.get('percentdiffs'):
+            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+
+        if len(self.graph_urls) < 1:
+            self.RFUGraphs(rfudf)
 
         return [self.graph_urls, self.name]
 
