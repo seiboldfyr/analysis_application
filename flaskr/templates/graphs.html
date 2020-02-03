@@ -10,14 +10,29 @@ Graphs for dataset {{name}}
   <form method = "POST">
       <br><br>
       <div id="graph-features">
+
+          <input type="checkbox" name='rfus' id="rfus"/>
+          <label for="rfus"> RFU graphs </label><br>
+
+          <input type="checkbox" name='inflections' id="inflections"/>
+          <label for="inflections"> Inflection graphs </label><br>
+
+          <input type="checkbox" name='curvefits' id="curvefits"/>
+          <label for="curvefits"> Curve Fit graphs </label><br>
+
+          <input type="checkbox" name='percentdiffs' id="percentdiffs"/>
+          <label for="percentdiffs"> Percent Difference graphs </label><br>
+
+          <input type="checkbox" name='experimental' id="experimental"/>
+          <label for="experimental"> Experimental graphs </label><br>
+
+          <br>
+
           <input type="checkbox" name='transparent' id="transparent">
           <label for="transparent"> Transparent graphs </label><br>
 
           <input type="checkbox" name='white' id="white"/>
           <label for="white"> White graphs </label><br>
-
-          <input type="checkbox" name='experimental' id="experimental"/>
-          <label for="experimental"> Experimental graphs </label>
 
         <br>
       </div>
@@ -26,29 +41,20 @@ Graphs for dataset {{name}}
 
       <input type="submit" name='download' value="Download ZIP File"/>
       Please only click the download button ONCE.
+
   </form>
 </div>
 
 <script>
-    if ("{{ prevTransparent }}".toString() == 'on') {
-        document.getElementById('transparent').checked = true
-    }
-    if ("{{ prevTransparent }}".toString() != 'on') {
-        document.getElementById('transparent').checked = false
-    }
-    if ("{{ prevWhite }}".toString() == 'on') {
-        document.getElementById('white').checked = true
-    }
-    if ("{{ prevWhite }}".toString() != 'on') {
-        document.getElementById('white').checked = false
-    }
-    if ("{{ prevExperimental }}".toString() == 'on') {
-        document.getElementById('experimental').checked = true
-    }
-    if ("{{ prevExperimental }}".toString() != 'on') {
-        document.getElementById('experimental').checked = false
-    }
 
+    var features = {{ features|tojson }};
+    document.getElementById('experimental').checked = features.experimental == 'on' ? true : false;
+    document.getElementById('transparent').checked = features.transparent == 'on' ? true : false;
+    document.getElementById('white').checked = features.white == 'on' ? true : false;
+    document.getElementById('rfus').checked = features.rfus == 'on' ? true : false;
+    document.getElementById('inflections').checked = features.inflections == 'on' ? true : false;
+    document.getElementById('curvefits').checked = features.curvefits == 'on' ? true : false;
+    document.getElementById('percentdiffs').checked = features.percentdiffs == 'on' ? true : false;
 
 </script>
 
