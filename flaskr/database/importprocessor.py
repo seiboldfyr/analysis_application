@@ -34,7 +34,7 @@ def getTime(t):
 
 
 class ImportProcessor(AbstractImporter):
-    def __init__(self, id):
+    def __init__(self, id=None):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
