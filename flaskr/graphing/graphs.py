@@ -61,11 +61,11 @@ class Grapher:
 
         rfudf = df.copy()
         for i in range(len(rfudf['RFUs'].iloc[0])):
-            self.time.append(df['cycle'].iloc[0]*i/60)
+            self.time.append(i)
 
         df['DeltaCt'] = [x[0] if len(x) > 0 else 0 for x in df['deltaCt']]
         df['CtThreshold'] = [x[1] if len(x) > 1 else 0 for x in df['deltaCt']]
-        df['CtRFU'] = [x[2] if len(x) > 2 else 0 for x in df['deltaCt'] ]
+        df['CtRFU'] = [x[2] if len(x) > 2 else 0 for x in df['deltaCt']]
         for inf in range(4):
             df['Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflections']]
             df['RFU of Inflection ' + str(inf)] = [dict(x)[str(inf+1)] if dict(x).get(str(inf+1)) else 0 for x in df['inflectionRFUs']]

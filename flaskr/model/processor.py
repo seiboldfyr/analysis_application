@@ -69,7 +69,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n * well.get_cycle() / 60 for n in range(cut, len(well.get_rfus()))]
+                self.time = [n for n in range(cut, len(well.get_rfus()))]
 
             well = add_custom_group_label(self, well)
 
