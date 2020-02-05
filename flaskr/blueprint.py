@@ -91,9 +91,7 @@ def graphs(id, features=None):
                            id=id,
                            graphs=graphs.values(),
                            name=name,
-                           prevTransparent=request.form.get('transparent'),
-                           prevWhite=request.form.get('white'),
-                           prevExperimental=request.form.get('experimental'))
+                           features=request.form.to_dict())
 # TODO: passing these features as parameters is messy way to mark checkboxes on the post form
 # find a better way!
 
