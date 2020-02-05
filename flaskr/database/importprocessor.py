@@ -108,6 +108,9 @@ class ImportProcessor(AbstractImporter):
         )
 
     def add_components(self, request):
+        triplicatelist = self.dataset.get_triplicate_list()
+        print(triplicatelist)
+        print(request.form)
         for key, value in request.form.items():
             if key.startswith('Component'):
                 component = value
@@ -117,12 +120,12 @@ class ImportProcessor(AbstractImporter):
                     continue
                 unit = request.form['Unit' + str(key[-1])]
                 quantity = request.form['Quantity' + str(key[-1])]
-
-                save_dataset_component(self,
-                                       quantity=quantity,
-                                       component_id=
-                                       search_components(self, name=component, unit=unit),
-                                       triplicate_id=0)
+                for triplicate in triplicatelist:
+                    save_dataset_component(self,
+                                           quantity=quantity,
+                                           component_id=
+                                           search_components(self, name=component, unit=unit),
+                                           triplicate_id=triplicate)
             #TODO: add for each triplicate id
 
     def getexperimentlength(self, info):

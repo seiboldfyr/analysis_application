@@ -41,13 +41,25 @@ class Dataset(AbstractModel):
             self.measurement_collection.add_filter('dataset_id', self.get_id())
         return self.measurement_collection.to_df()
 
+    def get_triplicate_list(self):
+        if self.measurement_collection is None:
+            self.measurement_collection = DataframeCollection()
+            self.measurement_collection.add_filter('dataset_id', self.get_id())
+        triplicatelist = []
+        previoustriplicate = 0
+        for measurement in self.measurement_collection:
+            triplicate = measurement.get_triplicate()
+            if triplicate != previoustriplicate:
+                triplicatelist.append(measurement.get_triplicate_id())
+        return
+
     def get_component_collection(self) -> ProtocolCollection:
-            if self.component_collection is None:
-                self.component_collection = ProtocolCollection()
-                self.component_collection.add_filter('dataset_id', self.get_id())
-                # for item in self.component_collection:
-                    # TODO: get component name/unit from componentcollection
-            return self.component_collection
+        if self.component_collection is None:
+            self.component_collection = ProtocolCollection()
+            self.component_collection.add_filter('dataset_id', self.get_id())
+            # for item in self.component_collection:
+                # TODO: get component name/unit from componentcollection
+        return self.component_collection
 
     def get_well_count(self) -> int:
         """This should be added after the measures are imported"""

@@ -34,7 +34,7 @@
                     <select id="typetemplate" name="Type0">
                         <option value={{type}}>{{type}}</option>
                     </select>
-                    {% endfor %}</p><br>
+                    {% endfor %}</p>
             </th>
 
             <th>
@@ -45,14 +45,14 @@
                         <option value={{name}}>{{name}}</option>
                         {% endfor %}
                         {% endfor %}
-                    </select></p><br>
+                    </select></p>
             </th>
 
             <th><p id="quantityfield">
-                <input id="quantitytemplate" name="Quantity0" type="number"/></p><br></th>
+                <input id="quantitytemplate" name="Quantity0" type="number"/></p></th>
 
             <th><p id="unitfield">
-                <input id="unittemplate" name="Unit0" type="text"/></p><br></th>
+                <input id="unittemplate" name="Unit0" type="text"/></p></th>
 
             </tbody>
 
@@ -81,7 +81,7 @@
             <tbody>
             <th><p id="grouplabelfield">
                     <input id="grouplabeltemplate" name="Group Label 0" type="text"/>
-                </p></th><br>
+                </p></th>
             <th><p id="groupwellfield">
                     <input id="groupwelltemplate" name="Group Wells 0" type="number"/>
                 </p></th>
@@ -115,7 +115,7 @@
             <tbody>
             <th><p id="swapfromfield">
                     <input id="swapfromtemplate" name="Swap From 0" placeholder="A01" type="text"/>
-                </p></th><br>
+                </p></th>
             <th><p id="swaptofield">
                     <input id="swaptotemplate" name="Swap To 0" placeholder="D01" type="text"/>
                 </p></th>
@@ -174,6 +174,7 @@
         itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
         cln = itm.cloneNode(true);
         document.getElementById(fieldname).appendChild(cln);
+        document.getElementById(fieldname).innerhtml += '<br>';
     }
 
 </script>

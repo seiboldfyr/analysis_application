@@ -69,6 +69,9 @@ class Measurement(AbstractModel):
     def get_triplicate(self) -> int:
         return self['triplicate']
 
+    def get_triplicate_id(self) -> int:
+        return self['triplicate_id']
+
     def get_inflections(self) -> list:
         return self['inflections']
 
