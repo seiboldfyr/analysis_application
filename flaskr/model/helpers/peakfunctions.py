@@ -49,6 +49,7 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
             derivative = remove_peak(derivative, maxpeak[0])
     return allpeaks
 
+
 def remove_peak(data, peakindex, getnegativedata=False):
     # Finds the lowest trough that occurs immediately before or after the peak
     # replaces the peak with the trough value
@@ -60,7 +61,7 @@ def remove_peak(data, peakindex, getnegativedata=False):
             data[i:peakindex] = trough
             break
     if getnegativedata:
-        for i in range(peakindex, len(data)):
+        for i in range(peakindex, len(data)-1):
             if data[i+1] <= trough:
                 data[:i+1] = trough
                 return -data
