@@ -4,8 +4,7 @@ import io
 import base64
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import time
-from flask import current_app
+from flask import current_app, flash
 import matplotlib
 matplotlib.use('Agg')
 
@@ -128,7 +127,11 @@ class Grapher:
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
-        df.insert(0, 'labelwithoutgroup', [reg_conc(item).group(0) for item in df['label']])
+        if len([reg_conc(item) for item in df['label'] if reg_conc(item)]) > 0:
+            df.insert(0, 'labelwithoutgroup', [reg_conc(item).group(0) for item in df['label']])
+        else:
+            df.insert(0, 'labelwithoutgroup', df['label'])
+
         for inf in range(4):
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
                                        data=df[df['variable'] == "Inflection " + str(inf)],
@@ -225,6 +228,9 @@ class Grapher:
     def CurveFitByGroup(self, df):              # TODO: Figure out vertical shift in curve-fitting, see 20200110b_AA output
         for group in range(1, int(df['group'].max()) + 1):
             cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
+            if len([get_concentrations(reg_conc(item).group(0)) for item in cdf['label'] if reg_conc(item)]) == 0:
+                flash('The concentration cannot be identified for curve fit graphs', 'error')
+                break
             cdf.insert(0, 'pMconcentration', [get_concentrations(reg_conc(item).group(0))
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]
