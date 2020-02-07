@@ -120,7 +120,7 @@ class ImportProcessor(AbstractImporter):
             if row[0] == 'Run Started':
                 start = getTime(row[1])
         if start == 0 or end == 0:
-            current_app.logger("Error retrieving experiment length")
+            current_app.logger.error("Error retrieving experiment length")
         self.experimentlength = (end-start).total_seconds()
 
     def iterateidentifiers(self, label):
