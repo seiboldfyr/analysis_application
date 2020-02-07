@@ -41,9 +41,10 @@ def search():
 
             valid_dataset = importer.search(name)
             if not valid_dataset:
-                flash('The data was uploaded with an outdated application version %s, '
-                      'inflections will be replaced with those found using version %s.'
-                      % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
+                if importer.dataset is not None:
+                    flash('The data was uploaded with an outdated application version %s, '
+                          'inflections will be replaced with those found using version %s.'
+                          % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
                 response = importer.execute(request, name)
                 if not response.is_success():
                     flash(response.get_message(), 'error')

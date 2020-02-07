@@ -13,6 +13,8 @@
     }
 
 </style>
+
+
 <br>
 <div class="formwrapper">
     <form method=post>
@@ -28,6 +30,7 @@
             </thead>
 
             <tbody id="componenttable">
+            <div id="template">
                 <th><select id="typetemplate" name="Type0" class="componenttemplate" onchange="refreshNames()">
                         {% for type, names in components.items() %}
                         {% set selectedtype = type %}
@@ -41,6 +44,7 @@
                     </select><br></th>
                 <th><input id="quantitytemplate" name="Quantity0" type="number" class="componenttemplate"/><br></th>
                 <th><input id="unittemplate" name="Unit0" type="text" class="componenttemplate"/><br></th>
+            </div>
 
             <div class="componentfield">
                 <th><p id="typefield"></p></th>
@@ -171,15 +175,21 @@
         // itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
         // itm.id = itm.name.toString().substring(0,lastPosition) + (increment + 1);
         var table = document.getElementById('componenttable');
+        var components = document.getElementsByTagName('component');
         var row = table.insertRow(-1);
         var r = document.getElementsByClassName(templatename);
 
-        row.outerHTML += '<th>' + r[0].outerHTML + '<br></th>';
+        console.log(itm)
+        // row.outerHTML += '<th>' + r[0].outerHTML + '<br></th>';
+        // row.outerHTML += '<th>' + r[1].outerHTML + '<br></th>';
 
-        for (let i=1; i<r.length; i++){
-            row.innerHTML += '<th>' + r[i].outerHTML + '<br></th>';
+        console.log(itm[1])
+
+        for (let i=1; i<itm.length; i++){
+            console.log(itm[i])
+            row.innerHTML += '<th>' + itm[i] + '<br></th>';
         }
-        console.log(row)
+        // console.log(row)
 
 
     }
