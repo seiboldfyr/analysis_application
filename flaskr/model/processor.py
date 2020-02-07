@@ -58,7 +58,7 @@ class Processor(AbstractProcessor):
                 try:
                     self.swaps.pop(well.get_excelheader())
                 except KeyError:
-                    current_app.logger('Error deleting swap from swap dictionary')
+                    current_app.logger.error('Error deleting swap from swap dictionary')
 
             if cut > 0:
                 edit_RFUs(self, well, cut)
