@@ -33,12 +33,12 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
         # get the [width, width height, left_ips, right_ips] from the scipy peak width function
         widths = peak_widths(derivative, maxpeak)
         if widths[0] == 0:
-            current_app.logger.error('Width finding error 1, dataset: %s' % self.dataset_id, 'error')
+            current_app.logger.error('Width finding error 1, dataset: %s' % self.dataset_id)
             break
         leftside = int(np.floor(widths[2][0]))
         rightside = np.min([int(np.ceil(widths[3][0])), len(derivative)-1])
         if rightside - leftside < 2:
-            current_app.logger.error('Width finding error 2, dataset: %s' % self.dataset_id, 'error')
+            current_app.logger.error('Width finding error 2, dataset: %s' % self.dataset_id)
             break
 
         # fit a polynomial to the derivative
