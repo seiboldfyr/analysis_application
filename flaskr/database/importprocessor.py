@@ -180,7 +180,7 @@ class ImportProcessor(AbstractImporter):
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         concentration = 'unknown'
-        if reg_conc(inforow[5]).group(0):
+        if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
         data = {'dataset_id': self.dataset_id,
