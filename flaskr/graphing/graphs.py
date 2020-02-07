@@ -115,7 +115,7 @@ class Grapher:
             try:
                 ax = plt.gca().add_artist(legend1)
             except matplotlib.MatplotlibDeprecationWarning:
-                current_app.logger.error('Matplotlib depreciation warning with dataset: %s' % self.dataset_id, 'error')
+                current_app.logger.error('Matplotlib depreciation warning with dataset: %s' % self.dataset_id)
 
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(get_unique_group(df['label']))],
@@ -146,7 +146,7 @@ class Grapher:
             try:
                 ax = plt.gca().add_artist(legend1)
             except matplotlib.MatplotlibDeprecationWarning:
-                current_app.logger.error('Matplotlib depreciation with dataset: %s' % self.dataset_id, 'error')
+                current_app.logger.error('Matplotlib depreciation with dataset: %s' % self.dataset_id)
 
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(grouplabels)],
