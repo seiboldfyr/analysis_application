@@ -27,32 +27,28 @@
             </tr>
             </thead>
 
-            <tbody>
-            <th>
-                <p id="typefield">
-                    {% for type, names in components.items() %}
-                    <select id="typetemplate" name="Type0">
-                        <option value={{type}}>{{type}}</option>
-                    </select>
-                    {% endfor %}</p>
-            </th>
-
-            <th>
-                <p id="namefield">
-                    <select id="nametemplate" name="Component0">
+            <tbody id="componenttable">
+                <th><select id="typetemplate" name="Type0" class="componenttemplate" onchange="refreshNames()">
                         {% for type, names in components.items() %}
-                        {% for name in names%}
+                        {% set selectedtype = type %}
+                        <option value={{type}}>{{type}}</option>
+                        {% endfor %}
+                    </select><br></th>
+                <th><select id="nametemplate" name="Component0" class="componenttemplate">
+                        {% for name in components[selectedtype] %}
                         <option value={{name}}>{{name}}</option>
                         {% endfor %}
-                        {% endfor %}
-                    </select></p>
-            </th>
+                    </select><br></th>
+                <th><input id="quantitytemplate" name="Quantity0" type="number" class="componenttemplate"/><br></th>
+                <th><input id="unittemplate" name="Unit0" type="text" class="componenttemplate"/><br></th>
 
-            <th><p id="quantityfield">
-                <input id="quantitytemplate" name="Quantity0" type="number"/></p></th>
+            <div class="componentfield">
+                <th><p id="typefield"></p></th>
+                <th><p id="namefield"></p></th>
+                <th><p id="quantityfield"></p></th>
+                <th><p id="unitfield"></p></th>
+            </div>
 
-            <th><p id="unitfield">
-                <input id="unittemplate" name="Unit0" type="text"/></p></th>
 
             </tbody>
 
@@ -71,7 +67,7 @@
             <input name="customlabel" type="text"/><br>
         <p class="big">
 
-        <table>
+        <table id="grouptable">
             <thead>
             <tr><th> Group Label </th>
                 <th> Number of Wells </th>
@@ -105,7 +101,7 @@
         <p class="big">
 
 
-        <table><h>Swaps</h>
+        <table id="swaptable"><h>Swaps</h>
             <thead>
             <tr><th> From</th>
                 <th> To</th>
@@ -141,7 +137,7 @@
 
         <p><input name='Run' type="submit" value="Run analysis"/></p>
 
-        <br>
+<!--        <p id="breakdiv"><th>h<br></th></p>-->
     </form>
 </div>
 
@@ -149,10 +145,12 @@
     function addOne(type) {
         switch (type) {
             case 'component' :
-                clone('typetemplate', 'typefield');
-                clone('nametemplate', 'namefield');
-                clone('quantitytemplate', 'quantityfield');
-                clone('unittemplate', 'unitfield');
+                clone2('componenttemplate', 'componentfield');
+
+                // clone('typetemplate', 'typefield');
+                // clone('nametemplate', 'namefield');
+                // clone('quantitytemplate', 'quantityfield');
+                // clone('unittemplate', 'unitfield');
                 break;
             case 'group':
                 clone('grouplabeltemplate', 'grouplabelfield');
@@ -166,16 +164,42 @@
                 break;
         }
     }
+    function clone2(templatename, fieldname) {
+        itm = document.getElementsByClassName(templatename);
+        // lastPosition = itm.name.toString().length-1;
+        // increment = parseFloat(itm.name.toString().charAt(lastPosition));
+        // itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
+        // itm.id = itm.name.toString().substring(0,lastPosition) + (increment + 1);
+        var table = document.getElementById('componenttable');
+        var row = table.insertRow(-1);
+        var r = document.getElementsByClassName(templatename);
+
+        row.outerHTML += '<th>' + r[0].outerHTML + '<br></th>';
+
+        for (let i=1; i<r.length; i++){
+            row.innerHTML += '<th>' + r[i].outerHTML + '<br></th>';
+        }
+        console.log(row)
+
+
+    }
+
 
     function clone(templatename, fieldname) {
         itm = document.getElementById(templatename);
+
         lastPosition = itm.name.toString().length-1;
         increment = parseFloat(itm.name.toString().charAt(lastPosition));
         itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
-        cln = itm.cloneNode(true);
-        document.getElementById(fieldname).appendChild(cln);
-        document.getElementById(fieldname).innerhtml += '<br>';
+        itm.id = itm.name.toString().substring(0,lastPosition) + (increment + 1);
+
+        document.getElementById(fieldname).appendChild(itm.cloneNode());
     }
+
+    function refreshNames() {
+        document.getElementById('nametemplate').innerHTML = document.getElementById('namefield').innerHTML
+    }
+
 
 </script>
 
