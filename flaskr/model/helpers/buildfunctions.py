@@ -75,7 +75,7 @@ def swap_wells(self, originwell): # replaces origin well info with destination w
             return originwell
 
     flash('Swap could not be completed for well: %s' % originwell.get_excelheader(), 'error')
-    current_app.logger('A swap could not be completed, dataset: %s' % self.dataset_id)
+    current_app.logger.error('A swap could not be completed, dataset: %s' % self.dataset_id)
     return originwell
 
 
