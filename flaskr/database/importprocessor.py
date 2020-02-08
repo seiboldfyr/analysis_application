@@ -149,7 +149,7 @@ class ImportProcessor(AbstractImporter):
             self.identifers['triplicate'] += 1
             self.identifers['triplicate_id'] = ObjectId()
             result = self.validate_target(label)
-            if result.is_success():
+            if result is not None:
                 self.add_target(label=label,
                                 component_id=result.get_message(),
                                 triplicate_id=self.identifers['triplicate_id'])

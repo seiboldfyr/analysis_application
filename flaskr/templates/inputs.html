@@ -31,28 +31,20 @@
 
             <tbody id="componenttable">
             <div id="template">
-                <th><select id="typetemplate" name="Type0" class="componenttemplate" onchange="refreshNames()">
+                <th><p id="typefield"></p><select id="typetemplate" name="Type0" onchange="refreshNames('Buffer')">
                         {% for type, names in components.items() %}
                         {% set selectedtype = type %}
                         <option value={{type}}>{{type}}</option>
                         {% endfor %}
                     </select><br></th>
-                <th><select id="nametemplate" name="Component0" class="componenttemplate">
+                <th><p id="namefield"></p><select id="nametemplate" name="Component0" >
                         {% for name in components[selectedtype] %}
                         <option value={{name}}>{{name}}</option>
                         {% endfor %}
                     </select><br></th>
-                <th><input id="quantitytemplate" name="Quantity0" type="number" class="componenttemplate"/><br></th>
-                <th><input id="unittemplate" name="Unit0" type="text" class="componenttemplate"/><br></th>
+                <th><p id="quantityfield"></p><input id="quantitytemplate" name="Quantity0" type="number"/><br></th>
+                <th><p id="unitfield"></p><input id="unittemplate" name="Unit0" type="text"/><br></th>
             </div>
-
-            <div class="componentfield">
-                <th><p id="typefield"></p></th>
-                <th><p id="namefield"></p></th>
-                <th><p id="quantityfield"></p></th>
-                <th><p id="unitfield"></p></th>
-            </div>
-
 
             </tbody>
 
@@ -141,20 +133,21 @@
 
         <p><input name='Run' type="submit" value="Run analysis"/></p>
 
-<!--        <p id="breakdiv"><th>h<br></th></p>-->
+        <th id="startcol"><br id="breakdiv"></th></p>
     </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
 <script type="text/javascript">
     function addOne(type) {
         switch (type) {
             case 'component' :
-                clone2('componenttemplate', 'componentfield');
+                clone('typetemplate', 'typefield');
+                clone('nametemplate', 'namefield');
+                clone('quantitytemplate', 'quantityfield');
+                clone('unittemplate', 'unitfield');
 
-                // clone('typetemplate', 'typefield');
-                // clone('nametemplate', 'namefield');
-                // clone('quantitytemplate', 'quantityfield');
-                // clone('unittemplate', 'unitfield');
+                refreshNames('Target')
                 break;
             case 'group':
                 clone('grouplabeltemplate', 'grouplabelfield');
@@ -168,48 +161,26 @@
                 break;
         }
     }
-    function clone2(templatename, fieldname) {
-        itm = document.getElementsByClassName(templatename);
-        // lastPosition = itm.name.toString().length-1;
-        // increment = parseFloat(itm.name.toString().charAt(lastPosition));
-        // itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
-        // itm.id = itm.name.toString().substring(0,lastPosition) + (increment + 1);
-        var table = document.getElementById('componenttable');
-        var components = document.getElementsByTagName('component');
-        var row = table.insertRow(-1);
-        var r = document.getElementsByClassName(templatename);
-
-        console.log(itm)
-        // row.outerHTML += '<th>' + r[0].outerHTML + '<br></th>';
-        // row.outerHTML += '<th>' + r[1].outerHTML + '<br></th>';
-
-        console.log(itm[1])
-
-        for (let i=1; i<itm.length; i++){
-            console.log(itm[i])
-            row.innerHTML += '<th>' + itm[i] + '<br></th>';
-        }
-        // console.log(row)
-
-
-    }
 
 
     function clone(templatename, fieldname) {
         itm = document.getElementById(templatename);
-
         lastPosition = itm.name.toString().length-1;
         increment = parseFloat(itm.name.toString().charAt(lastPosition));
         itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
-        itm.id = itm.name.toString().substring(0,lastPosition) + (increment + 1);
+        // itm.id = itm.id.toString().substring(0,lastPosition) + (increment + 1);
 
-        document.getElementById(fieldname).appendChild(itm.cloneNode());
+        br = document.getElementById('breakdiv');
+        document.getElementById(fieldname).append(br.cloneNode());
+        document.getElementById(fieldname).append(itm.cloneNode());
     }
 
-    function refreshNames() {
-        document.getElementById('nametemplate').innerHTML = document.getElementById('namefield').innerHTML
+    function refreshNames(type) {
+        var componenttypes = {{ components | tojson }};
+        componenttypes[type].forEach(function(name){
+            $('#nametemplate').append("<option>" + name + "</option>");
+        });
     }
-
 
 </script>
 
