@@ -8,6 +8,8 @@ from io import BytesIO
 
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
+from flaskr.components.component_models.collection import Collection
+from flaskr.database.dataset_models.collection import Collection as DatasetCollection
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
 from flaskr.graphing.graphs import Grapher
@@ -19,7 +21,8 @@ base_blueprint = Blueprint('base', __name__, template_folder='templates')
 @base_blueprint.route('/')
 @login_required
 def home():
-    return render_template('home.html')
+    dataset_collection = DatasetCollection()
+    return render_template('home.html', datasets=dataset_collection)
 
 
 @base_blueprint.route('/search', methods=['GET', 'POST'])
@@ -28,23 +31,38 @@ def search():
     if request.method == 'POST':
 
         validator = ImportValidator()
-        result = validator.execute(request)
-        if not result.is_success():
-            flash('%s' % result.get_message(), 'error')
-            return redirect(url_for('base.home'))
-
-        fileinfo = {}
-        for f in request.files:
-            [name, fileinfo] = buildname(request.files.get(f).filename)
-
         importer = ImportProcessor()
-        valid_datset = importer.search(name)
-        if not valid_datset:
-            response = importer.execute(request, name)
-            if not response.is_success():
-                flash(response.get_message(), 'error')
 
-        #TODO: get components and list on search screen
+        result = validator.execute(request)
+        if result.is_success():
+            fileinfo = {}
+            for f in request.files:
+                [name, fileinfo] = buildname(request.files.get(f).filename)
+
+            valid_dataset = importer.search(name)
+            if not valid_dataset:
+                if importer.dataset is not None:
+                    flash('The data was uploaded with an outdated application version %s, '
+                          'inflections will be replaced with those found using version %s.'
+                          % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
+                response = importer.execute(request, name)
+                if not response.is_success():
+                    flash(response.get_message(), 'error')
+                    return redirect(url_for('base.home'))
+
+        else:
+            name = request.form['Select a Dataset']
+            valid_dataset = importer.search(name[:12])
+            if not valid_dataset:
+                flash('The data was uploaded with an outdated application version %s, '
+                      'please upload new INFO/RFU files.'
+                      % importer.dataset['version'], 'error')
+                return redirect(url_for('base.home'))
+
+            fileinfo = dict(Date=name[:8],
+                            Id=name[8:9],
+                            Initials=name[10:12])
+
         return render_template('search.html',
                                result=fileinfo,
                                id=importer.dataset['_id'])
@@ -53,14 +71,16 @@ def search():
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
+    types = Collection().get_types()
+    components = Collection().get_components()
     if request.method == 'POST':
         return analysis(id=id, form=request.form)
-    return render_template('inputs.html', id=id)
+    return render_template('inputs.html', id=id, types=types, components=components)
 
 
 @base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
 @login_required
-def analysis(id, form=None):
+def analysis(id, form=dict()):
     response = Processor(form=form,
                          dataset_id=id).execute()
     if not response.is_success():

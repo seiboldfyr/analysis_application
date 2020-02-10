@@ -1,6 +1,5 @@
 import datetime
 import re
-import os
 from bson import ObjectId
 
 from flask import flash, current_app
@@ -8,7 +7,6 @@ from flask import flash, current_app
 from flaskr.database.dataset_models.factory import Factory
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.components.component_models.repository import Repository as ComponentRepository
-from flaskr.components.component_models.factory import Factory as ComponentFactory
 from flaskr.database.protocol_models.factory import Factory as ProtocolFactory
 from flaskr.database.protocol_models.manager import Manager as ProtocolManager
 from flaskr.database.measurement_models.factory import Factory as MeasurementFactory
@@ -18,7 +16,7 @@ from flaskr.framework.exception import InvalidArgument
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.framework.model.request.response import Response
 from flaskr.model.helpers.calcfunctions import reg_conc
-
+from flaskr.model.helpers.importfunctions import save_dataset_component, search_components
 
 def buildname(excelfilename):
     filename = excelfilename.split('_')
@@ -36,23 +34,25 @@ def getTime(t):
 
 
 class ImportProcessor(AbstractImporter):
-    def __init__(self):
+    def __init__(self, id=None):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
         self.dataset = None
+        self.dataset_id = id
+        self.component_repository = ComponentRepository()
+        self.protocol_factory = ProtocolFactory()
+        self.protocol_manager = ProtocolManager()
 
     def search(self, name) -> {}:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
-            # self.dataset = found_dataset
+            self.dataset = found_dataset
+            self.dataset_id = self.dataset.get_id()
             if found_dataset['version'] != float(current_app.config['VERSION']):
-                flash('The data was uploaded with version %s, '
-                      'inflections will be replaced with those found using version %s.'
-                      % (found_dataset['version'], current_app.config['VERSION']), 'msg')
-                #TODO: any reason to keep the previous dataset? Maybe just the RFUs?
-                dataset_repository.delete_by_filter({'name': name})
+                # dataset_repository.delete_by_filter({'name': name})
+                # print('deleting')
                 return False
             else:
                 self.dataset = found_dataset
@@ -61,9 +61,6 @@ class ImportProcessor(AbstractImporter):
         return False
 
     def execute(self, request, name) -> Response:
-        self.component_repository = ComponentRepository()
-        self.protocol_factory = ProtocolFactory()
-        self.protocol_manager = ProtocolManager()
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()
 
@@ -102,13 +99,14 @@ class ImportProcessor(AbstractImporter):
 
         self.dataset['measure_count'] = self.dataset.get_well_collection().get_size()
         self.dataset['version'] = float(current_app.config['VERSION'])
+        print(self.dataset)
         dataset_repository.save(self.dataset)
 
         flash('File imported successfully', 'success')
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
         return Response(
             True,
-            self.dataset.get_id()
+            self.dataset_id
         )
 
     def getexperimentlength(self, info):
@@ -131,10 +129,10 @@ class ImportProcessor(AbstractImporter):
             self.identifers['sample'] += 1
             self.identifers['triplicate'] += 1
             self.identifers['triplicate_id'] = ObjectId()
-            search_components = self.validate_target(label)
-            if search_components.is_success():
+            result = self.validate_target(label)
+            if result is not None:
                 self.add_target(label=label,
-                                component_id=search_components.get_message(),
+                                component_id=result.get_message(),
                                 triplicate_id=self.identifers['triplicate_id'])
 
             # TODO: check if control is labeled with '_0'
@@ -146,36 +144,17 @@ class ImportProcessor(AbstractImporter):
 
     def validate_target(self, target):
         if re.match(r'^\d+\s*[a-z]+\/*[a-zA-Z]+?\s+\w?', target) is not None:
-            quantityRe = re.match(r'^\d+', target)
-            unitRe = reg_conc(target)
-            if quantityRe is None or unitRe is None:
+            quantityregex = re.match(r'^\d+', target)
+            unitregex = reg_conc(target)
+            if quantityregex is None or unitregex is None:
                 Response(False, 'Target units and name could not be identified')
-            name = target[unitRe.end():]
-            unit = target[quantityRe.end():unitRe.end()]
-
-            component = self.component_repository.search_by_name_and_unit(name, unit)
-            if component is not None:
-                return Response(True, component['_id'])
-            # TODO: edit case if component is not found in library
-            # return Response(False, 'Target does not exist in the component library')
-            self.add_component(name=name, unit=unit)
-        return Response(False, 'Target units and name could not be identified')
-
-    def add_component(self, name, unit):
-        # TODO: delete when component library is filled
-        factory = ComponentFactory()
-        model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
-        self.component_repository.save(model)
+            name = target[unitregex.end():]
+            unit = target[quantityregex.end():unitregex.end()]
+            return search_components(self, name, unit)
 
     def add_target(self, label, component_id, triplicate_id):
         quantity = re.match(r'^\d+', label).group(0)
-        data = {'triplicate_id': triplicate_id,
-                'dataset_id': self.dataset.get_id(),
-                'component_id': component_id,
-                'quantity': quantity}
-        #TODO: convert all to pM units?
-        protocol = self.protocol_factory.create(data)
-        self.protocol_manager.add(protocol)
+        save_dataset_component(self, quantity, component_id, triplicate_id)
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(inforow[5] + '_' + inforow[6])
@@ -185,7 +164,7 @@ class ImportProcessor(AbstractImporter):
         if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
-        data = {'dataset_id': self.dataset.get_id(),
+        data = {'dataset_id': self.dataset_id,
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,

@@ -1,14 +1,14 @@
 import re
 from flask import flash, current_app
 
-from flaskr.database.dataset_models.repository import Repository
+from flaskr.model.helpers.importfunctions import get_collection
 
 
 def build_swap_inputs(self):
     for item in self.form.keys():
         if item.startswith('Swap From'):
             self.swaps[self.form[item]] = self.form['Swap To ' + str(item[-1])]
-        if item.startswith('Bidirectional Swap') == True:
+        if item.startswith('Bidirectional Swap'):
             self.swaps[self.form['Swap To ' + str(item[-1])]] = self.form['Swap From ' + str(item[-1])]
 
 
@@ -18,26 +18,6 @@ def build_group_inputs(self):
             if self.groupings.get(str(item[-1])) is None:    #TODO: see the (*) TODO item in processor.py, this is source of error
                 self.groupings[str(item[-1])] = {}
             self.groupings[item[-1]][item[:-2]] = self.form[item]
-
-
-def get_collection(self):
-    dataset_repository = Repository()
-    dataset = dataset_repository.get_by_id(self.dataset_id)
-    return dataset.get_well_collection()
-
-
-def get_existing_metadata(self):
-    dataset_repository = Repository()
-    model = dataset_repository.get_by_id(self.dataset_id)
-    self.form = dict(form=dict())
-    self.form = model.get_metadata()
-
-
-def update_metadata(self):
-    dataset_repository = Repository()
-    model = dataset_repository.get_by_id(self.dataset_id)
-    model['metadata'] = self.form
-    dataset_repository.save(model)
 
 
 def get_concentrations(string):
@@ -58,11 +38,6 @@ def add_custom_group_label(self, well):
         well['label'] = well.get_label() + '_' + self.groupings[str(well.get_group())]['Group Label']
     well['label'] += '_' + str(well.get_group())
     return well
-
-
-def edit_RFUs(self, originwell, cut):
-    originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
-    self.measurement_manager.update(originwell)
 
 
 def save_temporary_swap(self, originwell):
