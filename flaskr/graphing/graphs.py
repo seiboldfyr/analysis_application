@@ -4,8 +4,7 @@ import io
 import base64
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import time
-from flask import current_app
+from flask import current_app, flash
 import matplotlib
 matplotlib.use('Agg')
 
@@ -81,35 +80,25 @@ class Grapher:
                      var_name='variable',
                      value_name='value')
 
-        startgraphing = time.time()
         if features.get('experimental'):
             self.CtThresholds(testdf)
 
-        else:
-
+        if features.get('rfus'):
             self.RFUIndividualGraphsByGroup(rfudf, testdf)
-            graphtimes = [time.time() - startgraphing]
-            startgraphing = time.time()
-
             self.RFUGraphs(rfudf)
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
 
+        if features.get('inflections'):
             self.InflectionGraphByGroup(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
-
             self.InflectionGraphsByNumber(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
 
-            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
-            graphtimes.append(time.time() - startgraphing)
-            startgraphing = time.time()
-
+        if features.get('curvefits'):
             self.CurveFitByGroup(df[df['variable'].str.startswith('Inflection')])
-            graphtimes.append(time.time() - startgraphing)
-            print(graphtimes)
+
+        if features.get('percentdiffs'):
+            self.percentGraphs(df[df['variable'].str.startswith('Percent Diff ')])
+
+        if len(self.graph_urls) < 1:
+            self.RFUGraphs(rfudf)
 
         return [self.graph_urls, self.name]
 
@@ -126,7 +115,7 @@ class Grapher:
             try:
                 ax = plt.gca().add_artist(legend1)
             except matplotlib.MatplotlibDeprecationWarning:
-                current_app.logger('Matplotlib depreciation warning with dataset: %s' % self.dataset_id, 'error')
+                current_app.logger.error('Matplotlib depreciation warning with dataset: %s' % self.dataset_id, 'error')
 
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(get_unique_group(df['label']))],
@@ -138,7 +127,11 @@ class Grapher:
     def InflectionGraphsByNumber(self, df):
         df.insert(0, 'triplicateIndex', int(df['group'].max())*(df['sample'])+df['group'])
         grouplabels = get_unique_group(df['label'])
-        df.insert(0, 'labelwithoutgroup', [reg_conc(item).group(0) for item in df['label']])
+        if len([reg_conc(item) for item in df['label'] if reg_conc(item)]) > 0:
+            df.insert(0, 'labelwithoutgroup', [reg_conc(item).group(0) for item in df['label']])
+        else:
+            df.insert(0, 'labelwithoutgroup', df['label'])
+
         for inf in range(4):
             indplt = seaborn.swarmplot(x="triplicateIndex", y="value", hue="labelwithoutgroup",
                                        data=df[df['variable'] == "Inflection " + str(inf)],
@@ -153,7 +146,7 @@ class Grapher:
             try:
                 ax = plt.gca().add_artist(legend1)
             except matplotlib.MatplotlibDeprecationWarning:
-                current_app.logger('Matplotlib depreciation with dataset: %s' % self.dataset_id, 'error')
+                current_app.logger.error('Matplotlib depreciation with dataset: %s' % self.dataset_id, 'error')
 
             plt.legend(['Group  ' + str(idx + 1) + '- ' + str(label)
                         for idx, label in enumerate(grouplabels)],
@@ -235,6 +228,9 @@ class Grapher:
     def CurveFitByGroup(self, df):              # TODO: Figure out vertical shift in curve-fitting, see 20200110b_AA output
         for group in range(1, int(df['group'].max()) + 1):
             cdf = df[(df['group'] == group) & df['value'] > 0].sort_values(['triplicate', 'value'])
+            if len([get_concentrations(reg_conc(item).group(0)) for item in cdf['label'] if reg_conc(item)]) == 0:
+                flash('The concentration cannot be identified for curve fit graphs', 'error')
+                break
             cdf.insert(0, 'pMconcentration', [get_concentrations(reg_conc(item).group(0))
                                               for item in cdf['label']])
             cdf = cdf[cdf['pMconcentration'] >= .1]

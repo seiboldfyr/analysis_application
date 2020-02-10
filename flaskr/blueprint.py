@@ -41,8 +41,6 @@ def search():
         valid_datset = importer.search(name)
         if not valid_datset:
             response = importer.execute(request, name)
-            print(response)
-            print(importer.dataset)
             if not response.is_success():
                 flash(response.get_message(), 'error')
 
@@ -93,9 +91,7 @@ def graphs(id, features=None):
                            id=id,
                            graphs=graphs.values(),
                            name=name,
-                           prevTransparent=request.form.get('transparent'),
-                           prevWhite=request.form.get('white'),
-                           prevExperimental=request.form.get('experimental'))
+                           features=request.form.to_dict())
 # TODO: passing these features as parameters is messy way to mark checkboxes on the post form
 # find a better way!
 

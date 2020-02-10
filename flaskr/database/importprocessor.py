@@ -120,7 +120,7 @@ class ImportProcessor(AbstractImporter):
             if row[0] == 'Run Started':
                 start = getTime(row[1])
         if start == 0 or end == 0:
-            current_app.logger("Error retrieving experiment length")
+            current_app.logger.error("Error retrieving experiment length")
         self.experimentlength = (end-start).total_seconds()
 
     def iterateidentifiers(self, label):
@@ -182,7 +182,7 @@ class ImportProcessor(AbstractImporter):
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         concentration = 'unknown'
-        if reg_conc(inforow[5]).group(0):
+        if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
         data = {'dataset_id': self.dataset.get_id(),

@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.signal import peak_widths
-from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values
+from flask import current_app
+
+from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values, square
+
 
 def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
     timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
@@ -26,17 +29,25 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
                 inflectionnumber = 4
 
         maxpeak = list(np.where(derivative == max(derivative)))[0]
+
+        # get the [width, width height, left_ips, right_ips] from the scipy peak width function
         widths = peak_widths(derivative, maxpeak)
         if widths[0] == 0:
+            current_app.logger.error('Width finding error 1, dataset: %s' % self.dataset_id, 'error')
             break
-        leftside = int(widths[2][0])
-        rightside = int(np.min([widths[3][0], len(derivative)-1]))
+        leftside = int(np.floor(widths[2][0]))
+        rightside = np.min([int(np.ceil(widths[3][0])), len(derivative)-1])
         if rightside - leftside < 2:
+            current_app.logger.error('Width finding error 2, dataset: %s' % self.dataset_id, 'error')
             break
 
+        # fit a polynomial to the derivative
         polycoefs = fit_poly_equation(self.time[leftside:rightside],
                                       derivative[leftside:rightside])
 
+        # Calculate the inflection point as the maximum of the fit polynomial
+        # Calculate the expected RFU value at the inflection point by fitting a new polynomial to the original time/rfus
+        # Collect all information into an inflection dictionary
         allpeaks[str(inflectionnumber)] = dict(inflection=-polycoefs[1] / (2 * polycoefs[0]),
                                                rfu=get_expected_values(self, well, -polycoefs[1] / (2 * polycoefs[0]),
                                                                        [leftside, rightside])[0],
@@ -49,6 +60,7 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
             derivative = remove_peak(derivative, maxpeak[0])
     return allpeaks
 
+
 def remove_peak(data, peakindex, getnegativedata=False):
     # Finds the lowest trough that occurs immediately before or after the peak
     # replaces the peak with the trough value
@@ -60,7 +72,7 @@ def remove_peak(data, peakindex, getnegativedata=False):
             data[i:peakindex] = trough
             break
     if getnegativedata:
-        for i in range(peakindex, len(data)):
+        for i in range(peakindex, len(data)-1):
             if data[i+1] <= trough:
                 data[:i+1] = trough
                 return -data
