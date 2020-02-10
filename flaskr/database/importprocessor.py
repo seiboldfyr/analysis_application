@@ -108,15 +108,18 @@ class ImportProcessor(AbstractImporter):
         )
 
     def add_components(self, request):
-        triplicatelist = self.dataset.get_triplicate_list()
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        triplicatelist = dataset.get_triplicate_list()
         print(triplicatelist)
         print(request.form)
         for key, value in request.form.items():
             if key.startswith('Component'):
                 component = value
+
                 if not request.form.get('Unit' + str(key[-1])) or \
                         not request.form.get('Quantity' + str(key[-1])):
-                    flash('missing values', 'error')
+                    flash('Missing values', 'error')
                     continue
                 unit = request.form['Unit' + str(key[-1])]
                 quantity = request.form['Quantity' + str(key[-1])]

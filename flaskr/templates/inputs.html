@@ -29,35 +29,32 @@
             </tr>
             </thead>
 
-            <tbody id="componenttable">
-            <div id="template">
-                <th><p id="typefield"></p><select id="typetemplate" name="Type0" onchange="refreshNames('Buffer')">
-                        {% for type, names in components.items() %}
-                        {% set selectedtype = type %}
+            <tbody>
+                <th><select id="typetemplate" name="Type" onchange="refreshNames()">
+                        {% for type, items in components.items() %}
                         <option value={{type}}>{{type}}</option>
                         {% endfor %}
-                    </select><br></th>
-                <th><p id="namefield"></p><select id="nametemplate" name="Component0" >
-                        {% for name in components[selectedtype] %}
-                        <option value={{name}}>{{name}}</option>
+                    </select></th>
+                <th><select id="nametemplate" name="Component"  onchange="refreshUnit()">
+                        {% for item in components['Target'] %}
+                        <option value={{item[0]}}>{{item[0]}}</option>
                         {% endfor %}
-                    </select><br></th>
-                <th><p id="quantityfield"></p><input id="quantitytemplate" name="Quantity0" type="number"/><br></th>
-                <th><p id="unitfield"></p><input id="unittemplate" name="Unit0" type="text"/><br></th>
-            </div>
-
+                    </select></th>
+                <th><input id="quantitytemplate" name="Quantity" type="number"/></th>
+                <th><input id="unittemplate" name="Unit" type="text"/></th>
             </tbody>
 
             <tfooter>
-                <tr>
-                    <td><br>
-                        <input onclick="addOne('component')" type="button" value="Add a Component"/>
-                    </td>
-                </tr>
+                <tr><td>
+                    <input onclick="addOne('component')" type="button" value="Add component"/>
+                    <input onclick="deleteOne('component')" type="button" value="Delete last component"/>
+                </td></tr>
             </tfooter>
-        </table>
 
-        <p class="big">
+        </table>
+        <p id="component"></p>
+
+        <p class="huge">
 
             Custom Label Addition:
             <input name="customlabel" type="text"/><br>
@@ -71,23 +68,19 @@
             </thead>
 
             <tbody>
-            <th><p id="grouplabelfield">
-                    <input id="grouplabeltemplate" name="Group Label 0" type="text"/>
-                </p></th>
-            <th><p id="groupwellfield">
-                    <input id="groupwelltemplate" name="Group Wells 0" type="number"/>
-                </p></th>
-            <th><p id="groupsamplefield">
-                    <input id="groupsampletemplate" name="Group Samples 0" type="number"/>
-            </p></th>
+            <th><input id="grouplabeltemplate" name="Group Label" type="text"/></th>
+            <th><input id="groupwelltemplate" name="Group Wells" type="number"/></th>
+            <th><input id="groupsampletemplate" name="Group Samples" type="number"/></th>
             </tbody>
 
             <tfooter>
                 <tr><td><br>
-                        <input onclick="addOne('group')" type="button" value="Add a Group"/><br>
+                        <input onclick="addOne('group')" type="button" value="Add group"/><br>
+                        <input onclick="deleteOne('group')" type="button" value="Delete last group"/><br>
                     </td></tr>
             </tfooter>
         </table>
+        <p id="group"></p>
         If no groups are entered, we will attempt to automatically differentiate them
 
         <p class="big">
@@ -105,23 +98,19 @@
             </thead>
 
             <tbody>
-            <th><p id="swapfromfield">
-                    <input id="swapfromtemplate" name="Swap From 0" placeholder="A01" type="text"/>
-                </p></th>
-            <th><p id="swaptofield">
-                    <input id="swaptotemplate" name="Swap To 0" placeholder="D01" type="text"/>
-                </p></th>
-            <th><td><p id="bidirectionalfield">
-                <input id="bidirectionaltemplate" name="Bidirectional Swap 0" type="checkbox"/>
-                </p></td></th>
+            <th><input id="swapfromtemplate" name="Swap From 0" placeholder="A01" type="text"/></th>
+            <th><input id="swaptotemplate" name="Swap To 0" placeholder="D01" type="text"/></th>
+            <th><td><input id="bidirectionaltemplate" name="Bidirectional Swap 0" type="checkbox" value=" "/></td></th>
             </tbody>
 
             <tfooter>
                 <tr><td><br>
-                        <input onclick="addOne('swap')" type="button" value="Add a Swap"/><br>
+                        <input onclick="addOne('swap')" type="button" value="Add swap"/><br>
+                        <input onclick="deleteOne('swap')" type="button" value="Delete last swap"/><br>
                     </td></tr>
             </tfooter>
         </table>
+        <p id="swap"></p>
 
         <p class="big">
             Any wells with known errors
@@ -138,50 +127,28 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="../static/js/inputs.js"></script>
 <script type="text/javascript">
-    function addOne(type) {
-        switch (type) {
-            case 'component' :
-                clone('typetemplate', 'typefield');
-                clone('nametemplate', 'namefield');
-                clone('quantitytemplate', 'quantityfield');
-                clone('unittemplate', 'unitfield');
-
-                refreshNames('Target')
-                break;
-            case 'group':
-                clone('grouplabeltemplate', 'grouplabelfield');
-                clone('groupwelltemplate', 'groupwellfield');
-                clone('groupsampletemplate', 'groupsamplefield');
-                break;
-            case 'swap':
-                clone('swapfromtemplate', 'swapfromfield');
-                clone('swaptotemplate', 'swaptofield');
-                clone('bidirectionaltemplate', 'bidirectionalfield');
-                break;
-        }
-    }
-
-
-    function clone(templatename, fieldname) {
-        itm = document.getElementById(templatename);
-        lastPosition = itm.name.toString().length-1;
-        increment = parseFloat(itm.name.toString().charAt(lastPosition));
-        itm.name = itm.name.toString().substring(0,lastPosition) + (increment + 1);
-        // itm.id = itm.id.toString().substring(0,lastPosition) + (increment + 1);
-
-        br = document.getElementById('breakdiv');
-        document.getElementById(fieldname).append(br.cloneNode());
-        document.getElementById(fieldname).append(itm.cloneNode());
-    }
-
-    function refreshNames(type) {
+    function refreshNames() {
         var componenttypes = {{ components | tojson }};
-        componenttypes[type].forEach(function(name){
-            $('#nametemplate').append("<option>" + name + "</option>");
+        var type = $(`#typetemplate`).val()
+        $('#nametemplate').empty()
+        componenttypes[type].forEach(function(item){
+            $('#nametemplate').append("<option>" + item.name + "</option>");
+        });
+        refreshUnit()
+    }
+
+    function refreshUnit() {
+        var componenttypes = {{ components | tojson }};
+        var type = $(`#typetemplate`).val()
+        var name = $(`#nametemplate`).val()
+        componenttypes[type].forEach(function(item){
+            if (item.name == name) {
+                $(`#unittemplate`).val(item.unit)
+            }
         });
     }
-
 </script>
 
 

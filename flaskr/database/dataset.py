@@ -51,7 +51,7 @@ class Dataset(AbstractModel):
             triplicate = measurement.get_triplicate()
             if triplicate != previoustriplicate:
                 triplicatelist.append(measurement.get_triplicate_id())
-        return
+        return triplicatelist
 
     def get_component_collection(self) -> ProtocolCollection:
         if self.component_collection is None:

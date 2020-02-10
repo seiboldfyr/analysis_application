@@ -30,7 +30,8 @@ class Collection(AbstractCollection):
         for item in self:
             if not components.get(item['type']):
                 components[item['type']] = []
-            components[item['type']].append(item['name'])
+            components[item['type']].append({'name': item['name'],
+                                             'unit': item['unit']})
         return components
 
 
