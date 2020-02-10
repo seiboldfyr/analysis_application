@@ -121,7 +121,7 @@ class Grapher:
                         for idx, label in enumerate(get_unique_group(df['label']))],
                        bbox_to_anchor=(1, .1), loc='lower left')
             plt.xlabel('')
-            plt.ylabel('Time (Min)')
+            plt.ylabel('Cycles')
             self.saveimage(plt, 'Inflections_' + str(group))
 
     def InflectionGraphsByNumber(self, df):
@@ -138,7 +138,7 @@ class Grapher:
                                        marker='o', s=2.6, linewidth=.6)
             indplt.set(xticklabels=[str(num % 4 + 1) for num in np.arange(32)])
             indplt = removeLegendTitle(indplt)
-            plt.ylabel('Time (Min)')
+            plt.ylabel('Cycles')
             plt.xlabel('Group Number')
             box = plt.gca().get_position()
             plt.gca().set_position([box.x0, box.y0, box.width * 0.75, box.height])
@@ -172,7 +172,7 @@ class Grapher:
                                        data=rdf, linewidth=.7)
             snsplot = removeLegendTitle(snsplot)
             plt.ylabel('RFU')
-            plt.xlabel('Time (Min)')
+            plt.xlabel('Cycles')
             self.saveimage(plt, 'Individuals_' + str(group))
 
     def RFUGraphs(self, df):
@@ -194,7 +194,7 @@ class Grapher:
                                             data=adf, linewidth=.7)
             grouprfuplot = removeLegendTitle(grouprfuplot)
             plt.ylabel('RFU')
-            plt.xlabel('Time (Min)')
+            plt.xlabel('Cycles')
             self.saveimage(plt, 'Averages_' + str(group))
 
             plt.figure(1)
@@ -207,7 +207,7 @@ class Grapher:
         allrfuplot.legend(handles=h)
 
         plt.ylabel('RFU')
-        plt.xlabel('Time (Min)')
+        plt.xlabel('Cycles')
         self.saveimage(plt, 'Averages_All')
 
     def percentGraphs(self, df):
@@ -258,7 +258,7 @@ class Grapher:
                         ' (' + str(lessrvalue) + ')'
 
                 curveplt = seaborn.lineplot(x=[-1, 0, 1, 2, 3, 4, 5], y=Y, label=label)
-                plt.ylabel('Time (Min)')
+                plt.ylabel('Cycles')
                 plt.xlabel('Log of Concentration (pM)')
             self.saveimage(plt, 'CurveFit_' + str(group))
 

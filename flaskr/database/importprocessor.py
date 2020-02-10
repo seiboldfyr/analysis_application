@@ -178,7 +178,7 @@ class ImportProcessor(AbstractImporter):
         self.protocol_manager.add(protocol)
 
     def add_measurement(self, inforow, rfuvalues):
-        self.iterateidentifiers(inforow[5] + '_' + inforow[6])
+        self.iterateidentifiers(str(inforow[5]) + '_' + str(inforow[6]))
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         concentration = 'unknown'
