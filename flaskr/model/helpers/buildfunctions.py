@@ -52,7 +52,6 @@ def get_concentrations(string):
 
 
 def add_custom_group_label(self, well, wellIndex):
-    print(self.groupings.keys())
     for g in self.groupings.keys():
         grouplim = int(self.groupings[g]['Group Wells'])
         lowlim = 0
@@ -66,7 +65,6 @@ def add_custom_group_label(self, well, wellIndex):
                 well['label'] = well.get_label() + '_' + self.groupings[g]['Group Label']       # TODO: Figure out how to redefine triplicate or sample
             well['label'] += '_' + g
             well['group'] = int(g)
-            print(well['label'])
     return well
 
 
