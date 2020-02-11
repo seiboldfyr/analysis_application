@@ -15,7 +15,7 @@ def build_swap_inputs(self):
 def build_group_inputs(self):
     for item in self.form.keys():
         if item.startswith('Group'):
-            if self.groupings.get(str(item[-1])) is None:    #TODO: see the (*) TODO item in processor.py, this is source of error
+            if self.groupings.get(str(item[-1])) is None:    #TODO: this doesn't account for groups 10 or higher
                 self.groupings[str(item[-1])] = {}
             self.groupings[item[-1]][item[:-2]] = self.form[item]
 
@@ -51,12 +51,22 @@ def get_concentrations(string):
         return 0
 
 
-def add_custom_group_label(self, well):
-    originallabel = well.get_label().split('_')
-    well['label'] = '_'.join([item for item in originallabel[:2]])
-    if self.groupings.get(str(well.get_group())):
-        well['label'] = well.get_label() + '_' + self.groupings[str(well.get_group())]['Group Label']
-    well['label'] += '_' + str(well.get_group())
+def add_custom_group_label(self, well, wellIndex):
+    print(self.groupings.keys())
+    for g in self.groupings.keys():
+        grouplim = int(self.groupings[g]['Group Wells'])
+        lowlim = 0
+        if g != '1':
+            lowlim = sum([int(self.groupings[str(i)]['Group Wells']) for i in range(1,int(g))])
+            grouplim = lowlim + int(self.groupings[g]['Group Wells'])
+        if lowlim <= wellIndex < grouplim:
+            originallabel = well.get_label().split('_')
+            well['label'] = '_'.join([item for item in originallabel[:2]])
+            if self.groupings.get(g):
+                well['label'] = well.get_label() + '_' + self.groupings[g]['Group Label']       # TODO: Figure out how to redefine triplicate or sample
+            well['label'] += '_' + g
+            well['group'] = int(g)
+            print(well['label'])
     return well
 
 
