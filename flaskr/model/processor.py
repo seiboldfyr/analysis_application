@@ -51,6 +51,8 @@ class Processor(AbstractProcessor):
 
         for wellindex, well in enumerate(get_collection(self)):
 
+            well = add_custom_group_label(self, well, wellindex)
+
             # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
                 well = swap_wells(self, well)
@@ -71,8 +73,6 @@ class Processor(AbstractProcessor):
             if wellindex < 2:
                 self.time = [n for n in range(cut, len(well.get_rfus()))]
 
-            well = add_custom_group_label(self, well)
-
             self.measurement_manager.update(well)
             response = self.processData(well)
 
@@ -86,6 +86,12 @@ class Processor(AbstractProcessor):
             flash('Peaks were not found in wells %s' % str(', '.join(self.errorwells)), 'error')
 
         self.getStatistics()
+
+        welltotal = sum([int(self.groupings[g]['Group Wells']) for g in self.groupings.keys()])
+
+        if welltotal != wellindex+1:
+            flash('Number of Wells in Custom Groups Not Equal to Total Number of Wells', 'error')
+            flash('Please Edit Inputs', 'error')
 
         return Response(True, str(round(time.time() - timestart, 2)))
 
@@ -159,6 +165,7 @@ class Processor(AbstractProcessor):
                                                          ignore_index=True)
 
         self.measurement_manager.update(well)
+
         return Response(True, '')
 
     def getCtThreshold(self, well, derivative, inflectiondict):
