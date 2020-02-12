@@ -17,3 +17,22 @@ class Collection(AbstractCollection):
         model = self.factory.create(data)
         return model
 
+    def get_types(self):
+        types = []
+        for item in self:
+            if item['type'] not in types:
+                types.append(item['type'])
+
+        return types
+
+    def get_components(self):
+        components = dict()
+        for item in self:
+            if not components.get(item['type']):
+                components[item['type']] = []
+            components[item['type']].append({'name': item['name'],
+                                             'unit': item['unit']})
+        return components
+
+
+

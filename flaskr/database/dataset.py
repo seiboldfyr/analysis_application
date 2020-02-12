@@ -23,6 +23,9 @@ class Dataset(AbstractModel):
     def get_stats(self) -> []:
         return self['statistics']
 
+    def get_version(self) -> float:
+        return self['version']
+
     def get_name(self) -> str:
         return self['name']
 
@@ -39,12 +42,12 @@ class Dataset(AbstractModel):
         return self.measurement_collection.to_df()
 
     def get_component_collection(self) -> ProtocolCollection:
-            if self.component_collection is None:
-                self.component_collection = ProtocolCollection()
-                self.component_collection.add_filter('dataset_id', self.get_id())
-                # for item in self.component_collection:
-                    # TODO: get component name/unit from componentcollection
-            return self.component_collection
+        if self.component_collection is None:
+            self.component_collection = ProtocolCollection()
+            self.component_collection.add_filter('dataset_id', self.get_id())
+            # for item in self.component_collection:
+                # TODO: get component name/unit from componentcollection
+        return self.component_collection
 
     def get_well_count(self) -> int:
         """This should be added after the measures are imported"""
