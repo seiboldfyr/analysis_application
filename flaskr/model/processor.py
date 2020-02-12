@@ -179,6 +179,8 @@ class Processor(AbstractProcessor):
                 plateauborders[1] = int(inflectiondict[key]['location'])
                 break
         plateauslope = derivative[plateauborders[0]: plateauborders[1]]
+        if not plateauslope.any():
+            return {'Ct RFU': 0, 'Ct Cycle': 0}
         plateaumin = (np.where(plateauslope == min(plateauslope))[0])
         if len(plateaumin) > 1:
             plateaumin = plateaumin[0]
