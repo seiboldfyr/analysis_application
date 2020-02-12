@@ -16,7 +16,7 @@ class ImportValidator(AbstractValidator):
             if not file.filename.endswith('.xlsx'):
                 return Response(False, 'The file has an incorrect filetype')
 
-        return Response(True)
+        return Response(True, '')
 
 
 

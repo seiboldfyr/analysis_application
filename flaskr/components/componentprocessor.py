@@ -8,7 +8,7 @@ from flaskr.framework.model.request.response import Response
 
 
 def search(name, unit) -> {}:
-    if Repository().search_by_name_and_unit(name, unit) is None:
+    if Repository().search_by_name_and_unit(name, unit) is not None:
         flash('A component with name %s and unit %s already exists' % (name, unit), 'error')
         return False
     return True
@@ -31,9 +31,9 @@ class ImportComponents:
             if not search(row[1], row[2]):
                 continue
 
-            baseprotocol = row[3]
-            if not isinstance(baseprotocol, int):
-                baseprotocol = 0
+            baseprotocol = 0
+            if len(row) > 2:
+                baseprotocol = int(row[3])
 
             model = factory.create({'type': row[0],
                                     'name': row[1],

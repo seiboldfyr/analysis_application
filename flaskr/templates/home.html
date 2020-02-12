@@ -19,8 +19,10 @@ line-height: 8px;
       <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
       <p>Select an existing dataset: </p>
 <!--      TODO: input date, id, and initials as separate select statements-->
-          <select id="selectedDataset" name = "Coming Soon..." />
-          <option value="id">Coming Soon...</option>
+          <select id="selectedDataset" name = "Select a Dataset" />
+            {% for dataset in datasets %}
+          <option id="selectedname" name={{dataset.get_name()}}>{{dataset.get_name()}} (v{{dataset.get_version()}})</option>
+            {% endfor %}
         </select>
      <p><input type = "submit" value = "Continue to verify dataset information" /></p>
   </form>
