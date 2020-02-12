@@ -118,6 +118,7 @@ class Processor(AbstractProcessor):
             well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
             well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
 
+            print(well.get_sample(), well.get_group(), well.get_label())
             if len(inflectiondict.keys()) < 4:
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
                                                                       well.get_excelheader()), 'error')
@@ -179,6 +180,8 @@ class Processor(AbstractProcessor):
                 plateauborders[1] = int(inflectiondict[key]['location'])
                 break
         plateauslope = derivative[plateauborders[0]: plateauborders[1]]
+        if not plateauslope.any():
+            return {'Ct RFU': 0, 'Ct Cycle': 0}
         plateaumin = (np.where(plateauslope == min(plateauslope))[0])
         if len(plateaumin) > 1:
             plateaumin = plateaumin[0]
