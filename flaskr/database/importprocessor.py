@@ -150,7 +150,7 @@ class ImportProcessor(AbstractImporter):
         save_dataset_component(self, quantity, component_id, triplicate_id)
 
     def add_measurement(self, inforow, rfuvalues):
-        self.iterateidentifiers(inforow[5] + '_' + inforow[6])
+        self.iterateidentifiers(str(inforow[5]) + '_' + str(inforow[6]))
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         concentration = 'unknown'
