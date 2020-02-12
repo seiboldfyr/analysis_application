@@ -45,10 +45,10 @@ def search():
                     flash('The data was uploaded with an outdated application version %s, '
                           'inflections will be replaced with those found using version %s.'
                           % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
-                response = importer.execute(request, name)
-                if not response.is_success():
-                    flash(response.get_message(), 'error')
-                    return redirect(url_for('base.home'))
+            response = importer.execute(request, name)
+            if not response.is_success():
+                flash(response.get_message(), 'error')
+                return redirect(url_for('base.home'))
 
         else:
             name = request.form['Select a Dataset']
@@ -71,11 +71,9 @@ def search():
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
-    types = Collection().get_types()
-    components = Collection().get_components()
     if request.method == 'POST':
         return analysis(id=id, form=request.form)
-    return render_template('inputs.html', id=id, types=types, components=components)
+    return render_template('inputs.html', id=id)
 
 
 @base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
