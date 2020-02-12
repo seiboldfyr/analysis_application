@@ -118,7 +118,6 @@ class Processor(AbstractProcessor):
             well['inflections'] = [(key, inflectiondict[key]['inflection']) for key in inflectiondict.keys()]
             well['inflectionRFUs'] = [(key, inflectiondict[key]['rfu']) for key in inflectiondict.keys()]
 
-            print(well.get_sample(), well.get_group(), well.get_label())
             if len(inflectiondict.keys()) < 4:
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
                                                                       well.get_excelheader()), 'error')
