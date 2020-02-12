@@ -50,14 +50,7 @@ class ImportProcessor(AbstractImporter):
         if found_dataset is not None:
             self.dataset = found_dataset
             self.dataset_id = self.dataset.get_id()
-            if found_dataset['version'] != float(current_app.config['VERSION']):
-                # dataset_repository.delete_by_filter({'name': name})
-                # print('deleting')
-                return False
-            else:
-                self.dataset = found_dataset
-                flash('An existing dataset was found.', 'success')
-                return True
+            return True
         return False
 
     def execute(self, request, name) -> Response:
