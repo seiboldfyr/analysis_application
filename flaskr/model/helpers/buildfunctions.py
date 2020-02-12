@@ -8,7 +8,7 @@ def build_swap_inputs(self):
     for item in self.form.keys():
         if item.startswith('Swap From'):
             self.swaps[self.form[item]] = self.form['Swap To ' + str(item[-1])]
-        if item.startswith('Bidirectional Swap') == True:
+        if item.startswith('Bidirectional Swap'):
             self.swaps[self.form['Swap To ' + str(item[-1])]] = self.form['Swap From ' + str(item[-1])]
 
 

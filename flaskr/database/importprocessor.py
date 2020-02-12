@@ -1,6 +1,5 @@
 import datetime
 import re
-import os
 from bson import ObjectId
 
 from flask import flash, current_app
@@ -18,6 +17,7 @@ from flaskr.framework.exception import InvalidArgument
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.framework.model.request.response import Response
 from flaskr.model.helpers.calcfunctions import reg_conc
+from flaskr.model.helpers.importfunctions import save_dataset_component
 
 
 def buildname(excelfilename):
@@ -36,34 +36,26 @@ def getTime(t):
 
 
 class ImportProcessor(AbstractImporter):
-    def __init__(self):
+    def __init__(self, id=None):
         self.identifers = dict(group=0, sample=-1, triplicate=-1, triplicate_id=None, previous='')
         self.experimentlength = 0
         self.cyclelength = 0
         self.dataset = None
+        self.dataset_id = id
+        self.component_repository = ComponentRepository()
+        self.protocol_factory = ProtocolFactory()
+        self.protocol_manager = ProtocolManager()
 
     def search(self, name) -> {}:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
-            # self.dataset = found_dataset
-            if found_dataset['version'] != float(current_app.config['VERSION']):
-                flash('The data was uploaded with version %s, '
-                      'inflections will be replaced with those found using version %s.'
-                      % (found_dataset['version'], current_app.config['VERSION']), 'msg')
-                #TODO: any reason to keep the previous dataset? Maybe just the RFUs?
-                dataset_repository.delete_by_filter({'name': name})
-                return False
-            else:
-                self.dataset = found_dataset
-                flash('An existing dataset was found.', 'success')
-                return True
+            self.dataset = found_dataset
+            self.dataset_id = self.dataset.get_id()
+            return True
         return False
 
     def execute(self, request, name) -> Response:
-        self.component_repository = ComponentRepository()
-        self.protocol_factory = ProtocolFactory()
-        self.protocol_manager = ProtocolManager()
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()
 
@@ -108,7 +100,7 @@ class ImportProcessor(AbstractImporter):
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
         return Response(
             True,
-            self.dataset.get_id()
+            self.dataset_id
         )
 
     def getexperimentlength(self, info):
@@ -169,13 +161,7 @@ class ImportProcessor(AbstractImporter):
 
     def add_target(self, label, component_id, triplicate_id):
         quantity = re.match(r'^\d+', label).group(0)
-        data = {'triplicate_id': triplicate_id,
-                'dataset_id': self.dataset.get_id(),
-                'component_id': component_id,
-                'quantity': quantity}
-        #TODO: convert all to pM units?
-        protocol = self.protocol_factory.create(data)
-        self.protocol_manager.add(protocol)
+        save_dataset_component(self, quantity, component_id, triplicate_id)
 
     def add_measurement(self, inforow, rfuvalues):
         self.iterateidentifiers(str(inforow[5]) + '_' + str(inforow[6]))
@@ -185,7 +171,7 @@ class ImportProcessor(AbstractImporter):
         if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
-        data = {'dataset_id': self.dataset.get_id(),
+        data = {'dataset_id': self.dataset_id,
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
