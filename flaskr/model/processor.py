@@ -128,9 +128,10 @@ class Processor(AbstractProcessor):
             #for all samples that match the control sample, collect controls
             if self.control.get_sample() == well.get_sample():
                 self.controllist.append([x for x in well.get_inflections()])
-                controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
-                self.ctlist.append(controlCt)
-                deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
+                if self.form['gcpr'] is None:
+                    controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
+                    self.ctlist.append(controlCt)
+                    deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
 
                 #average the control inflections
                 #TODO: what if the first control has only 2 inflections and the others have 4? or vice versa?
@@ -148,7 +149,8 @@ class Processor(AbstractProcessor):
             # get percent differences and delta ct values
             elif self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
-                deltact = self.getDeltaCt(well)
+                if self.form['gcpr'] is None:
+                    deltact = self.getDeltaCt(well)
 
             # calculate delta ct and percent diffs
             well['deltaCt'] = deltact
