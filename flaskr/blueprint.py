@@ -41,14 +41,16 @@ def search():
 
             valid_dataset = importer.search(name)
             if not valid_dataset:
-                if importer.dataset is not None:
+                response = importer.execute(request, name)
+                if not response.is_success():
+                    flash(response.get_message(), 'error')
+                    return redirect(url_for('base.home'))
+            else:
+                #TODO: put this on the search screen
+                if importer.dataset is not None and importer.dataset['version'] < float(current_app.config['VERSION']):
                     flash('The data was uploaded with an outdated application version %s, '
                           'inflections will be replaced with those found using version %s.'
                           % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
-            response = importer.execute(request, name)
-            if not response.is_success():
-                flash(response.get_message(), 'error')
-                return redirect(url_for('base.home'))
 
         else:
             name = request.form['Select a Dataset']

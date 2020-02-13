@@ -266,7 +266,8 @@ class Grapher:
         for group in range(1, int(df['group'].max())+1):
             idf = df[(df['group'] == group)]
             ctRFU = idf[idf['CtRFU'] > 0]['CtRFU']
-            if not self.validateDF(ctRFU):
+            if not self.validateDF(ctRFU) or len(np.unique(idf['concentration'])) == 1:
+                flash('Unique concentration cannot be identified in group %s for ct threshold graphs' % group, 'error')
                 continue
 
             plt.scatter(x='concentration', y='DeltaCt', label='concentration',

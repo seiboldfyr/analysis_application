@@ -131,9 +131,10 @@ class Processor(AbstractProcessor):
             #for all samples that match the control sample, collect controls
             if self.control.get_sample() == well.get_sample():
                 self.controllist.append([x for x in well.get_inflections()])
-                controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
-                self.ctlist.append(controlCt)
-                deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
+                if not self.form.get('qcpr'):
+                    controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
+                    self.ctlist.append(controlCt)
+                    deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
 
                 #average the control inflections
                 #TODO: what if the first control has only 2 inflections and the others have 4? or vice versa?
@@ -151,7 +152,8 @@ class Processor(AbstractProcessor):
             # get percent differences and delta ct values
             elif self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
-                deltact = self.getDeltaCt(well)
+                if not self.form.get('qcpr'):
+                    deltact = self.getDeltaCt(well)
 
             # calculate delta ct and percent diffs
             well['deltaCt'] = deltact
@@ -180,8 +182,13 @@ class Processor(AbstractProcessor):
                 plateauborders[1] = int(inflectiondict[key]['location'])
                 break
         plateauslope = derivative[plateauborders[0]: plateauborders[1]]
+
         if not plateauslope.any():
-            return {'Ct RFU': 0, 'Ct Cycle': 0}
+            try:
+                plateauslope = derivative[int(inflectiondict['2']['location']): int(inflectiondict['1']['location'])]
+            except KeyError:
+                return {'Ct RFU': 0, 'Ct Cycle': 0}
+
         plateaumin = (np.where(plateauslope == min(plateauslope))[0])
         if len(plateaumin) > 1:
             plateaumin = plateaumin[0]

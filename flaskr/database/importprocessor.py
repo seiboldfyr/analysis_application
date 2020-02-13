@@ -98,6 +98,7 @@ class ImportProcessor(AbstractImporter):
 
         flash('File imported successfully', 'success')
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
+
         return Response(
             True,
             self.dataset_id
@@ -171,7 +172,7 @@ class ImportProcessor(AbstractImporter):
         if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
-        data = {'dataset_id': self.dataset_id,
+        data = {'dataset_id': self.dataset.get_id(),
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,
