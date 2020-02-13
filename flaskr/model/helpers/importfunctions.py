@@ -4,15 +4,9 @@ from flaskr.database.dataset_models.repository import Repository
 from flaskr.components.component_models.factory import Factory as ComponentFactory
 
 
-def edit_RFUs(self, originwell, cut):
-    originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
-    self.measurement_manager.update(originwell)
-
-
 def get_collection(self):
     dataset_repository = Repository()
     dataset = dataset_repository.get_by_id(self.dataset_id)
-    print(dataset)
     return dataset.get_well_collection()
 
 
