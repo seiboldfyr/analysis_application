@@ -253,7 +253,8 @@ class Grapher:
                 concentrationX = [.01, .1, 1, 10, 100, 1000, 10000]
                 Y = linear_regressor.predict(np.log(concentrationX).reshape(-1, 1)).flatten()
                 label = 'Inflection ' + str(inf + 1) + ' ' + \
-                        str(float(linear_regressor.coef_[0])) + 'x + ' + str(float(linear_regressor.intercept_)) + \
+                        str(round(float(linear_regressor.coef_[0]), 4)) + 'x + ' + \
+                        str(round(float(linear_regressor.intercept_), 4)) + \
                         ' Rvalue: ' + str(round(rvalue, 5)) + \
                         ' (' + str(lessrvalue) + ')'
 
