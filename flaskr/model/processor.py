@@ -83,7 +83,8 @@ class Processor(AbstractProcessor):
         self.getStatistics()
 
         welltotal = sum([int(self.groupings[g]['Group Wells']) for g in self.groupings.keys()])
-
+        if welltotal == 0:
+            welltotal = wellindex + 1
         if welltotal != wellindex+1:
             flash('Number of Wells in Custom Groups Not Equal to Total Number of Wells', 'error')
             flash('Please Edit Inputs', 'error')
