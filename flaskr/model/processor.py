@@ -66,7 +66,7 @@ class Processor(AbstractProcessor):
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n for n in range(cut, len(well.get_rfus()))]
+                self.time = [n for n in range(len(well.get_rfus()))]
 
             self.measurement_manager.update(well)
             response = self.processData(well)

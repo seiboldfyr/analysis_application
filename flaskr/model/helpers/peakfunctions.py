@@ -40,7 +40,7 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
             cut = 0
             tempderivative = derivative.copy()
             for idx, value in enumerate(tempderivative):
-                if value > tempderivative[idx + 1]:
+                if len(tempderivative) > value > tempderivative[idx + 1]:
                     cut = idx
                 else:
                     tempderivative[:cut] = tempderivative[cut+1]
