@@ -42,10 +42,6 @@ class Processor(AbstractProcessor):
         else:
             update_metadata(self)
 
-        cut = 0
-        if self.form.get('cutlength'):
-            cut = self.form['cutlength']
-
         build_swap_inputs(self)
         build_group_inputs(self)
         validate_errors(self)
@@ -64,16 +60,13 @@ class Processor(AbstractProcessor):
                 except KeyError:
                     current_app.logger.error('Error deleting swap from swap dictionary')
 
-            if cut > 0:
-                edit_RFUs(self, well, cut)
-
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
                 well['is_valid'] = False
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n for n in range(cut, len(well.get_rfus()))]
+                self.time = [n for n in range(len(well.get_rfus()))]
 
             self.measurement_manager.update(well)
             response = self.processData(well)
@@ -107,6 +100,7 @@ class Processor(AbstractProcessor):
             deltact = [0 for x in range(3)]
             inflectiondict = {}
             derivatives = get_derivatives(well)
+
             for dIndex in derivatives.keys():
                 inflectiondict = get_peaks(self,
                                            well=well,
