@@ -12,7 +12,6 @@ def edit_RFUs(self, originwell, cut):
 def get_collection(self):
     dataset_repository = Repository()
     dataset = dataset_repository.get_by_id(self.dataset_id)
-    print(dataset)
     return dataset.get_well_collection()
 
 
