@@ -24,7 +24,6 @@ def home():
     dataset_collection = DatasetCollection()
     return render_template('home.html', datasets=dataset_collection)
 
-
 @base_blueprint.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
@@ -33,19 +32,22 @@ def search():
         validator = ImportValidator()
         importer = ImportProcessor()
 
+        #validate inputs
         result = validator.execute(request)
         if not result.is_success():
             flash(result.get_message(), 'error')
             return redirect(url_for('base.home'))
 
+        # delete previously uploaded file
         if request.form.get('Delete'):
-            name = request.form['Select']
-            importer.delete(name[:-7])
-            flash('Deleted: %s ' % name, 'success')
+            importer.delete(request.form['Select'][:-7])
+            flash('Deleted: %s ' % request.form['Select'], 'success')
             return redirect(url_for('base.home'))
 
+        # use new uploads (no dataset selected)
         if request.form['Select'] == 'Select':
             fileinfo = {}
+            name = ''
             for f in request.files:
                 [name, fileinfo] = buildname(request.files.get(f).filename)
 
@@ -55,20 +57,19 @@ def search():
                 if not response.is_success():
                     flash(response.get_message(), 'error')
                     return redirect(url_for('base.home'))
-            else:
-                #TODO: put this on the search screen
-                if importer.dataset is not None and importer.dataset['version'] < float(current_app.config['VERSION']):
-                    flash('The data was uploaded with an outdated application version %s, '
-                          'inflections will be replaced with those found using version %s.'
-                          % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
 
+            elif importer.dataset is not None and \
+                    importer.dataset['version'] < float(current_app.config['VERSION']):
+                flash('The data was uploaded with an outdated application version %s, '
+                      'inflections will be replaced with those found using version %s.'
+                      % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
+
+        # use a selected dataset
         elif request.form['Select'] != 'Select':
             name = request.form['Select']
             valid_dataset = importer.search(name[:12])
             if not valid_dataset:
-                flash('The data was uploaded with an outdated application version %s, '
-                      'please upload new INFO/RFU files.'
-                      % importer.dataset['version'], 'error')
+                flash('Error finding file.', 'error')
                 return redirect(url_for('base.home'))
 
             fileinfo = dict(Date=name[:8],
@@ -78,6 +79,7 @@ def search():
         return render_template('search.html',
                                result=fileinfo,
                                id=importer.dataset['_id'])
+
     return redirect(url_for('base.home'))
 
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
