@@ -34,7 +34,17 @@ def search():
         importer = ImportProcessor()
 
         result = validator.execute(request)
-        if result.is_success():
+        if not result.is_success():
+            flash(result.get_message(), 'error')
+            return redirect(url_for('base.home'))
+
+        if request.form.get('Delete'):
+            name = request.form['Select']
+            importer.delete(name[:-7])
+            flash('Deleted: %s ' % name, 'success')
+            return redirect(url_for('base.home'))
+
+        if request.form['Select'] == 'Select':
             fileinfo = {}
             for f in request.files:
                 [name, fileinfo] = buildname(request.files.get(f).filename)
@@ -52,8 +62,8 @@ def search():
                           'inflections will be replaced with those found using version %s.'
                           % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
 
-        else:
-            name = request.form['Select a Dataset']
+        elif request.form['Select'] != 'Select':
+            name = request.form['Select']
             valid_dataset = importer.search(name[:12])
             if not valid_dataset:
                 flash('The data was uploaded with an outdated application version %s, '
