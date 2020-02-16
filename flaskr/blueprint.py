@@ -9,6 +9,7 @@ from io import BytesIO
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
 from flaskr.components.component_models.collection import Collection
+from flaskr.database.dataset_models.repository import Repository
 from flaskr.database.dataset_models.collection import Collection as DatasetCollection
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
@@ -24,13 +25,22 @@ def home():
     dataset_collection = DatasetCollection()
     return render_template('home.html', datasets=dataset_collection)
 
+
+def delete(name):
+    dataset_repository = Repository()
+    dataset = dataset_repository.get_by_name(name)
+    if dataset is None:
+        dataset = dataset_repository.get_empty(name)
+    dataset_repository.delete(dataset)
+    flash('Deleted: %s ' % name, 'success')
+
+
 @base_blueprint.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
     if request.method == 'POST':
 
         validator = ImportValidator()
-        importer = ImportProcessor()
 
         #validate inputs
         result = validator.execute(request)
@@ -40,41 +50,34 @@ def search():
 
         # delete previously uploaded file
         if request.form.get('Delete'):
-            importer.delete(request.form['Select'][:-7])
-            flash('Deleted: %s ' % request.form['Select'], 'success')
+            delete(request.form['select'][:-7])
             return redirect(url_for('base.home'))
 
-        # use new uploads (no dataset selected)
-        if request.form['Select'] == 'Select':
-            fileinfo = {}
-            name = ''
-            for f in request.files:
-                [name, fileinfo] = buildname(request.files.get(f).filename)
 
-            valid_dataset = importer.search(name)
-            if not valid_dataset:
-                response = importer.execute(request, name)
-                if not response.is_success():
-                    flash(response.get_message(), 'error')
-                    return redirect(url_for('base.home'))
-
-            elif importer.dataset is not None and \
-                    importer.dataset['version'] < float(current_app.config['VERSION']):
-                flash('The data was uploaded with an outdated application version %s, '
-                      'inflections will be replaced with those found using version %s.'
-                      % (importer.dataset['version'], current_app.config['VERSION']), 'msg')
+        importer = ImportProcessor()
 
         # use a selected dataset
-        elif request.form['Select'] != 'Select':
-            name = request.form['Select']
-            valid_dataset = importer.search(name[:12])
-            if not valid_dataset:
-                flash('Error finding file.', 'error')
-                return redirect(url_for('base.home'))
-
+        name = ''
+        fileinfo = {}
+        if request.form['select'] != '':
+            name = request.form['select'][:12]
             fileinfo = dict(Date=name[:8],
                             Id=name[8:9],
                             Initials=name[10:12])
+        else:
+            for f in request.files:
+                [name, fileinfo] = buildname(request.files.get(f).filename)
+
+        # search for dataset
+        valid_dataset = importer.search(name)
+        if not valid_dataset:
+
+            # import dataset
+            response = importer.execute(request, name)
+            if not response.is_success():
+
+                flash(response.get_message(), 'error')
+                return redirect(url_for('base.home'))
 
         return render_template('search.html',
                                result=fileinfo,
@@ -124,8 +127,6 @@ def graphs(id, features=None):
                            graphs=graphs.values(),
                            name=name,
                            features=request.form.to_dict())
-# TODO: passing these features as parameters is messy way to mark checkboxes on the post form
-# find a better way!
 
 
 def download(id, graphs, name):
@@ -156,5 +157,4 @@ def download(id, graphs, name):
     memory_file.seek(0)
     zipfilename = 'output' + '_' + name + '_v.' + current_app.config['VERSION'] + '.zip'
     return [memory_file, zipfilename]
-    # return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 

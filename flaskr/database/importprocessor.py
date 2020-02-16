@@ -55,12 +55,6 @@ class ImportProcessor(AbstractImporter):
             return True
         return False
 
-    def delete(self, name) -> bool:
-        dataset_repository = Repository()
-        dataset = dataset_repository.get_by_name(name)
-        dataset_repository.delete(dataset)
-        return True
-
     def execute(self, request, name) -> Response:
         self.measurement_factory = MeasurementFactory()
         self.measurement_manager = MeasurementManager()

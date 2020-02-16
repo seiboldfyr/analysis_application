@@ -21,8 +21,8 @@ line-height: 8px;
       <br>
       <p>Or you can select an existing dataset: </p>
 <!--      TODO: input date, id, and initials as separate select statements-->
-          <select id="selectedDataset" name = "Select" >
-            <option id="noneselected" > Select </option>
+          <select id="selectedDataset" name = "select" >
+            <option name="None"> </option>
             {% for dataset in datasets %}
               <option id="selectedname" name={{dataset.get_name()}}>{{dataset.get_name()}} (v{{dataset.get_version()}})</option>
             {% endfor %}

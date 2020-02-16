@@ -6,10 +6,10 @@ from flaskr.framework.model.request.response import Response
 class ImportValidator(AbstractValidator):
 
     def execute(self, request) -> Response:
-        if request.form['Select'] != 'Select':
+        if request.form['select'] != '':
             return Response(True, '')
 
-        if request.form.get('delete') and request.form['Select'] == 'Select':
+        if request.form.get('delete') and request.form['select'] == '':
             return Response(False, 'No dataset selected')
 
         if request.files is None:
