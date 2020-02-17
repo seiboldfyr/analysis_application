@@ -6,6 +6,12 @@ from flaskr.framework.model.request.response import Response
 class ImportValidator(AbstractValidator):
 
     def execute(self, request) -> Response:
+        if request.form['select'] != '':
+            return Response(True, '')
+
+        if request.form.get('delete') and request.form['select'] == '':
+            return Response(False, 'No dataset selected')
+
         if request.files is None:
             return Response(False, 'Files are required')
 
@@ -18,10 +24,6 @@ class ImportValidator(AbstractValidator):
 
         return Response(True, '')
 
-    def units(self, request) -> Response:
-        return Response(True, '')
-        # check if units are legitimate for the found component
-        # and check if quantity is non-zero
-        # and check that a target, linear template, reporter template, and reagents are uploaded
+
 
 

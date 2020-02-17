@@ -42,15 +42,14 @@ class Processor(AbstractProcessor):
         else:
             update_metadata(self)
 
-        cut = 0
-        if self.form.get('cutlength'):
-            cut = self.form['cutlength']
-
         build_swap_inputs(self)
         build_group_inputs(self)
         validate_errors(self)
 
+        wellindex = 0
         for wellindex, well in enumerate(get_collection(self)):
+
+            well = add_custom_group_label(self, well, wellindex)
 
             # swap wells and shift RFUs to account for a cut time
             if len(self.swaps) > 0 and self.swaps.get(well.get_excelheader()) is not None:
@@ -61,18 +60,13 @@ class Processor(AbstractProcessor):
                 except KeyError:
                     current_app.logger.error('Error deleting swap from swap dictionary')
 
-            if cut > 0:
-                edit_RFUs(self, well, cut)
-
             # set well status to invalid if reported
             if well.get_excelheader() in self.errorwells:
                 well['is_valid'] = False
 
             # build time list from first well
             if wellindex < 2:
-                self.time = [n * well.get_cycle() / 60 for n in range(cut, len(well.get_rfus()))]
-
-            well = add_custom_group_label(self, well)
+                self.time = [n for n in range(len(well.get_rfus()))]
 
             self.measurement_manager.update(well)
             response = self.processData(well)
@@ -88,6 +82,13 @@ class Processor(AbstractProcessor):
 
         self.getStatistics()
 
+        welltotal = sum([int(self.groupings[g]['Group Wells']) for g in self.groupings.keys()])
+        if welltotal == 0:
+            welltotal = wellindex + 1
+        if welltotal != wellindex+1:
+            flash('Number of Wells in Custom Groups Not Equal to Total Number of Wells', 'error')
+            flash('Please Edit Inputs', 'error')
+
         return Response(True, str(round(time.time() - timestart, 2)))
 
     def processData(self, well):
@@ -100,6 +101,7 @@ class Processor(AbstractProcessor):
             deltact = [0 for x in range(3)]
             inflectiondict = {}
             derivatives = get_derivatives(well)
+
             for dIndex in derivatives.keys():
                 inflectiondict = get_peaks(self,
                                            well=well,
@@ -123,9 +125,10 @@ class Processor(AbstractProcessor):
             #for all samples that match the control sample, collect controls
             if self.control.get_sample() == well.get_sample():
                 self.controllist.append([x for x in well.get_inflections()])
-                controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
-                self.ctlist.append(controlCt)
-                deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
+                if not self.form.get('qcpr'):
+                    controlCt = self.getCtThreshold(well, derivatives[1], inflectiondict)
+                    self.ctlist.append(controlCt)
+                    deltact = [0, controlCt['Ct Cycle'], controlCt['Ct RFU']]
 
                 #average the control inflections
                 #TODO: what if the first control has only 2 inflections and the others have 4? or vice versa?
@@ -143,7 +146,8 @@ class Processor(AbstractProcessor):
             # get percent differences and delta ct values
             elif self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
-                deltact = self.getDeltaCt(well)
+                if not self.form.get('qcpr'):
+                    deltact = self.getDeltaCt(well)
 
             # calculate delta ct and percent diffs
             well['deltaCt'] = deltact
@@ -160,6 +164,7 @@ class Processor(AbstractProcessor):
                                                          ignore_index=True)
 
         self.measurement_manager.update(well)
+
         return Response(True, '')
 
     def getCtThreshold(self, well, derivative, inflectiondict):
@@ -171,6 +176,13 @@ class Processor(AbstractProcessor):
                 plateauborders[1] = int(inflectiondict[key]['location'])
                 break
         plateauslope = derivative[plateauborders[0]: plateauborders[1]]
+
+        if not plateauslope.any():
+            try:
+                plateauslope = derivative[int(inflectiondict['2']['location']): int(inflectiondict['1']['location'])]
+            except KeyError:
+                return {'Ct RFU': 0, 'Ct Cycle': 0}
+
         plateaumin = (np.where(plateauslope == min(plateauslope))[0])
         if len(plateaumin) > 1:
             plateaumin = plateaumin[0]

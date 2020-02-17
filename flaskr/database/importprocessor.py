@@ -44,19 +44,13 @@ class ImportProcessor(AbstractImporter):
         self.protocol_factory = ProtocolFactory()
         self.protocol_manager = ProtocolManager()
 
-    def search(self, name) -> {}:
+    def search(self, name) -> bool:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
             self.dataset = found_dataset
             self.dataset_id = self.dataset.get_id()
-            if found_dataset['version'] != float(current_app.config['VERSION']):
-                dataset_repository.delete_by_filter({'name': name})
-                return False
-            else:
-                self.dataset = found_dataset
-                flash('An existing dataset was found.', 'success')
-                return True
+            return True
         return False
 
     def execute(self, request, name) -> Response:
@@ -102,6 +96,7 @@ class ImportProcessor(AbstractImporter):
 
         flash('File imported successfully', 'success')
         flash('Calculated cycle length was %s' % round(self.cyclelength, 3), 'success')
+
         return Response(
             True,
             self.dataset_id
@@ -163,27 +158,40 @@ class ImportProcessor(AbstractImporter):
 
     def validate_target(self, target):
         if re.match(r'^\d+\s*[a-z]+\/*[a-zA-Z]+?\s+\w?', target) is not None:
-            quantityregex = re.match(r'^\d+', target)
-            unitregex = reg_conc(target)
-            if quantityregex is None or unitregex is None:
+            quantityRe = re.match(r'^\d+', target)
+            unitRe = reg_conc(target)
+            if quantityRe is None or unitRe is None:
                 Response(False, 'Target units and name could not be identified')
-            name = target[unitregex.end():]
-            unit = target[quantityregex.end():unitregex.end()]
-            return search_components(self, name, unit)
+            name = target[unitRe.end():]
+            unit = target[quantityRe.end():unitRe.end()]
+
+            component = self.component_repository.search_by_name_and_unit(name, unit)
+            if component is not None:
+                return Response(True, component['_id'])
+            # TODO: edit case if component is not found in library
+            # return Response(False, 'Target does not exist in the component library')
+            self.add_component(name=name, unit=unit)
+        return Response(False, 'Target units and name could not be identified')
+
+    def add_component(self, name, unit):
+        # TODO: delete when component library is filled
+        factory = ComponentFactory()
+        model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
+        self.component_repository.save(model)
 
     def add_target(self, label, component_id, triplicate_id):
         quantity = re.match(r'^\d+', label).group(0)
         save_dataset_component(self, quantity, component_id, triplicate_id)
 
     def add_measurement(self, inforow, rfuvalues):
-        self.iterateidentifiers(inforow[5] + '_' + inforow[6])
+        self.iterateidentifiers(str(inforow[5]) + '_' + str(inforow[6]))
         self.cyclelength = self.experimentlength/len(rfuvalues)
 
         concentration = 'unknown'
         if reg_conc(inforow[5]):
             concentration = reg_conc(inforow[5]).group(0)
 
-        data = {'dataset_id': self.dataset_id,
+        data = {'dataset_id': self.dataset.get_id(),
                 'triplicate_id': self.identifers['triplicate_id'],
                 'excelheader': inforow[1],
                 'cycle': self.cyclelength,

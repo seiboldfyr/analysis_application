@@ -4,11 +4,6 @@ from flaskr.database.dataset_models.repository import Repository
 from flaskr.components.component_models.factory import Factory as ComponentFactory
 
 
-def edit_RFUs(self, originwell, cut):
-    originwell.edit_labels(dict(RFUs=originwell.get_rfus()[cut:]))
-    self.measurement_manager.update(originwell)
-
-
 def get_collection(self):
     dataset_repository = Repository()
     dataset = dataset_repository.get_by_id(self.dataset_id)
@@ -53,4 +48,4 @@ def search_components(self, name, unit):
     # TODO: edit case if component is not found in library
     # return Flash('Target does not exist in the component library')
     add_component(self, name=name, unit=unit)
-    return self.component_repository.search_by_name_and_unit(name, unit)['_id']
+    return Response(True, self.component_repository.search_by_name_and_unit(name, unit)['_id'])
