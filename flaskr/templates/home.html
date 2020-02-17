@@ -10,26 +10,32 @@ line-height: 8px;
 </style>
 <br>
 
-<b>Please enter the following information:</b>
+<b>Please upload the following files:</b>
 <br>
 
 <div class="formwrapper">
   <form action = "{{ url_for('.search') }}" method = "POST" enctype="multipart/form-data">
       <p>INFO File: <input name="file2" id="infofile" type="file"/></p>
       <p>RFU File: <input name="file1" id="rfufile" type="file"/></p>
-      <p>Select an existing dataset: </p>
-<!--      TODO: input date, id, and initials as separate select statements-->
-          <select id="selectedDataset" name = "Select a Dataset" />
-            {% for dataset in datasets %}
-          <option id="selectedname" name={{dataset.get_name()}}>{{dataset.get_name()}} (v{{dataset.get_version()}})</option>
-            {% endfor %}
-        </select>
-     <p><input type = "submit" value = "Continue to verify dataset information" /></p>
 
+      <br>
+      <p>Or you can select an existing dataset: </p>
+<!--      TODO: input date, id, and initials as separate select statements-->
+          <select id="selectedDataset" name = "select" >
+            <option name="None"> </option>
+            {% for dataset in datasets %}
+              <option id="selectedname" name={{dataset.get_name()}}>{{dataset.get_name()}} (v{{dataset.get_version()}})</option>
+            {% endfor %}
+          </select>
+
+       <a name='delete' value="delete"><button name="Delete" value="True">Delete</button></a>
+
+     <p><input type = "submit" value = "Submit" /></p>
 
   </form>
     <a href="{{ url_for('.stats', id=id) }}"><button>STATS</button></a>
 </div>
+
 {% endblock %}
 
 {% block content %}{% endblock %}
