@@ -46,7 +46,7 @@ class ImportProcessor(AbstractImporter):
         self.protocol_factory = ProtocolFactory()
         self.protocol_manager = ProtocolManager()
 
-    def search(self, name) -> {}:
+    def search(self, name) -> bool:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
