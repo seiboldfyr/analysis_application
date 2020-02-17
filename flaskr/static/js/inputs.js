@@ -12,7 +12,8 @@ function addOne(type) {
         case 'group':
             if ($(`#grouplabeltemplate`).val() ||
             $(`#groupwelltemplate`).val() || $(`#groupsampletemplate`).val()) {
-                display(inputs=['grouplabeltemplate', 'groupwelltemplate', 'groupsampletemplate'],
+                display(inputs=['grouplabeltemplate', 'groupwelltemplate', 'groupsampletemplate',
+                        'groupcontroltemplate'],
                 output='group');
             }
             break;
@@ -30,19 +31,32 @@ var groupcount = 1;
 var swapcount = 1;
 
 function display(inputs, output) {
-    outputspan = document.getElementById(output);
-    outputfield = document.createElement("div");
-    outputfield.id = output + getCounter(output);
+    inputfield = document.createElement("input");
+    inputfield.name = output + getCounter(output);
+    inputfield.style.visibility = 'hidden';
+
+    outputvalue = document.createElement("a");
+    outputvalue.id = output + getCounter(output);
 
     for (var i=0; i<inputs.length; i++) {
         entry = document.getElementById(inputs[i]);
         if (entry.checked) {
-            outputfield.innerText += '  bidirectional';
+            outputvalue.innerText += ' bidirectional';
+            inputfield.innerText += '  bidirectional';
         }
-        outputfield.innerText += '  ' + entry.value;
+        let value = entry.value;
+        if (i > 0) {
+            value = ' ' + entry.value;
+        }
+
+        outputvalue.innerText += value;
+        inputfield.value += value;
     }
-    outputfield.innerHTML += '<br>';
-    outputspan.appendChild(outputfield);
+
+    outputvalue.innerHTML += '<br>';
+    displayedoutput = document.getElementById(output);
+    displayedoutput.appendChild(outputvalue);
+    displayedoutput.appendChild(inputfield);
 
     switch (output) {
         case 'component': componentcount += 1; break;

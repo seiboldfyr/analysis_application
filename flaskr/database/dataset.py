@@ -1,3 +1,4 @@
+from bson import ObjectId
 
 from flaskr.database.measurement_models.collection import Collection as MeasurementCollection
 from flaskr.database.measurement_models.dataframe_collection import Collection as DataframeCollection
@@ -42,9 +43,11 @@ class Dataset(AbstractModel):
         return self.measurement_collection.to_df()
 
     def get_triplicate_list(self):
+        print(self)
         if self.measurement_collection is None:
-            self.measurement_collection = DataframeCollection()
+            self.measurement_collection = MeasurementCollection()
             self.measurement_collection.add_filter('dataset_id', self.get_id())
+        print('size: ', self.measurement_collection.get_size(), self.get_id())
         triplicatelist = []
         previoustriplicate = 0
         for measurement in self.measurement_collection:

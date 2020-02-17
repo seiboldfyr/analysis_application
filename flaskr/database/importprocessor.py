@@ -111,25 +111,22 @@ class ImportProcessor(AbstractImporter):
         dataset_repository = Repository()
         dataset = dataset_repository.get_by_id(self.dataset_id)
         triplicatelist = dataset.get_triplicate_list()
-        print(triplicatelist)
-        print(request.form)
         for key, value in request.form.items():
-            if key.startswith('Component'):
-                component = value
-
-                if not request.form.get('Unit' + str(key[-1])) or \
-                        not request.form.get('Quantity' + str(key[-1])):
+            if key.startswith('component'):
+                component = value.split(' ')
+                if len(component) < 4:
                     flash('Missing values', 'error')
                     continue
-                unit = request.form['Unit' + str(key[-1])]
-                quantity = request.form['Quantity' + str(key[-1])]
+                name = component[1]
+                quantity = component[2]
+                unit = component[3]
+
                 for triplicate in triplicatelist:
                     save_dataset_component(self,
                                            quantity=quantity,
                                            component_id=
-                                           search_components(self, name=component, unit=unit),
+                                           search_components(self, name=name, unit=unit),
                                            triplicate_id=triplicate)
-            #TODO: add for each triplicate id
 
     def getexperimentlength(self, info):
         start = 0

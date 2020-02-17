@@ -46,78 +46,86 @@
 
             <tfooter>
                 <tr><td>
-                    <input onclick="addOne('component')" type="button" value="Add component"/>
+                    <input onclick="addOne('component')" type="button" value="Add component"/><br>
                     <input onclick="deleteOne('component')" type="button" value="Delete last component"/>
                 </td></tr>
             </tfooter>
 
         </table>
         <p id="component"></p>
-
+________________________________________________________________________________
         <p class="huge">
 
             Custom Label Addition:
             <input name="customlabel" type="text"/><br>
         <p class="big">
 
-        <table id="grouptable">
+        <table>
             <thead>
             <tr><th> Group Label </th>
                 <th> Number of Wells </th>
-                <th> Number of Samples </th></tr>
+                <th> Number of Samples </th>
+                <th> Location of Control(s) </th></tr>
             </thead>
 
             <tbody>
             <th><input id="grouplabeltemplate" name="Group Label" type="text"/></th>
             <th><input id="groupwelltemplate" name="Group Wells" type="number"/></th>
             <th><input id="groupsampletemplate" name="Group Samples" type="number"/></th>
+            <th><input id="groupcontroltemplate" name="Group Control(s)" type="text"/></th>
             </tbody>
 
             <tfooter>
-                <tr><td><br>
+                <tr><td>
                         <input onclick="addOne('group')" type="button" value="Add group"/><br>
                         <input onclick="deleteOne('group')" type="button" value="Delete last group"/><br>
                     </td></tr>
             </tfooter>
         </table>
+
         <p id="group"></p>
         If no groups are entered, we will attempt to automatically differentiate them
+________________________________________________________________________________
 
         <p class="big">
 
         <p class="huge"><br>
-            <b> Optional parameters:</b><br>
+
+        <b> Optional parameters:</b><br>
+
         <p class="big">
 
+            Any wells with known errors
+            <input name="errorwells" placeholder="A01, A02, ..." type="text"><br>
+            <br>
+            Fluorescence Error Cut Time
+            <input name="cutlength" placeholder="default=0" type="text"/><br>
 
-        <table id="swaptable"><h>Swaps</h>
+        <p class="big">
+
+        <table>
             <thead>
             <tr><th> From</th>
                 <th> To</th>
-                <th> Make Bidirectional</th></tr>
+                <th> Bidirectional</th></tr>
             </thead>
 
             <tbody>
             <th><input id="swapfromtemplate" name="Swap From 0" placeholder="A01" type="text"/></th>
             <th><input id="swaptotemplate" name="Swap To 0" placeholder="D01" type="text"/></th>
-            <th><td><input id="bidirectionaltemplate" name="Bidirectional Swap 0" type="checkbox" value=" "/></td></th>
+            <th><tl><input id="bidirectionaltemplate" name="Bidirectional Swap 0" type="checkbox" value=" "/></tl></th>
             </tbody>
 
             <tfooter>
-                <tr><td><br>
+                <tr><td>
                         <input onclick="addOne('swap')" type="button" value="Add swap"/><br>
                         <input onclick="deleteOne('swap')" type="button" value="Delete last swap"/><br>
                     </td></tr>
             </tfooter>
         </table>
         <p id="swap"></p>
+________________________________________________________________________________
 
-        <p class="big">
-            Any wells with known errors
-            <input name="errorwells" placeholder="A01, A02, ..." type="text"><br>
-            <br>
-            Fluorescence Error Cut Time
-            <input name="cutlength" placeholder="default=0" type="text"/><br>
         <p class="big">
 
         <p><input name='Run' type="submit" value="Run analysis"/></p>
@@ -126,13 +134,13 @@
     </form>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="../static/js/jquery.min.js"></script>
 <script src="../static/js/inputs.js"></script>
 <script type="text/javascript">
     function refreshNames() {
         var componenttypes = {{ components | tojson }};
-        var type = $(`#typetemplate`).val()
-        $('#nametemplate').empty()
+        var type = $(`#typetemplate`).val();
+        $('#nametemplate').empty();
         componenttypes[type].forEach(function(item){
             $('#nametemplate').append("<option>" + item.name + "</option>");
         });
