@@ -1,4 +1,3 @@
-
 from flask import render_template, redirect, url_for, request, flash, Blueprint, \
     send_file, current_app
 import zipfile
@@ -46,7 +45,7 @@ def search():
                     flash(response.get_message(), 'error')
                     return redirect(url_for('base.home'))
             else:
-                #TODO: put this on the search screen
+                # TODO: put this on the search screen
                 if importer.dataset is not None and importer.dataset['version'] < float(current_app.config['VERSION']):
                     flash('The data was uploaded with an outdated application version %s, '
                           'inflections will be replaced with those found using version %s.'
@@ -69,6 +68,7 @@ def search():
                                result=fileinfo,
                                id=importer.dataset['_id'])
     return redirect(url_for('base.home'))
+
 
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
@@ -96,7 +96,7 @@ def analysis(id, form=dict()):
 def graphs(id, features=None):
     if request.method == 'POST':
         features = request.form
-    graphs, name = Grapher(dataset_id=id)\
+    graphs, name = Grapher(dataset_id=id) \
         .execute(features=features)
 
     if len(graphs) == 0:
@@ -112,6 +112,8 @@ def graphs(id, features=None):
                            graphs=graphs.values(),
                            name=name,
                            features=request.form.to_dict())
+
+
 # TODO: passing these features as parameters is messy way to mark checkboxes on the post form
 # find a better way!
 
@@ -146,3 +148,10 @@ def download(id, graphs, name):
     return [memory_file, zipfilename]
     # return send_file(memory_file, attachment_filename=zipfilename, as_attachment=True)
 
+
+@base_blueprint.route('/stats', methods=['GET', 'POST'])
+@login_required
+def stats():
+
+
+    return render_template('stats.html',id=id)

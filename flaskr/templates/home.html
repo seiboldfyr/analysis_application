@@ -25,7 +25,10 @@ line-height: 8px;
             {% endfor %}
         </select>
      <p><input type = "submit" value = "Continue to verify dataset information" /></p>
+
+
   </form>
+    <a href="{{ url_for('.stats', id=id) }}"><button>STATS</button></a>
 </div>
 {% endblock %}
 
