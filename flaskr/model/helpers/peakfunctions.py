@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.signal import peak_widths
 from flask import current_app
+from scipy.signal import _peak_finding
+import matplotlib.pyplot as plt
 
 from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_values, square
 
@@ -32,6 +34,20 @@ def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
 
         # get the [width, width height, left_ips, right_ips] from the scipy peak width function
         widths = peak_widths(derivative, maxpeak)
+
+        #handle peak property warning
+        if widths[0] == 0 or int(widths[3][0]) - int(widths[2][0]) < 2:
+            cut = 0
+            tempderivative = derivative.copy()
+            for idx, value in enumerate(tempderivative):
+                if len(tempderivative) > value > tempderivative[idx + 1]:
+                    cut = idx
+                else:
+                    tempderivative[:cut] = tempderivative[cut+1]
+                    break
+            maxpeak = list(np.where(tempderivative == max(tempderivative)))[0]
+            widths = peak_widths(tempderivative, maxpeak)
+
         if widths[0] == 0:
             current_app.logger.error('Width finding error 1, dataset: %s' % self.dataset_id)
             break

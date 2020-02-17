@@ -46,12 +46,14 @@ class ImportProcessor(AbstractImporter):
         self.protocol_factory = ProtocolFactory()
         self.protocol_manager = ProtocolManager()
 
-    def search(self, name) -> {}:
+    def search(self, name) -> bool:
         dataset_repository = Repository()
         found_dataset = dataset_repository.get_by_name(name)
         if found_dataset is not None:
             self.dataset = found_dataset
             self.dataset_id = self.dataset.get_id()
+            if self.dataset.get_well_count() == 0:
+                flash('An error occured, please upload the data files again.', 'error')
             return True
         return False
 
