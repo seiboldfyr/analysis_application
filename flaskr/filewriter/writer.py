@@ -27,7 +27,6 @@ class Writer:
         variablesofinterest = 4 * 3
         variablecolumns = [startindex + n for n in range(variablesofinterest)]
         variablecolumns.insert(0, 6)
-        print(variablecolumns, df.columns)
         for group in range(1, int(df['group'].max()) + 1):
             self.write_to_sheet('Inflections', df[(df['group'] == group)], variablecolumns)
             self.rowshift += df[(df['group'] == group)].shape[0] + 4
@@ -52,9 +51,6 @@ class Writer:
             gdf.to_excel(self.excelwriter, sheet_name='Averages', startrow=self.rowshift)
             self.excel_formatting('Averages', gdf, 0)
             self.rowshift += gdf.shape[0] + 4
-            print((group-1)*(gdf.shape[0]+3), self.rowshift)
-
-
 
         # write inflection and percent differences in matrices
         self.rowshift = 0
