@@ -117,6 +117,13 @@ class Processor(AbstractProcessor):
                 flash('%s of 4 inflections were found in well: %s' % (str(len(inflectiondict)),
                                                                       well.get_excelheader()), 'error')
 
+            if self.groupings.get(str(well.get_group())):
+                groupcontrols = self.groupings[str(well.get_group())]['Controls'].split(',')
+                if well.get_excelheader() in groupcontrols:
+                    well['is_control'] = True
+                    # TODO: will need to loop through all wells, set control property
+                    # before making the following calculations
+
             if self.control is None or well.get_group() != self.control.get_group():
                 self.control = well
                 self.controllist = []

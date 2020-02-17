@@ -154,7 +154,6 @@ class ImportProcessor(AbstractImporter):
                                 component_id=result.get_message(),
                                 triplicate_id=self.identifers['triplicate_id'])
 
-            # TODO: check if control is labeled with '_0'
             if label[:12] == self.identifers['control']:
                 self.identifers['group'] += 1
                 self.identifers['sample'] = 0
