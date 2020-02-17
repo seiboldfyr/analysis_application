@@ -117,11 +117,16 @@ class ImportProcessor(AbstractImporter):
                 unit = component[3]
 
                 for triplicate in triplicatelist:
+                    componentid = search_components(self, name=name, unit=unit)
+                    if not componentid.is_success():
+                        flash(componentid.get_message())
+                        # TODO: can add single component if needed (add_single_component())
+                        break
                     save_dataset_component(self,
                                            quantity=quantity,
-                                           component_id=
-                                           search_components(self, name=name, unit=unit),
+                                           component_id=componentid.get_message(),
                                            triplicate_id=triplicate)
+        self.protocol_manager.save()
 
     def getexperimentlength(self, info):
         start = 0
@@ -144,7 +149,7 @@ class ImportProcessor(AbstractImporter):
             self.identifers['triplicate'] += 1
             self.identifers['triplicate_id'] = ObjectId()
             result = self.validate_target(label)
-            if result is not None:
+            if result.is_success():
                 self.add_target(label=label,
                                 component_id=result.get_message(),
                                 triplicate_id=self.identifers['triplicate_id'])
@@ -168,16 +173,9 @@ class ImportProcessor(AbstractImporter):
             component = self.component_repository.search_by_name_and_unit(name, unit)
             if component is not None:
                 return Response(True, component['_id'])
-            # TODO: edit case if component is not found in library
-            # return Response(False, 'Target does not exist in the component library')
-            self.add_component(name=name, unit=unit)
-        return Response(False, 'Target units and name could not be identified')
+            return Response(False, 'Target does not exist in the component library')
 
-    def add_component(self, name, unit):
-        # TODO: delete when component library is filled
-        factory = ComponentFactory()
-        model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
-        self.component_repository.save(model)
+        return Response(False, 'Target units and name could not be identified')
 
     def add_target(self, label, component_id, triplicate_id):
         quantity = re.match(r'^\d+', label).group(0)

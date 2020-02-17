@@ -9,6 +9,7 @@ from io import BytesIO
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.database.protocol_models.collection import Collection as ProtocolCollection
 from flaskr.components.component_models.collection import Collection
 from flaskr.database.dataset_models.collection import Collection as DatasetCollection
 from flaskr.model.processor import Processor
@@ -105,6 +106,13 @@ def analysis(id, form=dict()):
     if not response.is_success():
         flash('%s' % response.get_message(), 'error')
         return render_template('analysis.html', id=id)
+
+
+    protocols = ProtocolCollection()
+    # protocols.add_filter('data')
+    print('here')
+    for item in protocols:
+        print(item)
 
     flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
     return render_template('analysis.html', id=id)

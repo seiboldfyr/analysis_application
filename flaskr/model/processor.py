@@ -10,7 +10,7 @@ from flaskr.framework.abstract.abstract_processor import AbstractProcessor
 from flaskr.model.helpers.calcfunctions import get_derivatives, get_percent_difference, get_linear_approx
 from flaskr.model.helpers.buildfunctions import build_group_inputs, build_swap_inputs, swap_wells, validate_errors,\
     add_custom_group_label
-from flaskr.model.helpers.importfunctions import edit_RFUs, get_existing_metadata, update_metadata, get_collection
+from flaskr.model.helpers.importfunctions import get_existing_metadata, update_metadata, get_collection
 from flaskr.model.helpers.peakfunctions import get_peaks
 
 
@@ -82,7 +82,7 @@ class Processor(AbstractProcessor):
 
         self.getStatistics()
 
-        welltotal = sum([int(self.groupings[g]['Group Wells']) for g in self.groupings.keys()])
+        welltotal = sum([int(self.groupings[g]['Wells']) for g in self.groupings.keys()])
         if welltotal == 0:
             welltotal = wellindex + 1
         if welltotal != wellindex+1:

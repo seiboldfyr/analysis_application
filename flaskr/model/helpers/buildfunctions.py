@@ -6,19 +6,34 @@ from flaskr.model.helpers.importfunctions import get_collection
 
 def build_swap_inputs(self):
     for item in self.form.keys():
-        if item.startswith('Swap From'):
-            self.swaps[self.form[item]] = self.form['Swap To ' + str(item[-1])]
-        if item.startswith('Bidirectional Swap'):
-            self.swaps[self.form['Swap To ' + str(item[-1])]] = self.form['Swap From ' + str(item[-1])]
+        if item.startswith('swap'):
+            swapfrom = self.form[item].split(' ')[0]
+            swapto = self.form[item].split(' ')[1]
+            if len(self.form[item].split(' ')) > 2:
+                self.swaps[swapto] = swapfrom
+            self.swaps[swapfrom] = swapto
 
 
 def build_group_inputs(self):
     for item in self.form.keys():
-        if item.startswith('Group'):
-            if self.groupings.get(str(item[-1])) is None:    #TODO: this doesn't account for groups 10 or higher
-                self.groupings[str(item[-1])] = {}
-            self.groupings[item[-1]][item[:-2]] = self.form[item]
+        if item.startswith('group'):
+            groupnum = get_digit_ending(item)
+            if self.groupings.get(groupnum) is None:
+                self.groupings[groupnum] = {}
+            groupdata = self.form[item].split(' ')
+            self.groupings[groupnum] = dict(Label=groupdata[0],
+                                            Wells=groupdata[1],
+                                            Sample=groupdata[2],
+                                            Controls=groupdata[3])
 
+
+def get_digit_ending(string):
+    digit = 0
+    if string[-2].isdigit():
+        digit = str(string[-2:])
+    else:
+        digit = str(string[-1])
+    return digit
 
 def get_concentrations(string):
     if string.endswith('fM'):
@@ -33,16 +48,16 @@ def get_concentrations(string):
 
 def add_custom_group_label(self, well, wellIndex):
     for g in self.groupings.keys():
-        grouplim = int(self.groupings[g]['Group Wells'])
+        grouplim = int(self.groupings[g]['Wells'])
         lowlim = 0
         if g != '1':
-            lowlim = sum([int(self.groupings[str(i)]['Group Wells']) for i in range(1,int(g))])
-            grouplim = lowlim + int(self.groupings[g]['Group Wells'])
+            lowlim = sum([int(self.groupings[str(i)]['Wells']) for i in range(1,int(g))])
+            grouplim = lowlim + int(self.groupings[g]['Wells'])
         if lowlim <= wellIndex < grouplim:
             originallabel = well.get_label().split('_')
             well['label'] = '_'.join([item for item in originallabel[:2]])
             if self.groupings.get(g):
-                well['label'] = well.get_label() + '_' + self.groupings[g]['Group Label']       # TODO: Figure out how to redefine triplicate or sample
+                well['label'] = well.get_label() + '_' + self.groupings[g]['Label']       # TODO: Figure out how to redefine triplicate or sample
             well['label'] += '_' + g
             well['group'] = int(g)
     return well

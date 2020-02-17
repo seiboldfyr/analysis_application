@@ -34,8 +34,7 @@ def save_dataset_component(self, quantity, component_id, triplicate_id):
     self.protocol_manager.add(protocol)
 
 
-def add_component(self, name, unit):
-    # TODO: delete when component library is filled
+def add_single_component(self, name, unit):
     factory = ComponentFactory()
     model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
     self.component_repository.save(model)
@@ -45,7 +44,7 @@ def search_components(self, name, unit):
     component = self.component_repository.search_by_name_and_unit(name, unit)
     if component is not None:
         return Response(True, component['_id'])
-    # TODO: edit case if component is not found in library
-    # return Flash('Target does not exist in the component library')
-    add_component(self, name=name, unit=unit)
-    return Response(True, self.component_repository.search_by_name_and_unit(name, unit)['_id'])
+    return Response(False, 'Target does not exist in the component library.')
+    # TODO: Should the target be automatically added if it isn't found
+    # add_component(self, name=name, unit=unit)
+    # return Response(True, self.component_repository.search_by_name_and_unit(name, unit)['_id'])

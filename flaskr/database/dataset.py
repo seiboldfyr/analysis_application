@@ -43,11 +43,10 @@ class Dataset(AbstractModel):
         return self.measurement_collection.to_df()
 
     def get_triplicate_list(self):
-        print(self)
         if self.measurement_collection is None:
             self.measurement_collection = MeasurementCollection()
             self.measurement_collection.add_filter('dataset_id', self.get_id())
-        print('size: ', self.measurement_collection.get_size(), self.get_id())
+        #TODO: is there a mongo command to get the triplicate id of all measurements?
         triplicatelist = []
         previoustriplicate = 0
         for measurement in self.measurement_collection:
