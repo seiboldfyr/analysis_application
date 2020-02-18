@@ -31,7 +31,9 @@ line-height: 8px;
        <a name='delete' value="delete"><button name="Delete" value="True">Delete</button></a>
 
      <p><input type = "submit" value = "Submit" /></p>
+
   </form>
+    <a href="{{ url_for('.stats', id=id) }}"><button>STATS</button></a>
 </div>
 
 {% endblock %}
