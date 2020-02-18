@@ -1,4 +1,3 @@
-
 from flask import render_template, redirect, url_for, request, flash, Blueprint, \
     send_file, current_app
 import zipfile
@@ -85,6 +84,7 @@ def search():
 
     return redirect(url_for('base.home'))
 
+
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
@@ -111,7 +111,7 @@ def analysis(id, form=dict()):
 def graphs(id, features=None):
     if request.method == 'POST':
         features = request.form
-    graphs, name = Grapher(dataset_id=id)\
+    graphs, name = Grapher(dataset_id=id) \
         .execute(features=features)
 
     if len(graphs) == 0:
@@ -127,7 +127,6 @@ def graphs(id, features=None):
                            graphs=graphs.values(),
                            name=name,
                            features=request.form.to_dict())
-
 
 def download(id, graphs, name):
     memory_file = BytesIO()
@@ -158,3 +157,10 @@ def download(id, graphs, name):
     zipfilename = 'output' + '_' + name + '_v.' + current_app.config['VERSION'] + '.zip'
     return [memory_file, zipfilename]
 
+
+@base_blueprint.route('/stats', methods=['GET', 'POST'])
+@login_required
+def stats():
+
+
+    return render_template('stats.html',id=id)
