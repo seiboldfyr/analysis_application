@@ -1,3 +1,4 @@
+
 from flask import render_template, redirect, url_for, request, flash, Blueprint, \
     send_file, current_app
 import zipfile
@@ -7,8 +8,9 @@ from io import BytesIO
 
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
-from flaskr.components.component_models.collection import Collection
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.database.protocol_models.collection import Collection as ProtocolCollection
+from flaskr.components.component_models.collection import Collection
 from flaskr.database.dataset_models.collection import Collection as DatasetCollection
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
@@ -84,13 +86,16 @@ def search():
 
     return redirect(url_for('base.home'))
 
-
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
+    types = Collection().get_types()
+    components = Collection().get_components()
     if request.method == 'POST':
+        importer = ImportProcessor(id)
+        importer.add_components(request)
         return analysis(id=id, form=request.form)
-    return render_template('inputs.html', id=id)
+    return render_template('inputs.html', id=id, types=types, components=components)
 
 
 @base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
@@ -102,6 +107,11 @@ def analysis(id, form=dict()):
         flash('%s' % response.get_message(), 'error')
         return render_template('analysis.html', id=id)
 
+
+    protocols = ProtocolCollection()
+    # protocols.add_filter('data')
+    for item in protocols:
+        print(item)
     flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
     return render_template('analysis.html', id=id)
 
@@ -111,7 +121,7 @@ def analysis(id, form=dict()):
 def graphs(id, features=None):
     if request.method == 'POST':
         features = request.form
-    graphs, name = Grapher(dataset_id=id) \
+    graphs, name = Grapher(dataset_id=id)\
         .execute(features=features)
 
     if len(graphs) == 0:
@@ -127,6 +137,7 @@ def graphs(id, features=None):
                            graphs=graphs.values(),
                            name=name,
                            features=request.form.to_dict())
+
 
 def download(id, graphs, name):
     memory_file = BytesIO()
