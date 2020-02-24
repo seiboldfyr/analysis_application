@@ -4,13 +4,12 @@
 
 {% block body %}
 <style>
-    p.big {
-        line-height: 8px;
-    }
-
-    p.huge {
-        line-height: 16px;
-    }
+p.big {
+line-height: 8px;
+}
+p.huge {
+line-height: 16px;
+}
 
 </style>
 
@@ -60,6 +59,10 @@ ________________________________________________________________________________
             <input name="customlabel" type="text"/><br>
         <p class="big">
 
+        <label for="gPCR">gPCR experiment</label>
+        <input type="checkbox" id="gPCR" name="gPCR" value="True"></br>
+
+        <p class="big">
         <table>
             <thead>
             <tr><th> Group Label </th>

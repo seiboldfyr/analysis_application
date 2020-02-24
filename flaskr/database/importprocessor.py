@@ -50,6 +50,8 @@ class ImportProcessor(AbstractImporter):
         if found_dataset is not None:
             self.dataset = found_dataset
             self.dataset_id = self.dataset.get_id()
+            if self.dataset.get_well_count() == 0:
+                flash('An error occured, please upload the data files again.', 'error')
             return True
         return False
 
