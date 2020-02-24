@@ -9,7 +9,10 @@ from flaskr.model.helpers.calcfunctions import fit_poly_equation, get_expected_v
 
 def get_peaks(self, well, derivativenumber, derivative, allpeaks) -> {}:
     timediff = [(self.time[t] + self.time[t + 1]) / 2 for t in range(len(self.time) - 1)]
-    for i in range(2):
+    
+    # For gPCR experiments, we need to skip the first peak on the first dIndex (derivativenumber)
+    num_of_peaks = 1 if derivativenumber == 1 and self.form.get('gPCR') == "True" else 2
+    for i in range(num_of_peaks):
         if derivativenumber == 1:
             if i == 0:
                 #first derivative largest peak
