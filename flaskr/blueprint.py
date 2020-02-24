@@ -86,6 +86,7 @@ def search():
 
     return redirect(url_for('base.home'))
 
+
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
@@ -121,7 +122,7 @@ def analysis(id, form=dict()):
 def graphs(id, features=None):
     if request.method == 'POST':
         features = request.form
-    graphs, name = Grapher(dataset_id=id)\
+    graphs, name = Grapher(dataset_id=id) \
         .execute(features=features)
 
     if len(graphs) == 0:
@@ -137,7 +138,6 @@ def graphs(id, features=None):
                            graphs=graphs.values(),
                            name=name,
                            features=request.form.to_dict())
-
 
 def download(id, graphs, name):
     memory_file = BytesIO()
