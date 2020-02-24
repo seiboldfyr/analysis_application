@@ -1,22 +1,13 @@
 {% extends "master.html" %}
 
-{% block title %} Data Analysis Tool {% endblock %}
+{% block title %} Statistical Tools {% endblock %}
 
 {% block body %}
-<style>
-    p.big {
-        line-height: 8px;
-    }
-</style>
-<br>
-
-<b>Please enter the following information:</b>
 <br>
 
 <div class="formwrapper">
-    <form action="{{ url_for('search') }}" method="POST">
-        <p>Folder <input name="folder" type="text"/></p>
-        <p><input type="submit" value="Get Files "/></p>
+    <form method="POST">
+        <p> This is where the magic will happen</p>
     </form>
 </div>
 
