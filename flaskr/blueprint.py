@@ -107,13 +107,6 @@ def analysis(id, form=dict()):
         flash('%s' % response.get_message(), 'error')
         return render_template('analysis.html', id=id)
 
-
-    protocols = ProtocolCollection()
-    # protocols.add_filter('data')
-    print('here')
-    for item in protocols:
-        print(item)
-
     flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
     return render_template('analysis.html', id=id)
 
