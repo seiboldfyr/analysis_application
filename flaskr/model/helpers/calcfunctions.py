@@ -68,6 +68,5 @@ def smooth(a):
 def reg_conc(item, dataset=None):
     if dataset is not None and dataset.get_metadata()['gpcr']:
         return re.match(r'(\d+(|\s|[a-z]+\/)+([a-z]+[A-Z]))', item)
-        print("entered the gpcr loop")
     else:
         return re.match(r'(\d+(|\s|[a-z]+\/)+([a-z]+[A-Z]))', item)

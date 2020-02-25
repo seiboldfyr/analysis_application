@@ -1,3 +1,4 @@
+
 from flask import render_template, redirect, url_for, request, flash, Blueprint, \
     send_file, current_app
 import zipfile
@@ -93,7 +94,7 @@ def input(id):
     components = Collection().get_components()
     if request.method == 'POST':
         importer = ImportProcessor(id)
-        importer.add_components(request)
+        # importer.add_components(request)
         return analysis(id=id, form=request.form)
     return render_template('inputs.html', id=id, types=types, components=components)
 
@@ -107,6 +108,11 @@ def analysis(id, form=dict()):
         flash('%s' % response.get_message(), 'error')
         return render_template('analysis.html', id=id)
 
+
+    protocols = ProtocolCollection()
+    # protocols.add_filter('data')
+    for item in protocols:
+        print(item)
     flash('Processed successfully in %s seconds' % response.get_message(), 'timing')
     return render_template('analysis.html', id=id)
 

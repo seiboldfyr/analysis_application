@@ -153,7 +153,7 @@ class Processor(AbstractProcessor):
             # get percent differences and delta ct values
             elif self.control.get_sample() != well.get_sample():
                 percentdiffs = get_percent_difference(self, well['inflections'])
-                if not self.form.get('qcpr'):
+                if not self.form.get('gPCR'):
                     deltact = self.getDeltaCt(well)
 
             # calculate delta ct and percent diffs
