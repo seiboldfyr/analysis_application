@@ -7,7 +7,6 @@ from flask import flash, current_app
 from flaskr.database.dataset_models.factory import Factory
 from flaskr.database.dataset_models.repository import Repository
 from flaskr.components.component_models.repository import Repository as ComponentRepository
-from flaskr.components.component_models.factory import Factory as ComponentFactory
 from flaskr.database.protocol_models.factory import Factory as ProtocolFactory
 from flaskr.database.protocol_models.manager import Manager as ProtocolManager
 from flaskr.database.measurement_models.factory import Factory as MeasurementFactory
@@ -17,8 +16,7 @@ from flaskr.framework.exception import InvalidArgument
 from flaskr.framework.model.Io.xlsx_file import XLSXFile
 from flaskr.framework.model.request.response import Response
 from flaskr.model.helpers.calcfunctions import reg_conc
-from flaskr.model.helpers.importfunctions import save_dataset_component
-
+from flaskr.model.helpers.importfunctions import save_dataset_component, search_components
 
 def buildname(excelfilename):
     filename = excelfilename.split('_')
@@ -106,6 +104,32 @@ class ImportProcessor(AbstractImporter):
             self.dataset_id
         )
 
+    def add_components(self, request):
+        dataset_repository = Repository()
+        dataset = dataset_repository.get_by_id(self.dataset_id)
+        triplicatelist = dataset.get_triplicate_list()
+        for key, value in request.form.items():
+            if key.startswith('component'):
+                component = value.split(' ')
+                if len(component) < 4:
+                    flash('Missing values', 'error')
+                    continue
+                name = component[1]
+                quantity = component[2]
+                unit = component[3]
+
+                for triplicate in triplicatelist:
+                    componentid = search_components(self, name=name, unit=unit)
+                    if not componentid.is_success():
+                        flash(componentid.get_message())
+                        # TODO: can add single component if needed (add_single_component())
+                        break
+                    save_dataset_component(self,
+                                           quantity=quantity,
+                                           component_id=componentid.get_message(),
+                                           triplicate_id=triplicate)
+        self.protocol_manager.save()
+
     def getexperimentlength(self, info):
         start = 0
         end = 0
@@ -126,13 +150,12 @@ class ImportProcessor(AbstractImporter):
             self.identifers['sample'] += 1
             self.identifers['triplicate'] += 1
             self.identifers['triplicate_id'] = ObjectId()
-            search_components = self.validate_target(label)
-            if search_components.is_success():
+            result = self.validate_target(label)
+            if result.is_success():
                 self.add_target(label=label,
-                                component_id=search_components.get_message(),
+                                component_id=result.get_message(),
                                 triplicate_id=self.identifers['triplicate_id'])
 
-            # TODO: check if control is labeled with '_0'
             if label[:12] == self.identifers['control']:
                 self.identifers['group'] += 1
                 self.identifers['sample'] = 0
@@ -151,16 +174,9 @@ class ImportProcessor(AbstractImporter):
             component = self.component_repository.search_by_name_and_unit(name, unit)
             if component is not None:
                 return Response(True, component['_id'])
-            # TODO: edit case if component is not found in library
-            # return Response(False, 'Target does not exist in the component library')
-            self.add_component(name=name, unit=unit)
-        return Response(False, 'Target units and name could not be identified')
+            return Response(False, 'Target does not exist in the component library')
 
-    def add_component(self, name, unit):
-        # TODO: delete when component library is filled
-        factory = ComponentFactory()
-        model = factory.create({'type': 'Target', 'name': name, 'unit': unit})
-        self.component_repository.save(model)
+        return Response(False, 'Target units and name could not be identified')
 
     def add_target(self, label, component_id, triplicate_id):
         quantity = re.match(r'^\d+', label).group(0)

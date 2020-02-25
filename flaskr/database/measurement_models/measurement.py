@@ -16,6 +16,7 @@ class Measurement(AbstractModel):
         self['dataset_id'] = dataset_id
         self['excelheader'] = excelheader
         self['is_valid'] = True
+        self['is_control'] = False
         self['concentration'] = concentration
         self['label'] = label
         self['group'] = group
@@ -42,6 +43,9 @@ class Measurement(AbstractModel):
 
     def is_valid(self) -> bool:
         return self['is_valid']
+
+    def is_control(self) -> bool:
+        return self['is_control']
 
     def has_output(self) -> bool:
         if len(self['inflections']) == 0:
