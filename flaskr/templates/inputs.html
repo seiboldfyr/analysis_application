@@ -12,124 +12,157 @@ line-height: 16px;
 }
 
 </style>
+
+
 <br>
 <div class="formwrapper">
     <form method=post>
 
-        Custom Label Addition
-        <input type="text" name="customlabel"><br>
+        <table>
+            <thead>
+            <tr>
+                <th> Type</th>
+                <th> Component</th>
+                <th> Quantity</th>
+                <th> Unit</th>
+            </tr>
+            </thead>
+
+            <tbody>
+                <th><select id="typetemplate" name="Type" onchange="refreshNames()">
+                        {% for type, items in components.items() %}
+                        <option value={{type}}>{{type}}</option>
+                        {% endfor %}
+                    </select></th>
+                <th><select id="nametemplate" name="Component"  onchange="refreshUnit()">
+                        {% for item in components['Target'] %}
+                        <option value={{item[0]}}>{{item[0]}}</option>
+                        {% endfor %}
+                    </select></th>
+                <th><input id="quantitytemplate" name="Quantity" type="number"/></th>
+                <th><input id="unittemplate" name="Unit" type="text"/></th>
+            </tbody>
+
+            <tfooter>
+                <tr><td>
+                    <input onclick="addOne('component')" type="button" value="Add component"/><br>
+                    <input onclick="deleteOne('component')" type="button" value="Delete last component"/>
+                </td></tr>
+            </tfooter>
+
+        </table>
+        <p id="component"></p>
+________________________________________________________________________________
+        <p class="huge">
+
+            Custom Label Addition:
+            <input name="customlabel" type="text"/><br>
         <p class="big">
 
         <label for="gPCR">gPCR experiment</label>
         <input type="checkbox" id="gPCR" name="gPCR" value="True"></br>
 
-        <div class="groupidentification">
-        Group Number
-            <select id="groupidentification" name="number of groups" onchange="otherSelect()">
-                <option value="0">Autoselect</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="13">13</option>
-                <option value="14">14</option>
-                <option value="15">15</option>
-                <option value="16">16</option>
-            </select>
-        </div>
         <p class="big">
 
-        <p id="groupresult"></p>
+        <table>
+            <thead>
+            <tr><th> Group Label </th>
+                <th> Number of Wells </th>
+                <th> Number of Samples </th>
+                <th> Location of Control(s) </th></tr>
+            </thead>
 
+            <tbody>
+            <th><input id="grouplabeltemplate" name="Group Label" type="text"/></th>
+            <th><input id="groupwelltemplate" name="Group Wells" type="number"/></th>
+            <th><input id="groupsampletemplate" name="Group Samples" type="number"/></th>
+            <th><input id="groupcontroltemplate" name="Group Control(s)" type="text"/></th>
+            </tbody>
+
+            <tfooter>
+                <tr><td>
+                        <input onclick="addOne('group')" type="button" value="Add group"/><br>
+                        <input onclick="deleteOne('group')" type="button" value="Delete last group"/><br>
+                    </td></tr>
+            </tfooter>
+        </table>
+
+        <p id="group"></p>
+        If no groups are entered, we will attempt to automatically differentiate them
+________________________________________________________________________________
+
+        <p class="big">
+
+        <p class="huge"><br>
+
+        <b> Optional parameters:</b><br>
+
+        <p class="big">
+
+            Any wells with known errors
+            <input name="errorwells" placeholder="A01, A02, ..." type="text"><br>
+            <br>
+            Fluorescence Error Cut Time
+            <input name="cutlength" placeholder="default=0" type="text"/><br>
+
+        <p class="big">
+
+        <table>
+            <thead>
+            <tr><th> From</th>
+                <th> To</th>
+                <th> Bidirectional</th></tr>
+            </thead>
+
+            <tbody>
+            <th><input id="swapfromtemplate" name="Swap From 0" placeholder="A01" type="text"/></th>
+            <th><input id="swaptotemplate" name="Swap To 0" placeholder="D01" type="text"/></th>
+            <th><tl><input id="bidirectionaltemplate" name="Bidirectional Swap 0" type="checkbox" value=" "/></tl></th>
+            </tbody>
+
+            <tfooter>
+                <tr><td>
+                        <input onclick="addOne('swap')" type="button" value="Add swap"/><br>
+                        <input onclick="deleteOne('swap')" type="button" value="Delete last swap"/><br>
+                    </td></tr>
+            </tfooter>
+        </table>
+        <p id="swap"></p>
+________________________________________________________________________________
+
+        <p class="big">
+
+        <p><input name='Run' type="submit" value="Run analysis"/></p>
+
+        <th id="startcol"><br id="breakdiv"></th></p>
+    </form>
+</div>
+
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/inputs.js"></script>
 <script type="text/javascript">
-
-function otherSelect() {
-    let pick = document.getElementById("groupidentification").selectedIndex;
-    makeVisible(parseInt(pick));
+    function refreshNames() {
+        var componenttypes = {{ components | tojson }};
+        var type = $(`#typetemplate`).val();
+        $('#nametemplate').empty();
+        componenttypes[type].forEach(function(item){
+            $('#nametemplate').append("<option>" + item.name + "</option>");
+        });
+        refreshUnit()
     }
 
-function makeVisible(grouptotal) {
-    document.getElementById("groupresult").innerHTML = '';
-    for(let group = 1; group <= grouptotal; group ++){
-        let formGroupHtml = buildGroupHtml(group);
-        document.getElementById("groupresult").innerHTML += formGroupHtml;
-        }
-    }
-
-function buildGroupHtml(group) {
-    let html ='<div class="wellidentification"><div id="grouptitle"><b>Group Number ';
-    html += group + '</b></div>';
-    html += '<div id="grouplabel">Custom label <input name="Group Label ' + group + '" type="text"/></div>';
-    html += '<div id="groupwells">Number of wells <input name="Group Wells ' + group + '" type="text"/></div>';
-    html += '<div id="groupsamples">Number of samples <input name="Group Samples ' + group + '" type="text"/></div>';
-    html += '<p class="big">';
-    return html;
+    function refreshUnit() {
+        var componenttypes = {{ components | tojson }};
+        var type = $(`#typetemplate`).val()
+        var name = $(`#nametemplate`).val()
+        componenttypes[type].forEach(function(item){
+            if (item.name == name) {
+                $(`#unittemplate`).val(item.unit)
+            }
+        });
     }
 
 </script>
-
-<p class="huge"><br>
-<b> Optional parameters:</b><br>
-        <p class="big">
-        Any wells with known errors
-        <input type="text" name="errorwells" placeholder="A01, A02, ..."><br>
-        <p class="big">
-
-        <div class="labelswaps">
-        Swapping well positions - how many swaps do you want to make?
-            <select id="labelswaps" name="labels that were swapped" onchange="swapnumber()">
-                <option value="0">None</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-            </select>
-        </div>
-        <p class="big">
-
-        <p id="swapinput"></p>
-
-<script type="text/javascript">
-function swapnumber() {
-    let pick = document.getElementById("labelswaps").selectedIndex;
-    makeSwapsVisible(parseInt(pick));
-    }
-
-function makeSwapsVisible(swapnumber) {
-    document.getElementById("swapinput").innerHTML = '';
-
-    for(var wellswap = 1; wellswap <= swapnumber; wellswap ++){
-        var formSwapHtml = buildSwapHtml(wellswap);
-        document.getElementById("swapinput").innerHTML += formSwapHtml;
-        }
-    }
-
-function buildSwapHtml(swapnumber) {
-    var html ='<div class="labelidentification"></div>';
-    html += '<div id="labelfrom">Swap well from: <input name="Swap From ' + swapnumber + '" type="text" placeholder="A01"/><input type="checkbox" name="Bidirectional Swap '+ swapnumber +'">Bidirectional Swap</div>';
-    html += '<div id="labelto">Swap well to: <input name="Swap To ' + swapnumber + '" type="text" placeholder="D01" /></div>';
-    html += '<p class="big">';
-    return html;
-    }
-</script>
-
-<p><input type="submit" name='Run' value="Run analysis"/></p>
-        <br>
-      </form>
-    </div>
-
 
 
 {% endblock %}
@@ -137,6 +170,8 @@ function buildSwapHtml(swapnumber) {
 {% block content %}{% endblock %}
 
 {% block buttons %}
-<a href="{{ url_for('.search', id=id) }}"><button>Back</button></a>
+<a href="{{ url_for('.search', id=id) }}">
+    <button>Back</button>
+</a>
 {% endblock %}
 

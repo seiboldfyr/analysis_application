@@ -1,3 +1,4 @@
+from bson import ObjectId
 
 from flaskr.database.measurement_models.collection import Collection as MeasurementCollection
 from flaskr.database.measurement_models.dataframe_collection import Collection as DataframeCollection
@@ -40,6 +41,19 @@ class Dataset(AbstractModel):
             self.measurement_collection = DataframeCollection()
             self.measurement_collection.add_filter('dataset_id', self.get_id())
         return self.measurement_collection.to_df()
+
+    def get_triplicate_list(self):
+        if self.measurement_collection is None:
+            self.measurement_collection = MeasurementCollection()
+            self.measurement_collection.add_filter('dataset_id', self.get_id())
+        #TODO: is there a mongo command to get the triplicate id of all measurements?
+        triplicatelist = []
+        previoustriplicate = 0
+        for measurement in self.measurement_collection:
+            triplicate = measurement.get_triplicate()
+            if triplicate != previoustriplicate:
+                triplicatelist.append(measurement.get_triplicate_id())
+        return triplicatelist
 
     def get_component_collection(self) -> ProtocolCollection:
         if self.component_collection is None:

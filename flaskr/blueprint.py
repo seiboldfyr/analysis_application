@@ -7,8 +7,9 @@ from io import BytesIO
 
 from flaskr.auth.blueprint import login_required
 from flaskr.database.importprocessor import ImportProcessor, buildname
-from flaskr.components.component_models.collection import Collection
 from flaskr.database.dataset_models.repository import Repository
+from flaskr.database.protocol_models.collection import Collection as ProtocolCollection
+from flaskr.components.component_models.collection import Collection
 from flaskr.database.dataset_models.collection import Collection as DatasetCollection
 from flaskr.model.processor import Processor
 from flaskr.model.validators.import_validator import ImportValidator
@@ -88,9 +89,13 @@ def search():
 @base_blueprint.route('/input/<id>', methods=['GET', 'POST'])
 @login_required
 def input(id):
+    types = Collection().get_types()
+    components = Collection().get_components()
     if request.method == 'POST':
+        importer = ImportProcessor(id)
+        importer.add_components(request)
         return analysis(id=id, form=request.form)
-    return render_template('inputs.html', id=id)
+    return render_template('inputs.html', id=id, types=types, components=components)
 
 
 @base_blueprint.route('/analysis/<id>', methods=['GET', 'POST'])
