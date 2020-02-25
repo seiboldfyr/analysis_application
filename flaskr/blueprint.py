@@ -94,7 +94,7 @@ def input(id):
     components = Collection().get_components()
     if request.method == 'POST':
         importer = ImportProcessor(id)
-        importer.add_components(request)
+        # importer.add_components(request)
         return analysis(id=id, form=request.form)
     return render_template('inputs.html', id=id, types=types, components=components)
 

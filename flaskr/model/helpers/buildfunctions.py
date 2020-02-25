@@ -93,8 +93,7 @@ def swap_wells(self, originwell): # replaces origin well info with destination w
                 originwell.edit_labels(dict(group=self.tempswaps[tempwell]['group'],
                                             sample=self.tempswaps[tempwell]['sample'],
                                             triplicate=self.tempswaps[tempwell]['triplicate'],
-                                            label=self.tempswaps[tempwell]['label'],
-                                            RFUs=self.tempswaps[tempwell]['RFUs']))
+                                            label=self.tempswaps[tempwell]['label']))
                 return originwell
 
     # search all wells until the destination well is found
@@ -103,8 +102,7 @@ def swap_wells(self, originwell): # replaces origin well info with destination w
             originwell.edit_labels(dict(group=destwell.get_group(),
                                         sample=destwell.get_sample(),
                                         triplicate=destwell.get_triplicate(),
-                                        label=destwell.get_label(),
-                                        RFUs=destwell.get_rfus()))
+                                        label=destwell.get_label()))
             return originwell
 
     flash('Swap could not be completed for well: %s' % originwell.get_excelheader(), 'error')
